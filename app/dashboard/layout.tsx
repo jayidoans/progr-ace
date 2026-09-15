@@ -34,6 +34,9 @@ export default async function DashboardLayout({
               <Link className="hover:text-indigo-600" href="/dashboard/training">
                 Training
               </Link>
+              <Link className="hover:text-indigo-600" href="/dashboard/activities">
+                Activities
+              </Link>
               <Link className="hover:text-indigo-600" href="/dashboard/profile">
                 Profile
               </Link>
@@ -60,6 +63,9 @@ export default async function DashboardLayout({
           </Link>
           <Link className="hover:text-indigo-600" href="/dashboard/training">
             Training
+          </Link>
+          <Link className="hover:text-indigo-600" href="/dashboard/activities">
+            Activities
           </Link>
           <Link className="hover:text-indigo-600" href="/dashboard/profile">
             Profile

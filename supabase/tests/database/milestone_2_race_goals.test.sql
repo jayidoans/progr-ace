@@ -251,12 +251,11 @@ select ok(
     join pg_namespace as namespace on namespace.oid = class.relnamespace
     where namespace.nspname = 'public'
       and class.relname in (
-        'activities',
         'training_claims',
         'claim_activities'
       )
   ),
-  'all domains later than Milestone 3 have forced RLS and no anon/authenticated CRUD access'
+  'claim domains later than Milestone 4 have forced RLS and no anon/authenticated CRUD access'
 );
 
 set local role authenticated;

@@ -22,7 +22,7 @@ export default async function DashboardPage() {
 
       <ActiveRaceGoalCard goal={activeGoal} />
 
-      <section className="grid gap-4 sm:grid-cols-2">
+      <section className="grid gap-4 sm:grid-cols-3">
         <Link
           className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 hover:ring-indigo-300"
           href="/dashboard/profile"
@@ -37,6 +37,15 @@ export default async function DashboardPage() {
           <span className="font-bold text-gray-950">Race goal history</span>
           <span className="mt-1 block text-sm text-gray-600">
             Manage the active goal and review previous targets.
+          </span>
+        </Link>
+        <Link
+          className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 hover:ring-indigo-300"
+          href="/dashboard/activities"
+        >
+          <span className="font-bold text-gray-950">Activity evidence</span>
+          <span className="mt-1 block text-sm text-gray-600">
+            Record what you actually did, independently from prescriptions.
           </span>
         </Link>
       </section>

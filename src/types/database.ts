@@ -11,43 +11,61 @@ export type Database = {
     Tables: {
       activities: {
         Row: {
-          activity_date: string
-          activity_type: string | null
           athlete_id: string
-          average_hr: number | null
-          average_pace: number | null
-          created_at: string | null
-          distance_meters: number | null
-          duration_seconds: number | null
+          average_hr_bpm: number | null
+          created_at: string
+          distance_m: number | null
+          duration_sec: number | null
+          elevation_gain_m: number | null
           external_activity_id: string | null
           id: string
-          source: string | null
+          max_hr_bpm: number | null
+          name: string
+          notes: string | null
+          raw_data: Json | null
+          rpe: number | null
+          source: string
+          sport_type: string
+          started_at: string
+          updated_at: string
         }
         Insert: {
-          activity_date: string
-          activity_type?: string | null
           athlete_id: string
-          average_hr?: number | null
-          average_pace?: number | null
-          created_at?: string | null
-          distance_meters?: number | null
-          duration_seconds?: number | null
+          average_hr_bpm?: number | null
+          created_at?: string
+          distance_m?: number | null
+          duration_sec?: number | null
+          elevation_gain_m?: number | null
           external_activity_id?: string | null
           id?: string
-          source?: string | null
+          max_hr_bpm?: number | null
+          name: string
+          notes?: string | null
+          raw_data?: Json | null
+          rpe?: number | null
+          source?: string
+          sport_type: string
+          started_at: string
+          updated_at?: string
         }
         Update: {
-          activity_date?: string
-          activity_type?: string | null
           athlete_id?: string
-          average_hr?: number | null
-          average_pace?: number | null
-          created_at?: string | null
-          distance_meters?: number | null
-          duration_seconds?: number | null
+          average_hr_bpm?: number | null
+          created_at?: string
+          distance_m?: number | null
+          duration_sec?: number | null
+          elevation_gain_m?: number | null
           external_activity_id?: string | null
           id?: string
-          source?: string | null
+          max_hr_bpm?: number | null
+          name?: string
+          notes?: string | null
+          raw_data?: Json | null
+          rpe?: number | null
+          source?: string
+          sport_type?: string
+          started_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -751,4 +769,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
