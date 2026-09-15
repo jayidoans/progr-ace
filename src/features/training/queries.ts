@@ -21,6 +21,11 @@ export type ProgramRaceGoal = Pick<
 export type TrainingProgramWithGoal = TrainingProgram & { race_goal: ProgramRaceGoal };
 export type PrescriptionWithComponents = TrainingPrescription & {
   components: PrescriptionComponent[];
+  claim: {
+    id: string;
+    status: string;
+    submitted_at: string | null;
+  } | null;
 };
 export type WeekWithPrescriptions = TrainingWeek & {
   prescriptions: PrescriptionWithComponents[];
@@ -108,12 +113,31 @@ export async function getTrainingProgram(programId: string) {
     );
   });
 
+  const prescriptionIds = program.weeks.flatMap((week) =>
+    week.prescriptions.map((prescription) => prescription.id),
+  );
+  const claimByPrescription = new Map<string, PrescriptionWithComponents["claim"]>();
+  if (prescriptionIds.length > 0) {
+    const { data: claims, error: claimError } = await supabase
+      .from("training_claims")
+      .select("id, prescription_id, status, submitted_at")
+      .in("prescription_id", prescriptionIds);
+    if (claimError) throw new Error("Unable to load training claim states.");
+    claims.forEach((claim) => claimByPrescription.set(claim.prescription_id, claim));
+  }
+  program.weeks.forEach((week) =>
+    week.prescriptions.forEach((prescription) => {
+      prescription.claim = claimByPrescription.get(prescription.id) ?? null;
+    }),
+  );
+
   return {
     program,
     user,
     roles,
     isAuthor,
     canEdit: program.status === "DRAFT" && (roles.includes("ADMIN") || program.created_by === user.id),
+    canClaim: program.status === "PUBLISHED" && program.race_goal.athlete_id === user.id,
   };
 }
 

@@ -20,9 +20,12 @@ Forced RLS restricts activity reads to the owning athlete. Authenticated athlete
 
 Activity notes may contain health or family context and remain private. Coach, admin, trainer, or supervisor access is not added because the current model has no verified coach–athlete assignment relationship or audit workflow. A future milestone must define that relationship before widening access.
 
-## Deferred claim and provider behavior
+## Claim and provider behavior
 
-`training_claims` and `claim_activities` stay locked. A later claim milestone may relate activity evidence to prescriptions without changing what the activity itself means. That milestone must also prevent edits or deletion once evidence is referenced by a claim.
+Milestone 5 relates Activity Evidence to a Training Prescription through `training_claims` and
+`claim_activities` without changing what the Activity itself means. Evidence linked to a draft Claim
+remains editable. Evidence linked to a submitted Claim cannot be edited or deleted; this is enforced
+at the database boundary as well as represented in the UI.
 
 Future Strava normalization may populate the same canonical columns plus `external_activity_id` and `raw_data` through a trusted server-side path. Browser clients must never be able to impersonate that provider path.
 

@@ -7,9 +7,9 @@ import {
   formatPace,
   formatSportType,
 } from "@/src/features/activities/format";
-import type { Activity } from "@/src/features/activities/queries";
+import type { ActivityWithClaimUsage } from "@/src/features/activities/queries";
 
-export function ActivitySummary({ activity }: { activity: Activity }) {
+export function ActivitySummary({ activity }: { activity: ActivityWithClaimUsage }) {
   return (
     <Link
       className="block rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 hover:ring-indigo-300"
@@ -23,9 +23,26 @@ export function ActivitySummary({ activity }: { activity: Activity }) {
           <h2 className="mt-1 text-lg font-bold text-gray-950">{activity.name}</h2>
           <p className="mt-1 text-sm text-gray-500">{formatActivityDate(activity.started_at)}</p>
         </div>
-        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">
-          {activity.source}
-        </span>
+        <div className="flex flex-col items-end gap-2">
+          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">
+            {activity.source}
+          </span>
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-bold ${
+              activity.claimUsage?.status === "SUBMITTED"
+                ? "bg-emerald-50 text-emerald-700"
+                : activity.claimUsage?.status === "DRAFT"
+                  ? "bg-amber-50 text-amber-700"
+                  : "bg-blue-50 text-blue-700"
+            }`}
+          >
+            {activity.claimUsage?.status === "SUBMITTED"
+              ? "Submitted as evidence"
+              : activity.claimUsage?.status === "DRAFT"
+                ? "Used in draft claim"
+                : "Available"}
+          </span>
+        </div>
       </div>
       <dl className="mt-5 grid grid-cols-2 gap-4 text-sm sm:grid-cols-5">
         <div><dt className="text-gray-500">Distance</dt><dd className="font-semibold">{formatDistance(activity.distance_m)}</dd></div>
@@ -38,4 +55,3 @@ export function ActivitySummary({ activity }: { activity: Activity }) {
     </Link>
   );
 }
-

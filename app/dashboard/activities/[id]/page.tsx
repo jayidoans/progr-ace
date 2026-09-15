@@ -19,6 +19,7 @@ export default async function ActivityDetailPage({
 }) {
   const [{ id }, feedback] = await Promise.all([params, searchParams]);
   const activity = await getActivity(id);
+  const isSubmittedEvidence = activity.claimUsage?.status === "SUBMITTED";
   const metrics = [
     ["Distance", formatDistance(activity.distance_m)],
     ["Duration", formatDuration(activity.duration_sec)],
@@ -39,7 +40,7 @@ export default async function ActivityDetailPage({
             <h1 className="mt-2 text-3xl font-bold">{activity.name}</h1>
             <p className="mt-2 text-gray-600">{formatActivityDate(activity.started_at)}</p>
           </div>
-          {activity.source === "MANUAL" ? <Link className="rounded-md border border-indigo-600 px-4 py-2 text-sm font-semibold text-indigo-700" href={`/dashboard/activities/${activity.id}/edit`}>Edit</Link> : null}
+          {activity.source === "MANUAL" && !isSubmittedEvidence ? <Link className="rounded-md border border-indigo-600 px-4 py-2 text-sm font-semibold text-indigo-700" href={`/dashboard/activities/${activity.id}/edit`}>Edit</Link> : null}
         </div>
       </header>
 
@@ -57,7 +58,19 @@ export default async function ActivityDetailPage({
         <p className="mt-3 whitespace-pre-wrap text-sm text-gray-700">{activity.notes ?? "No notes recorded."}</p>
       </section>
 
-      {activity.source === "MANUAL" ? <form action={deleteActivity} className="border-t border-gray-200 pt-6"><input name="activityId" type="hidden" value={activity.id} /><button className="rounded-md border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" type="submit">Delete activity</button><p className="mt-2 text-xs text-gray-500">Deletion is permanent. Later claim milestones will restrict deletion of referenced evidence.</p></form> : null}
+      <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+        <h2 className="text-lg font-bold">Claim usage</h2>
+        <p className="mt-2 text-sm text-gray-700">
+          {activity.claimUsage?.status === "SUBMITTED"
+            ? "Submitted as evidence. This activity is locked and cannot be edited or deleted."
+            : activity.claimUsage?.status === "DRAFT"
+              ? "Used in a draft claim. It remains editable until that claim is submitted."
+              : "Available for a training claim."}
+        </p>
+        {activity.claimUsage ? <Link className="mt-3 inline-flex text-sm font-semibold text-indigo-700" href={`/dashboard/claims/${activity.claimUsage.claimId}`}>View claim</Link> : null}
+      </section>
+
+      {activity.source === "MANUAL" && !activity.claimUsage ? <form action={deleteActivity} className="border-t border-gray-200 pt-6"><input name="activityId" type="hidden" value={activity.id} /><button className="rounded-md border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" type="submit">Delete activity</button><p className="mt-2 text-xs text-gray-500">Deletion is permanent.</p></form> : null}
     </div>
   );
 }

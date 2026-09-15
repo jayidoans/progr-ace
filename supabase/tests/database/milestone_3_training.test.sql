@@ -104,7 +104,7 @@ select set_config('request.jwt.claim.sub', '41000000-0000-0000-0000-000000000001
 select is((select name from public.training_programs where name = 'Program A'), 'Program A', 'athlete cannot modify a program');
 
 select ok((select bool_and(relrowsecurity and relforcerowsecurity) from pg_class join pg_namespace on pg_namespace.oid = pg_class.relnamespace where nspname = 'public' and relname in ('training_programs','training_weeks','training_prescriptions','prescription_components','training_import_previews')), 'Milestone 3 tables use forced RLS');
-select ok((select bool_and(not has_table_privilege('anon', pg_class.oid, 'SELECT') and not has_table_privilege('authenticated', pg_class.oid, 'SELECT')) from pg_class join pg_namespace on pg_namespace.oid = pg_class.relnamespace where nspname = 'public' and relname in ('training_claims','claim_activities')), 'claim-domain tables remain locked');
+select ok((select bool_and(relrowsecurity and relforcerowsecurity and not has_table_privilege('anon', pg_class.oid, 'SELECT')) from pg_class join pg_namespace on pg_namespace.oid = pg_class.relnamespace where nspname = 'public' and relname in ('training_claims','claim_activities')), 'claim-domain tables retain forced RLS and no anonymous reads');
 
 insert into public.training_import_previews (created_by, race_goal_id, source_hash, template_version, payload)
 values (

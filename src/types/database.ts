@@ -7,6 +7,31 @@ export type Json =
   | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       activities: {
@@ -128,21 +153,21 @@ export type Database = {
       claim_activities: {
         Row: {
           activity_id: string
-          created_at: string | null
+          claim_id: string
+          created_at: string
           id: string
-          training_claim_id: string
         }
         Insert: {
           activity_id: string
-          created_at?: string | null
+          claim_id: string
+          created_at?: string
           id?: string
-          training_claim_id: string
         }
         Update: {
           activity_id?: string
-          created_at?: string | null
+          claim_id?: string
+          created_at?: string
           id?: string
-          training_claim_id?: string
         }
         Relationships: [
           {
@@ -153,8 +178,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "claim_activities_training_claim_id_fkey"
-            columns: ["training_claim_id"]
+            foreignKeyName: "claim_activities_claim_id_fkey"
+            columns: ["claim_id"]
             isOneToOne: false
             referencedRelation: "training_claims"
             referencedColumns: ["id"]
@@ -309,30 +334,33 @@ export type Database = {
       training_claims: {
         Row: {
           athlete_id: string
-          created_at: string | null
+          athlete_note: string | null
+          created_at: string
           id: string
-          notes: string | null
           prescription_id: string
-          status: string | null
-          updated_at: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
         }
         Insert: {
           athlete_id: string
-          created_at?: string | null
+          athlete_note?: string | null
+          created_at?: string
           id?: string
-          notes?: string | null
           prescription_id: string
-          status?: string | null
-          updated_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
         }
         Update: {
           athlete_id?: string
-          created_at?: string | null
+          athlete_note?: string | null
+          created_at?: string
           id?: string
-          notes?: string | null
           prescription_id?: string
-          status?: string | null
-          updated_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -593,6 +621,14 @@ export type Database = {
         Args: { p_preview_id: string }
         Returns: string
       }
+      create_training_claim_draft: {
+        Args: {
+          p_activity_ids: string[]
+          p_athlete_note?: string
+          p_prescription_id: string
+        }
+        Returns: string
+      }
       create_training_prescription_with_component: {
         Args: {
           p_component_type: string
@@ -612,6 +648,10 @@ export type Database = {
           p_training_week_id: string
         }
         Returns: string
+      }
+      delete_training_claim_draft: {
+        Args: { p_claim_id: string }
+        Returns: undefined
       }
       has_role: { Args: { p_role_code: string }; Returns: boolean }
       set_active_race_goal: {
@@ -633,6 +673,25 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "athlete_race_goals"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      submit_training_claim: {
+        Args: { p_claim_id: string }
+        Returns: {
+          athlete_id: string
+          athlete_note: string | null
+          created_at: string
+          id: string
+          prescription_id: string
+          status: string
+          submitted_at: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "training_claims"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -765,6 +824,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

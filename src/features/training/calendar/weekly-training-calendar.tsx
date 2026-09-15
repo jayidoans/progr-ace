@@ -1,11 +1,16 @@
+import Link from "next/link";
+
 import { formatComponent } from "@/src/features/training/format";
 import type { WeekWithPrescriptions } from "@/src/features/training/queries";
 
 const weekdays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-type WeeklyTrainingCalendarProps = { week: WeekWithPrescriptions };
+type WeeklyTrainingCalendarProps = {
+  canClaim?: boolean;
+  week: WeekWithPrescriptions;
+};
 
-export function WeeklyTrainingCalendar({ week }: WeeklyTrainingCalendarProps) {
+export function WeeklyTrainingCalendar({ canClaim = false, week }: WeeklyTrainingCalendarProps) {
   const start = new Date(`${week.start_date}T00:00:00Z`);
   const days = weekdays.map((label, index) => {
     const date = new Date(start);
@@ -47,6 +52,29 @@ export function WeeklyTrainingCalendar({ week }: WeeklyTrainingCalendarProps) {
                         {formatComponent(component)}
                       </p>
                     ))}
+                    {canClaim ? (
+                      prescription.claim ? (
+                        <Link
+                          className={`mt-3 inline-flex rounded-md px-2.5 py-1.5 text-xs font-bold ${
+                            prescription.claim.status === "SUBMITTED"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-amber-50 text-amber-700"
+                          }`}
+                          href={`/dashboard/claims/${prescription.claim.id}`}
+                        >
+                          {prescription.claim.status === "SUBMITTED"
+                            ? "Submitted"
+                            : "Continue draft"}
+                        </Link>
+                      ) : (
+                        <Link
+                          className="mt-3 inline-flex rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-bold text-white hover:bg-indigo-700"
+                          href={`/dashboard/training/prescriptions/${prescription.id}/claim`}
+                        >
+                          Claim activity
+                        </Link>
+                      )
+                    ) : null}
                   </div>
                 ))}
               </div>

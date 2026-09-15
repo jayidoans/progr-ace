@@ -1,11 +1,16 @@
 import Link from "next/link";
 
+import { getAthleteClaims } from "@/src/features/claims/queries";
 import { getCurrentProfile } from "@/src/features/profiles/queries";
 import { ActiveRaceGoalCard } from "@/src/features/race-goals/components/active-race-goal-card";
 import { getActiveRaceGoal } from "@/src/features/race-goals/queries";
 
 export default async function DashboardPage() {
-  const [profile, activeGoal] = await Promise.all([getCurrentProfile(), getActiveRaceGoal()]);
+  const [profile, activeGoal, claims] = await Promise.all([
+    getCurrentProfile(),
+    getActiveRaceGoal(),
+    getAthleteClaims(3),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -21,6 +26,39 @@ export default async function DashboardPage() {
       </section>
 
       <ActiveRaceGoalCard goal={activeGoal} />
+
+      <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-950">Recent training claims</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Your explicit links between prescriptions and activity evidence.
+            </p>
+          </div>
+          <Link className="text-sm font-semibold text-indigo-700" href="/dashboard/training">
+            Open training
+          </Link>
+        </div>
+        {claims.length === 0 ? (
+          <p className="mt-5 text-sm text-gray-600">No training claims yet.</p>
+        ) : (
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            {claims.map((claim) => (
+              <Link
+                className="rounded-lg border border-gray-200 p-4 hover:border-indigo-300"
+                href={`/dashboard/claims/${claim.id}`}
+                key={claim.id}
+              >
+                <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">
+                  {claim.prescription.training_menu}
+                </p>
+                <h3 className="mt-1 font-bold">{claim.prescription.title}</h3>
+                <p className="mt-2 text-xs font-semibold text-gray-500">{claim.status}</p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="grid gap-4 sm:grid-cols-3">
         <Link

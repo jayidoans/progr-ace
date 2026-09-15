@@ -48,7 +48,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
 select is(
-  (select count(*) from public.races),
+  (select count(*) from public.races where id::text like '20000000-%'),
   3::bigint,
   'authenticated users can read shared races'
 );
@@ -244,8 +244,6 @@ select ok(
       and class.relforcerowsecurity
       and not has_table_privilege('anon', class.oid, 'SELECT')
       and not has_table_privilege('anon', class.oid, 'INSERT')
-      and not has_table_privilege('authenticated', class.oid, 'SELECT')
-      and not has_table_privilege('authenticated', class.oid, 'INSERT')
     )
     from pg_class as class
     join pg_namespace as namespace on namespace.oid = class.relnamespace
@@ -255,7 +253,7 @@ select ok(
         'claim_activities'
       )
   ),
-  'claim domains later than Milestone 4 have forced RLS and no anon/authenticated CRUD access'
+  'claim domains retain forced RLS and no anonymous CRUD access'
 );
 
 set local role authenticated;

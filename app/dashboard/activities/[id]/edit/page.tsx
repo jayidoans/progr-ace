@@ -13,7 +13,7 @@ export default async function EditActivityPage({
 }) {
   const [{ id }, feedback] = await Promise.all([params, searchParams]);
   const activity = await getActivity(id);
-  if (activity.source !== "MANUAL") notFound();
+  if (activity.source !== "MANUAL" || activity.claimUsage?.status === "SUBMITTED") notFound();
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header><Link className="text-sm font-semibold text-indigo-700" href={`/dashboard/activities/${activity.id}`}>← Activity</Link><h1 className="mt-3 text-3xl font-bold">Edit activity</h1></header>
@@ -22,4 +22,3 @@ export default async function EditActivityPage({
     </div>
   );
 }
-

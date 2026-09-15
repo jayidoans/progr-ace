@@ -98,8 +98,8 @@ select is(
   0::bigint,
   'activity evidence has no direct prescription, claim, or validation coupling'
 );
-select throws_ok($$ select * from public.training_claims $$);
-select throws_ok($$ select * from public.claim_activities $$);
+select is((select count(*) from public.training_claims), 0::bigint, 'athlete has no unrelated claims');
+select is((select count(*) from public.claim_activities), 0::bigint, 'athlete has no unrelated claim evidence');
 
 reset role;
 select * from finish();
