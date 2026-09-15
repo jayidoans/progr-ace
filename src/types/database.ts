@@ -62,30 +62,33 @@ export type Database = {
       athlete_race_goals: {
         Row: {
           athlete_id: string
-          created_at: string | null
+          created_at: string
           id: string
           notes: string | null
           race_id: string
-          target_pace: number | null
-          target_time: string | null
+          status: string
+          target_finish_time_sec: number
+          updated_at: string
         }
         Insert: {
           athlete_id: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           notes?: string | null
           race_id: string
-          target_pace?: number | null
-          target_time?: string | null
+          status?: string
+          target_finish_time_sec: number
+          updated_at?: string
         }
         Update: {
           athlete_id?: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           notes?: string | null
           race_id?: string
-          target_pace?: number | null
-          target_time?: string | null
+          status?: string
+          target_finish_time_sec?: number
+          updated_at?: string
         }
         Relationships: [
           {
@@ -143,45 +146,51 @@ export type Database = {
       prescription_components: {
         Row: {
           component_type: string
-          created_at: string | null
-          distance_km: number | null
-          duration_minutes: number | null
+          created_at: string
+          distance_per_rep_m: number | null
           id: string
-          notes: string | null
+          instruction: string | null
           prescription_id: string
-          recovery_seconds: number | null
+          recovery_duration_sec: number | null
           repetitions: number | null
           sequence_order: number
-          target_hr_zone: string | null
-          target_pace: string | null
+          target_distance_m: number | null
+          target_duration_sec: number | null
+          target_pace_max_sec_per_km: number | null
+          target_pace_min_sec_per_km: number | null
+          updated_at: string
         }
         Insert: {
           component_type: string
-          created_at?: string | null
-          distance_km?: number | null
-          duration_minutes?: number | null
+          created_at?: string
+          distance_per_rep_m?: number | null
           id?: string
-          notes?: string | null
+          instruction?: string | null
           prescription_id: string
-          recovery_seconds?: number | null
+          recovery_duration_sec?: number | null
           repetitions?: number | null
           sequence_order: number
-          target_hr_zone?: string | null
-          target_pace?: string | null
+          target_distance_m?: number | null
+          target_duration_sec?: number | null
+          target_pace_max_sec_per_km?: number | null
+          target_pace_min_sec_per_km?: number | null
+          updated_at?: string
         }
         Update: {
           component_type?: string
-          created_at?: string | null
-          distance_km?: number | null
-          duration_minutes?: number | null
+          created_at?: string
+          distance_per_rep_m?: number | null
           id?: string
-          notes?: string | null
+          instruction?: string | null
           prescription_id?: string
-          recovery_seconds?: number | null
+          recovery_duration_sec?: number | null
           repetitions?: number | null
           sequence_order?: number
-          target_hr_zone?: string | null
-          target_pace?: string | null
+          target_distance_m?: number | null
+          target_duration_sec?: number | null
+          target_pace_max_sec_per_km?: number | null
+          target_pace_min_sec_per_km?: number | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -219,30 +228,44 @@ export type Database = {
       }
       races: {
         Row: {
-          created_at: string | null
-          distance_km: number | null
+          created_at: string
+          created_by: string | null
+          distance_m: number
+          event_date: string
           id: string
           location: string | null
           name: string
-          race_date: string | null
+          updated_at: string
         }
         Insert: {
-          created_at?: string | null
-          distance_km?: number | null
+          created_at?: string
+          created_by?: string | null
+          distance_m: number
+          event_date: string
           id?: string
           location?: string | null
           name: string
-          race_date?: string | null
+          updated_at?: string
         }
         Update: {
-          created_at?: string | null
-          distance_km?: number | null
+          created_at?: string
+          created_by?: string | null
+          distance_m?: number
+          event_date?: string
           id?: string
           location?: string | null
           name?: string
-          race_date?: string | null
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "races_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       roles: {
         Row: {
@@ -310,30 +333,97 @@ export type Database = {
           },
         ]
       }
-      training_prescriptions: {
+      training_import_previews: {
         Row: {
-          created_at: string | null
-          description: string | null
+          created_at: string
+          created_by: string
+          expires_at: string
           id: string
-          scheduled_date: string | null
-          title: string
-          training_week_id: string
+          imported_program_id: string | null
+          payload: Json
+          race_goal_id: string
+          source_hash: string
+          template_version: number
+          warnings: Json
         }
         Insert: {
-          created_at?: string | null
-          description?: string | null
+          created_at?: string
+          created_by: string
+          expires_at?: string
           id?: string
-          scheduled_date?: string | null
-          title: string
-          training_week_id: string
+          imported_program_id?: string | null
+          payload: Json
+          race_goal_id: string
+          source_hash: string
+          template_version: number
+          warnings?: Json
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          imported_program_id?: string | null
+          payload?: Json
+          race_goal_id?: string
+          source_hash?: string
+          template_version?: number
+          warnings?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_import_previews_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_import_previews_imported_program_id_fkey"
+            columns: ["imported_program_id"]
+            isOneToOne: true
+            referencedRelation: "training_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_import_previews_race_goal_id_fkey"
+            columns: ["race_goal_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_race_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_prescriptions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          scheduled_date: string
+          title: string
+          training_menu: string
+          training_week_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
           description?: string | null
           id?: string
-          scheduled_date?: string | null
+          scheduled_date: string
+          title: string
+          training_menu: string
+          training_week_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          scheduled_date?: string
           title?: string
+          training_menu?: string
           training_week_id?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -347,42 +437,45 @@ export type Database = {
       }
       training_programs: {
         Row: {
-          athlete_id: string | null
-          created_at: string | null
+          created_at: string
+          created_by: string
           description: string | null
-          end_date: string | null
+          end_date: string
           id: string
           name: string
-          race_goal_id: string | null
-          start_date: string | null
-          updated_at: string | null
+          race_goal_id: string
+          start_date: string
+          status: string
+          updated_at: string
         }
         Insert: {
-          athlete_id?: string | null
-          created_at?: string | null
+          created_at?: string
+          created_by: string
           description?: string | null
-          end_date?: string | null
+          end_date: string
           id?: string
           name: string
-          race_goal_id?: string | null
-          start_date?: string | null
-          updated_at?: string | null
+          race_goal_id: string
+          start_date: string
+          status?: string
+          updated_at?: string
         }
         Update: {
-          athlete_id?: string | null
-          created_at?: string | null
+          created_at?: string
+          created_by?: string
           description?: string | null
-          end_date?: string | null
+          end_date?: string
           id?: string
           name?: string
-          race_goal_id?: string | null
-          start_date?: string | null
-          updated_at?: string | null
+          race_goal_id?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "training_programs_athlete_id_fkey"
-            columns: ["athlete_id"]
+            foreignKeyName: "training_programs_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -398,27 +491,33 @@ export type Database = {
       }
       training_weeks: {
         Row: {
-          created_at: string | null
-          end_date: string | null
+          created_at: string
+          end_date: string
           id: string
-          start_date: string | null
+          phase: string
+          start_date: string
           training_program_id: string
+          updated_at: string
           week_number: number
         }
         Insert: {
-          created_at?: string | null
-          end_date?: string | null
+          created_at?: string
+          end_date: string
           id?: string
-          start_date?: string | null
+          phase: string
+          start_date: string
           training_program_id: string
+          updated_at?: string
           week_number: number
         }
         Update: {
-          created_at?: string | null
-          end_date?: string | null
+          created_at?: string
+          end_date?: string
           id?: string
-          start_date?: string | null
+          phase?: string
+          start_date?: string
           training_program_id?: string
+          updated_at?: string
           week_number?: number
         }
         Relationships: [
@@ -472,7 +571,54 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      confirm_training_import: {
+        Args: { p_preview_id: string }
+        Returns: string
+      }
+      create_training_prescription_with_component: {
+        Args: {
+          p_component_type: string
+          p_description?: string
+          p_distance_per_rep_m?: number
+          p_instruction?: string
+          p_recovery_duration_sec?: number
+          p_repetitions?: number
+          p_scheduled_date: string
+          p_sequence_order: number
+          p_target_distance_m?: number
+          p_target_duration_sec?: number
+          p_target_pace_max_sec_per_km?: number
+          p_target_pace_min_sec_per_km?: number
+          p_title: string
+          p_training_menu: string
+          p_training_week_id: string
+        }
+        Returns: string
+      }
+      has_role: { Args: { p_role_code: string }; Returns: boolean }
+      set_active_race_goal: {
+        Args: {
+          p_notes?: string
+          p_race_id: string
+          p_target_finish_time_sec: number
+        }
+        Returns: {
+          athlete_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          race_id: string
+          status: string
+          target_finish_time_sec: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "athlete_race_goals"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never

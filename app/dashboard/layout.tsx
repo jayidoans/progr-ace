@@ -24,6 +24,20 @@ export default async function DashboardLayout({
             ProgrACE
           </Link>
           <div className="flex items-center gap-4">
+            <nav className="hidden items-center gap-4 text-sm font-semibold text-gray-700 md:flex">
+              <Link className="hover:text-indigo-600" href="/dashboard">
+                Dashboard
+              </Link>
+              <Link className="hover:text-indigo-600" href="/dashboard/race-goals">
+                Race goals
+              </Link>
+              <Link className="hover:text-indigo-600" href="/dashboard/training">
+                Training
+              </Link>
+              <Link className="hover:text-indigo-600" href="/dashboard/profile">
+                Profile
+              </Link>
+            </nav>
             <span className="hidden text-sm text-gray-600 sm:inline">{user.email}</span>
             <form action={signOut}>
               <button
@@ -36,6 +50,22 @@ export default async function DashboardLayout({
           </div>
         </div>
       </header>
+      <nav className="border-b border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 md:hidden">
+        <div className="mx-auto flex max-w-6xl gap-5">
+          <Link className="hover:text-indigo-600" href="/dashboard">
+            Dashboard
+          </Link>
+          <Link className="hover:text-indigo-600" href="/dashboard/race-goals">
+            Race goals
+          </Link>
+          <Link className="hover:text-indigo-600" href="/dashboard/training">
+            Training
+          </Link>
+          <Link className="hover:text-indigo-600" href="/dashboard/profile">
+            Profile
+          </Link>
+        </div>
+      </nav>
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</main>
     </div>
   );
