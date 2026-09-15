@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { claimIdSchema, prescriptionIdSchema } from "@/src/features/claims/schemas";
 import { createClient } from "@/src/lib/supabase/server";
 import type { Tables } from "@/src/types/database";
+import type { ValidationWithChecks } from "@/src/features/validation/types";
 
 export type Claim = Tables<"training_claims">;
 export type ClaimActivity = Tables<"claim_activities">;
@@ -20,12 +21,14 @@ export type ClaimPrescription = Tables<"training_prescriptions"> & {
 export type ClaimDetail = Claim & {
   prescription: ClaimPrescription;
   evidence: ClaimEvidence[];
+  validation: ValidationWithChecks | null;
 };
 export type AthleteClaimSummary = Claim & {
   prescription: Pick<
     Tables<"training_prescriptions">,
     "id" | "scheduled_date" | "title" | "training_menu"
   >;
+  validation: Pick<Tables<"claim_validations">, "result" | "evaluation_source"> | null;
 };
 
 const prescriptionSelection = `
@@ -109,7 +112,8 @@ export async function getClaim(claimId: string): Promise<ClaimDetail> {
     .select(`
       *,
       prescription:training_prescriptions (${prescriptionSelection}),
-      evidence:claim_activities (*, activity:activities (*))
+      evidence:claim_activities (*, activity:activities (*)),
+      validation:claim_validations (*, checks:validation_checks (*))
     `)
     .eq("id", parsedId.data)
     .eq("athlete_id", user.id)
@@ -120,6 +124,7 @@ export async function getClaim(claimId: string): Promise<ClaimDetail> {
   const claim = data as ClaimDetail;
   claim.prescription.components.sort((a, b) => a.sequence_order - b.sequence_order);
   claim.evidence.sort((a, b) => a.activity.started_at.localeCompare(b.activity.started_at));
+  claim.validation?.checks.sort((a, b) => a.sequence_order - b.sequence_order);
   return claim;
 }
 
@@ -142,7 +147,7 @@ export async function getAthleteClaims(limit = 5): Promise<AthleteClaimSummary[]
   const { supabase, user } = await claimContext();
   const { data, error } = await supabase
     .from("training_claims")
-    .select("*, prescription:training_prescriptions(id, scheduled_date, title, training_menu)")
+    .select("*, prescription:training_prescriptions(id, scheduled_date, title, training_menu), validation:claim_validations(result, evaluation_source)")
     .eq("athlete_id", user.id)
     .order("updated_at", { ascending: false })
     .limit(limit);

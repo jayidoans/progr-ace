@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { formatComponent } from "@/src/features/training/format";
 import type { WeekWithPrescriptions } from "@/src/features/training/queries";
+import { deriveComplianceState } from "@/src/features/validation/engine/compliance";
+import { distanceCompletion, validationLabel } from "@/src/features/validation/format";
 
 const weekdays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
@@ -52,29 +54,58 @@ export function WeeklyTrainingCalendar({ canClaim = false, week }: WeeklyTrainin
                         {formatComponent(component)}
                       </p>
                     ))}
-                    {canClaim ? (
-                      prescription.claim ? (
+                    {canClaim ? (() => {
+                      const compliance = deriveComplianceState(
+                        prescription.scheduled_date,
+                        prescription.claim,
+                      );
+                      const stateStyle =
+                        compliance === "VERIFIED"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : compliance === "PARTIAL" || compliance === "DRAFT"
+                            ? "bg-amber-50 text-amber-700"
+                            : compliance === "REJECTED" || compliance === "MISSED"
+                              ? "bg-red-50 text-red-700"
+                              : "bg-blue-50 text-blue-700";
+
+                      return prescription.claim ? (
                         <Link
-                          className={`mt-3 inline-flex rounded-md px-2.5 py-1.5 text-xs font-bold ${
-                            prescription.claim.status === "SUBMITTED"
-                              ? "bg-emerald-50 text-emerald-700"
-                              : "bg-amber-50 text-amber-700"
-                          }`}
+                          className={`mt-3 inline-flex rounded-md px-2.5 py-1.5 text-xs font-bold ${stateStyle}`}
                           href={`/dashboard/claims/${prescription.claim.id}`}
                         >
-                          {prescription.claim.status === "SUBMITTED"
-                            ? "Submitted"
-                            : "Continue draft"}
+                          {compliance === "DRAFT" ? "Continue draft" : validationLabel(compliance)}
                         </Link>
                       ) : (
-                        <Link
-                          className="mt-3 inline-flex rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-bold text-white hover:bg-indigo-700"
-                          href={`/dashboard/training/prescriptions/${prescription.id}/claim`}
-                        >
-                          Claim activity
-                        </Link>
-                      )
-                    ) : null}
+                        <div className="mt-3">
+                          <span className={`inline-flex rounded-md px-2.5 py-1.5 text-xs font-bold ${stateStyle}`}>
+                            {validationLabel(compliance)}
+                          </span>
+                          <Link
+                            className="mt-2 block text-xs font-bold text-indigo-700"
+                            href={`/dashboard/training/prescriptions/${prescription.id}/claim`}
+                          >
+                            Claim activity
+                          </Link>
+                        </div>
+                      );
+                    })() : null}
+                    {prescription.claim?.validation ? (() => {
+                      const distanceCheck = prescription.claim.validation.checks.find((check) =>
+                        ["DISTANCE", "TOTAL_DISTANCE"].includes(check.check_type),
+                      );
+                      const completion = distanceCheck ? distanceCompletion(distanceCheck) : null;
+                      const reason = prescription.claim.validation.checks.find(
+                        (check) => check.result === "NOT_EVALUABLE",
+                      )?.message;
+                      return (
+                        <div className="mt-2 text-xs text-gray-600">
+                          {completion !== null ? <p>Distance completion: {completion}%</p> : null}
+                          {prescription.claim.validation.result === "NEEDS_REVIEW" && reason ? (
+                            <p className="mt-1 line-clamp-3">{reason}</p>
+                          ) : null}
+                        </div>
+                      );
+                    })() : null}
                   </div>
                 ))}
               </div>

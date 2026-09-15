@@ -11,6 +11,7 @@ import { ActivityEvidenceCard } from "@/src/features/claims/components/activity-
 import { SubmitClaimForm } from "@/src/features/claims/components/submit-claim-form";
 import { getAvailableActivitiesForClaim, getClaim } from "@/src/features/claims/queries";
 import { formatComponent, formatTrainingDate } from "@/src/features/training/format";
+import { ValidationSummary } from "@/src/features/validation/components/validation-summary";
 
 const messages: Record<string, string> = {
   "draft-created": "Draft saved. Review the evidence before submission.",
@@ -115,6 +116,8 @@ export default async function TrainingClaimPage({
         </div>
       </section>
 
+      {claim.validation ? <ValidationSummary validation={claim.validation} /> : null}
+
       <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -218,7 +221,7 @@ export default async function TrainingClaimPage({
         </section>
       ) : (
         <p className="rounded-lg bg-gray-100 px-4 py-3 text-sm text-gray-700">
-          This submitted claim is read-only. Validation and evaluation are not part of Milestone 5.
+          This submitted Claim and its Activity Evidence are read-only.
         </p>
       )}
     </div>

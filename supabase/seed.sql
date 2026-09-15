@@ -10,7 +10,8 @@ values
   ('00000000-0000-0000-0000-000000000000', '61000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'admin@prograce.local', extensions.crypt('ProgrACE123!', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Local Admin"}', now(), now(), '', '', '', ''),
   ('00000000-0000-0000-0000-000000000000', '61000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'coach@prograce.local', extensions.crypt('ProgrACE123!', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Local Coach"}', now(), now(), '', '', '', ''),
   ('00000000-0000-0000-0000-000000000000', '61000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'athlete@prograce.local', extensions.crypt('ProgrACE123!', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Local Athlete A"}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '61000000-0000-4000-8000-000000000004', 'authenticated', 'authenticated', 'athlete-b@prograce.local', extensions.crypt('ProgrACE123!', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Local Athlete B"}', now(), now(), '', '', '', '')
+  ('00000000-0000-0000-0000-000000000000', '61000000-0000-4000-8000-000000000004', 'authenticated', 'authenticated', 'athlete-b@prograce.local', extensions.crypt('ProgrACE123!', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Local Athlete B"}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '61000000-0000-4000-8000-000000000005', 'authenticated', 'authenticated', 'coach-b@prograce.local', extensions.crypt('ProgrACE123!', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Local Coach B"}', now(), now(), '', '', '', '')
 on conflict (id) do update
 set encrypted_password = excluded.encrypted_password,
     email_confirmed_at = excluded.email_confirmed_at,
@@ -36,7 +37,8 @@ where users.id in (
   '61000000-0000-4000-8000-000000000001',
   '61000000-0000-4000-8000-000000000002',
   '61000000-0000-4000-8000-000000000003',
-  '61000000-0000-4000-8000-000000000004'
+  '61000000-0000-4000-8000-000000000004',
+  '61000000-0000-4000-8000-000000000005'
 )
 on conflict (provider_id, provider) do update
 set identity_data = excluded.identity_data,
@@ -47,7 +49,8 @@ where user_id in (
   '61000000-0000-4000-8000-000000000001',
   '61000000-0000-4000-8000-000000000002',
   '61000000-0000-4000-8000-000000000003',
-  '61000000-0000-4000-8000-000000000004'
+  '61000000-0000-4000-8000-000000000004',
+  '61000000-0000-4000-8000-000000000005'
 );
 
 insert into public.user_roles (user_id, role_id)
@@ -57,12 +60,13 @@ from (
     ('61000000-0000-4000-8000-000000000001'::uuid, 'ADMIN'),
     ('61000000-0000-4000-8000-000000000002'::uuid, 'COACH'),
     ('61000000-0000-4000-8000-000000000003'::uuid, 'ATHLETE'),
-    ('61000000-0000-4000-8000-000000000004'::uuid, 'ATHLETE')
+    ('61000000-0000-4000-8000-000000000004'::uuid, 'ATHLETE'),
+    ('61000000-0000-4000-8000-000000000005'::uuid, 'COACH')
 ) as assignments(user_id, role_code)
 join public.roles on roles.name = assignments.role_code;
 
--- Local acceptance fixtures. These deliberately stop before the Claim boundary so
--- the athlete must explicitly select evidence and create/submit a Claim in the UI.
+-- Local acceptance fixtures for Claims, automatic validation, Coach review, and
+-- derived compliance. They are deterministic examples, not production data.
 insert into public.races (id, name, event_date, location, distance_m, created_by)
 values (
   '62000000-0000-4000-8000-000000000001',
@@ -130,7 +134,12 @@ insert into public.training_prescriptions (
 values
   ('66000000-0000-4000-8000-000000000001', '65000000-0000-4000-8000-000000000001', 'EASY', '2027-01-05', 'Easy Run', 'Easy aerobic running.'),
   ('66000000-0000-4000-8000-000000000002', '65000000-0000-4000-8000-000000000001', 'SPEED', '2027-01-07', 'Speed Session', 'Controlled interval session.'),
-  ('66000000-0000-4000-8000-000000000003', '65000000-0000-4000-8000-000000000001', 'LONG', '2027-01-10', 'Long Run', 'Long aerobic run.')
+  ('66000000-0000-4000-8000-000000000003', '65000000-0000-4000-8000-000000000001', 'LONG', '2027-01-10', 'Long Run', 'Long aerobic run.'),
+  ('66000000-0000-4000-8000-000000000004', '65000000-0000-4000-8000-000000000001', 'LONG', '2027-01-09', 'Short Long Run', 'Simple distance target used to demonstrate Partial.'),
+  ('66000000-0000-4000-8000-000000000005', '65000000-0000-4000-8000-000000000001', 'SPEED', '2027-01-08', 'Tempo Session', 'Tempo segment requiring segment evidence.'),
+  ('66000000-0000-4000-8000-000000000006', '65000000-0000-4000-8000-000000000001', 'SPEED', '2027-01-06', 'Composite Session', 'Easy, Tempo, Easy sequence.'),
+  ('66000000-0000-4000-8000-000000000007', '65000000-0000-4000-8000-000000000001', 'STRENGTH', '2027-01-04', 'Strength Session', 'Structured duration target.'),
+  ('66000000-0000-4000-8000-000000000008', '65000000-0000-4000-8000-000000000001', 'MEDIUM', '2027-01-06', 'Upcoming Recovery Run', 'Unclaimed future session.')
 on conflict (id) do update
 set title = excluded.title,
     description = excluded.description;
@@ -142,8 +151,23 @@ insert into public.prescription_components (
 values
   ('67000000-0000-4000-8000-000000000001', '66000000-0000-4000-8000-000000000001', 1, 'EASY', 5000, null, null, null, 'Conversational effort'),
   ('67000000-0000-4000-8000-000000000002', '66000000-0000-4000-8000-000000000002', 1, 'INTERVAL', null, 8, 400, 90, 'Controlled repetitions'),
-  ('67000000-0000-4000-8000-000000000003', '66000000-0000-4000-8000-000000000003', 1, 'LONG', 16000, null, null, null, 'Easy long-run effort')
+  ('67000000-0000-4000-8000-000000000003', '66000000-0000-4000-8000-000000000003', 1, 'LONG', 16000, null, null, null, 'Easy long-run effort'),
+  ('67000000-0000-4000-8000-000000000004', '66000000-0000-4000-8000-000000000004', 1, 'LONG', 14000, null, null, null, 'Easy long-run effort'),
+  ('67000000-0000-4000-8000-000000000005', '66000000-0000-4000-8000-000000000005', 1, 'TEMPO', null, null, null, null, 'Tempo for 20 minutes'),
+  ('67000000-0000-4000-8000-000000000006', '66000000-0000-4000-8000-000000000006', 1, 'EASY', 3000, null, null, null, 'Warm-up'),
+  ('67000000-0000-4000-8000-000000000007', '66000000-0000-4000-8000-000000000006', 2, 'TEMPO', 8000, null, null, null, 'Tempo segment'),
+  ('67000000-0000-4000-8000-000000000008', '66000000-0000-4000-8000-000000000006', 3, 'EASY', 3000, null, null, null, 'Cool-down'),
+  ('67000000-0000-4000-8000-000000000009', '66000000-0000-4000-8000-000000000007', 1, 'STRENGTH', null, null, null, null, 'Full-body strength'),
+  ('67000000-0000-4000-8000-000000000010', '66000000-0000-4000-8000-000000000008', 1, 'MEDIUM', 6000, null, null, null, 'Controlled aerobic running')
 on conflict (id) do update set instruction = excluded.instruction;
+
+update public.prescription_components
+set target_duration_sec = 1200
+where id = '67000000-0000-4000-8000-000000000005';
+
+update public.prescription_components
+set target_duration_sec = 2700
+where id = '67000000-0000-4000-8000-000000000009';
 
 insert into public.activities (
   id, athlete_id, name, sport_type, started_at, distance_m, duration_sec,
@@ -155,7 +179,10 @@ values
   ('68000000-0000-4000-8000-000000000003', '61000000-0000-4000-8000-000000000003', 'Long Run Part One', 'RUNNING', '2027-01-10T05:30:00+07:00', 10000, 3900, 152, 5, null, 'MANUAL'),
   ('68000000-0000-4000-8000-000000000004', '61000000-0000-4000-8000-000000000003', 'Long Run Part Two', 'RUNNING', '2027-01-10T07:00:00+07:00', 6000, 2340, 154, 5, null, 'MANUAL'),
   ('68000000-0000-4000-8000-000000000005', '61000000-0000-4000-8000-000000000003', 'Padel Replacement', 'PADEL', '2027-01-07T18:30:00+07:00', null, 5400, 150, 7, 'Replacement activity for the speed session.', 'MANUAL'),
-  ('68000000-0000-4000-8000-000000000006', '61000000-0000-4000-8000-000000000004', 'Athlete B Private Run', 'RUNNING', '2027-01-05T06:00:00+07:00', 5000, 2100, 145, 4, null, 'MANUAL')
+  ('68000000-0000-4000-8000-000000000006', '61000000-0000-4000-8000-000000000004', 'Athlete B Private Run', 'RUNNING', '2027-01-05T06:00:00+07:00', 5000, 2100, 145, 4, null, 'MANUAL'),
+  ('68000000-0000-4000-8000-000000000007', '61000000-0000-4000-8000-000000000003', 'Tempo Run', 'RUNNING', '2027-01-08T06:00:00+07:00', 5000, 1800, 156, 6, 'Total duration only; no segment evidence.', 'MANUAL'),
+  ('68000000-0000-4000-8000-000000000008', '61000000-0000-4000-8000-000000000003', 'Composite Run', 'RUNNING', '2027-01-06T06:00:00+07:00', 14000, 5400, 158, 7, 'No component splits recorded.', 'MANUAL'),
+  ('68000000-0000-4000-8000-000000000009', '61000000-0000-4000-8000-000000000003', 'Strength Training', 'STRENGTH_TRAINING', '2027-01-04T18:00:00+07:00', null, 2700, 135, 6, null, 'MANUAL')
 on conflict (id) do update
 set name = excluded.name,
     sport_type = excluded.sport_type,
@@ -165,3 +192,85 @@ set name = excluded.name,
     average_hr_bpm = excluded.average_hr_bpm,
     rpe = excluded.rpe,
     notes = excluded.notes;
+
+-- A separate historical Program supplies a no-Claim MISSED state without creating
+-- a fake Claim or Validation record.
+insert into public.training_programs (
+  id, race_goal_id, name, description, start_date, end_date, status, created_by
+)
+values (
+  '64000000-0000-4000-8000-000000000002',
+  '63000000-0000-4000-8000-000000000001',
+  'Historical Compliance Example',
+  'Local-only missed-prescription fixture.',
+  '2026-01-05',
+  '2026-01-11',
+  'PUBLISHED',
+  '61000000-0000-4000-8000-000000000002'
+);
+
+insert into public.training_weeks (
+  id, training_program_id, week_number, phase, start_date, end_date
+)
+values (
+  '65000000-0000-4000-8000-000000000002',
+  '64000000-0000-4000-8000-000000000002',
+  1,
+  'Historical',
+  '2026-01-05',
+  '2026-01-11'
+);
+
+insert into public.training_prescriptions (
+  id, training_week_id, training_menu, scheduled_date, title, description
+)
+values (
+  '66000000-0000-4000-8000-000000000009',
+  '65000000-0000-4000-8000-000000000002',
+  'LONG',
+  '2026-01-11',
+  'Unclaimed Historical Long Run',
+  'No Claim exists; compliance is derived as Missed.'
+);
+
+insert into public.prescription_components (
+  id, prescription_id, sequence_order, component_type, target_distance_m, instruction
+)
+values (
+  '67000000-0000-4000-8000-000000000011',
+  '66000000-0000-4000-8000-000000000009',
+  1,
+  'LONG',
+  14000,
+  'Historical long run'
+);
+
+insert into public.training_claims (
+  id, athlete_id, prescription_id, athlete_note
+)
+values
+  ('69000000-0000-4000-8000-000000000001', '61000000-0000-4000-8000-000000000003', '66000000-0000-4000-8000-000000000001', null),
+  ('69000000-0000-4000-8000-000000000002', '61000000-0000-4000-8000-000000000003', '66000000-0000-4000-8000-000000000002', 'Used Padel as a replacement activity.'),
+  ('69000000-0000-4000-8000-000000000003', '61000000-0000-4000-8000-000000000003', '66000000-0000-4000-8000-000000000003', 'Two runs submitted for the Long Run target.'),
+  ('69000000-0000-4000-8000-000000000004', '61000000-0000-4000-8000-000000000003', '66000000-0000-4000-8000-000000000004', 'Stopped early because I was not feeling well.'),
+  ('69000000-0000-4000-8000-000000000005', '61000000-0000-4000-8000-000000000003', '66000000-0000-4000-8000-000000000005', null),
+  ('69000000-0000-4000-8000-000000000006', '61000000-0000-4000-8000-000000000003', '66000000-0000-4000-8000-000000000006', null),
+  ('69000000-0000-4000-8000-000000000007', '61000000-0000-4000-8000-000000000003', '66000000-0000-4000-8000-000000000007', null);
+
+insert into public.claim_activities (claim_id, activity_id)
+values
+  ('69000000-0000-4000-8000-000000000001', '68000000-0000-4000-8000-000000000001'),
+  ('69000000-0000-4000-8000-000000000002', '68000000-0000-4000-8000-000000000005'),
+  ('69000000-0000-4000-8000-000000000003', '68000000-0000-4000-8000-000000000003'),
+  ('69000000-0000-4000-8000-000000000003', '68000000-0000-4000-8000-000000000004'),
+  ('69000000-0000-4000-8000-000000000004', '68000000-0000-4000-8000-000000000002'),
+  ('69000000-0000-4000-8000-000000000005', '68000000-0000-4000-8000-000000000007'),
+  ('69000000-0000-4000-8000-000000000006', '68000000-0000-4000-8000-000000000008'),
+  ('69000000-0000-4000-8000-000000000007', '68000000-0000-4000-8000-000000000009');
+
+select set_config('request.jwt.claim.sub', '61000000-0000-4000-8000-000000000003', true);
+select public.submit_training_claim(id)
+from public.training_claims
+where id::text like '69000000-0000-4000-8000-%'
+order by id;
+select set_config('request.jwt.claim.sub', '', true);

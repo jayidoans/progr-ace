@@ -16,6 +16,15 @@ export default async function DashboardLayout({
     redirect("/login?next=/dashboard");
   }
 
+  const { data: roleRows, error: roleError } = await supabase
+    .from("user_roles")
+    .select("role:roles(name)")
+    .eq("user_id", user.id);
+  if (roleError) throw new Error("Unable to determine dashboard access.");
+  const canReview = roleRows?.some(
+    (row) => row.role.name === "COACH" || row.role.name === "ADMIN",
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-950">
       <header className="border-b border-gray-200 bg-white">
@@ -37,6 +46,11 @@ export default async function DashboardLayout({
               <Link className="hover:text-indigo-600" href="/dashboard/activities">
                 Activities
               </Link>
+              {canReview ? (
+                <Link className="hover:text-indigo-600" href="/dashboard/validation">
+                  Validation
+                </Link>
+              ) : null}
               <Link className="hover:text-indigo-600" href="/dashboard/profile">
                 Profile
               </Link>
@@ -67,6 +81,11 @@ export default async function DashboardLayout({
           <Link className="hover:text-indigo-600" href="/dashboard/activities">
             Activities
           </Link>
+          {canReview ? (
+            <Link className="hover:text-indigo-600" href="/dashboard/validation">
+              Validation
+            </Link>
+          ) : null}
           <Link className="hover:text-indigo-600" href="/dashboard/profile">
             Profile
           </Link>

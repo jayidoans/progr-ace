@@ -25,6 +25,15 @@ export type PrescriptionWithComponents = TrainingPrescription & {
     id: string;
     status: string;
     submitted_at: string | null;
+    validation: {
+      result: string;
+      automatic_result: string;
+      evaluation_source: string;
+      checks: Pick<
+        Tables<"validation_checks">,
+        "check_type" | "target_value" | "actual_value" | "result" | "message"
+      >[];
+    } | null;
   } | null;
 };
 export type WeekWithPrescriptions = TrainingWeek & {
@@ -120,7 +129,7 @@ export async function getTrainingProgram(programId: string) {
   if (prescriptionIds.length > 0) {
     const { data: claims, error: claimError } = await supabase
       .from("training_claims")
-      .select("id, prescription_id, status, submitted_at")
+      .select("id, prescription_id, status, submitted_at, validation:claim_validations(result, automatic_result, evaluation_source, checks:validation_checks(check_type, target_value, actual_value, result, message))")
       .in("prescription_id", prescriptionIds);
     if (claimError) throw new Error("Unable to load training claim states.");
     claims.forEach((claim) => claimByPrescription.set(claim.prescription_id, claim));

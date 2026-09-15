@@ -186,6 +186,63 @@ export type Database = {
           },
         ]
       }
+      claim_validations: {
+        Row: {
+          automatic_result: string
+          claim_id: string
+          created_at: string
+          evaluated_at: string
+          evaluation_source: string
+          id: string
+          result: string
+          reviewed_at: string | null
+          reviewer_id: string | null
+          reviewer_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          automatic_result: string
+          claim_id: string
+          created_at?: string
+          evaluated_at?: string
+          evaluation_source?: string
+          id?: string
+          result: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          automatic_result?: string
+          claim_id?: string
+          created_at?: string
+          evaluated_at?: string
+          evaluation_source?: string
+          id?: string
+          result?: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_note?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_validations_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: true
+            referencedRelation: "training_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_validations_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prescription_components: {
         Row: {
           component_type: string
@@ -612,11 +669,76 @@ export type Database = {
           },
         ]
       }
+      validation_checks: {
+        Row: {
+          actual_text: string | null
+          actual_value: number | null
+          check_type: string
+          created_at: string
+          id: string
+          message: string
+          result: string
+          sequence_order: number
+          target_text: string | null
+          target_value: number | null
+          unit: string | null
+          validation_id: string
+        }
+        Insert: {
+          actual_text?: string | null
+          actual_value?: number | null
+          check_type: string
+          created_at?: string
+          id?: string
+          message: string
+          result: string
+          sequence_order: number
+          target_text?: string | null
+          target_value?: number | null
+          unit?: string | null
+          validation_id: string
+        }
+        Update: {
+          actual_text?: string | null
+          actual_value?: number | null
+          check_type?: string
+          created_at?: string
+          id?: string
+          message?: string
+          result?: string
+          sequence_order?: number
+          target_text?: string | null
+          target_value?: number | null
+          unit?: string | null
+          validation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "validation_checks_validation_id_fkey"
+            columns: ["validation_id"]
+            isOneToOne: false
+            referencedRelation: "claim_validations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_read_training_claim: {
+        Args: { p_claim_id: string }
+        Returns: boolean
+      }
+      can_review_activity_evidence: {
+        Args: { p_activity_id: string }
+        Returns: boolean
+      }
+      can_review_training_claim: {
+        Args: { p_claim_id: string }
+        Returns: boolean
+      }
       confirm_training_import: {
         Args: { p_preview_id: string }
         Returns: string
@@ -653,7 +775,33 @@ export type Database = {
         Args: { p_claim_id: string }
         Returns: undefined
       }
+      evaluate_training_claim_internal: {
+        Args: { p_claim_id: string }
+        Returns: string
+      }
       has_role: { Args: { p_role_code: string }; Returns: boolean }
+      review_training_claim: {
+        Args: { p_claim_id: string; p_result: string; p_reviewer_note?: string }
+        Returns: {
+          automatic_result: string
+          claim_id: string
+          created_at: string
+          evaluated_at: string
+          evaluation_source: string
+          id: string
+          result: string
+          reviewed_at: string | null
+          reviewer_id: string | null
+          reviewer_note: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "claim_validations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_active_race_goal: {
         Args: {
           p_notes?: string

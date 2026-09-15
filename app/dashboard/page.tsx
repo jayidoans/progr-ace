@@ -4,6 +4,7 @@ import { getAthleteClaims } from "@/src/features/claims/queries";
 import { getCurrentProfile } from "@/src/features/profiles/queries";
 import { ActiveRaceGoalCard } from "@/src/features/race-goals/components/active-race-goal-card";
 import { getActiveRaceGoal } from "@/src/features/race-goals/queries";
+import { validationLabel } from "@/src/features/validation/format";
 
 export default async function DashboardPage() {
   const [profile, activeGoal, claims] = await Promise.all([
@@ -53,7 +54,11 @@ export default async function DashboardPage() {
                   {claim.prescription.training_menu}
                 </p>
                 <h3 className="mt-1 font-bold">{claim.prescription.title}</h3>
-                <p className="mt-2 text-xs font-semibold text-gray-500">{claim.status}</p>
+                <p className="mt-2 text-xs font-semibold text-gray-500">
+                  {claim.validation
+                    ? validationLabel(claim.validation.result)
+                    : validationLabel(claim.status)}
+                </p>
               </Link>
             ))}
           </div>

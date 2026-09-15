@@ -83,8 +83,8 @@ evidence`. Draft evidence remains editable, but deletion requires first deleting
 relationship because the evidence foreign key is restrictive. Submitted evidence exposes no edit or
 delete controls and is protected by the database trigger.
 
-## Deferred work
+## Validation boundary
 
-Milestone 6 will define Validation and Evaluation, including any review authorization model and
-outcomes. Strava remains a future Activity source; Claims remain source-agnostic and reference the
-normalized Activity table.
+Milestone 6 adds a separate Validation record for every submitted Claim. Claim lifecycle status
+remains `DRAFT` or `SUBMITTED`; Validation results never overwrite it. Strava remains a future
+Activity source, and Claims remain source-agnostic references to normalized Activity records.

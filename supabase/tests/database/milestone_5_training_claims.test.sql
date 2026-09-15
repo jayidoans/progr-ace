@@ -285,7 +285,10 @@ select pg_temp.throws_any_ok($$ select public.submit_training_claim(current_sett
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '71000000-0000-0000-0000-000000000003', true);
-select is((select count(*) from public.training_claims), 0::bigint, 'COACH receives no unscoped Claim read access in M5');
+select ok(
+  (select count(*) > 0 and bool_and(status = 'SUBMITTED') from public.training_claims),
+  'M6 exposes only submitted Claims from Programs authored by this COACH'
+);
 reset role;
 
 select ok(
