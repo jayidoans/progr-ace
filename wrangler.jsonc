@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "progr-ace",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-16",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // Runtime variables are managed in the Cloudflare dashboard. Preserve them
+  // when Wrangler deploys so environment-specific values stay out of Git.
+  "keep_vars": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "progr-ace"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
