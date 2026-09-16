@@ -3,15 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
+const slides = ["/slide1.jpg", "/slide2.jpg", "/slide3.jpg", "/slide4.jpg"];
+
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
-
-  const slides = [
-    "/slide1.jpg",
-    "/slide2.jpg",
-    "/slide3.jpg",
-    "/slide4.jpg"
-  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -25,14 +20,15 @@ export default function Home() {
       {/* Navigation Bar */}
       <nav className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
+          <div className="flex h-20 items-center justify-between sm:h-24">
             <div className="flex-shrink-0 flex items-center">
               <Image
-                src="/logo.png"
-                alt="Application Logo"
-                width={40}
-                height={40}
-                className="h-10 w-auto"
+                src="/prograce-logo.png"
+                alt="ProgrACE — Train Today. Go Further."
+                width={2172}
+                height={724}
+                className="h-auto w-44 sm:w-56"
+                priority
               />
             </div>
             <div className="hidden sm:flex sm:space-x-8">
