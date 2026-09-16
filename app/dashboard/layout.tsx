@@ -24,6 +24,7 @@ export default async function DashboardLayout({
   const canReview = roleRows?.some(
     (row) => row.role.name === "COACH" || row.role.name === "ADMIN",
   );
+  const isAthlete = roleRows?.some((row) => row.role.name === "ATHLETE");
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-950">
@@ -46,6 +47,11 @@ export default async function DashboardLayout({
               <Link className="hover:text-indigo-600" href="/dashboard/activities">
                 Activities
               </Link>
+              {isAthlete ? (
+                <Link className="hover:text-indigo-600" href="/dashboard/integrations/strava">
+                  Integrations
+                </Link>
+              ) : null}
               {canReview ? (
                 <Link className="hover:text-indigo-600" href="/dashboard/validation">
                   Validation
@@ -81,6 +87,11 @@ export default async function DashboardLayout({
           <Link className="hover:text-indigo-600" href="/dashboard/activities">
             Activities
           </Link>
+          {isAthlete ? (
+            <Link className="hover:text-indigo-600" href="/dashboard/integrations/strava">
+              Integrations
+            </Link>
+          ) : null}
           {canReview ? (
             <Link className="hover:text-indigo-600" href="/dashboard/validation">
               Validation

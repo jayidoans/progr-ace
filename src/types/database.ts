@@ -388,6 +388,100 @@ export type Database = {
         }
         Relationships: []
       }
+      strava_connections: {
+        Row: {
+          access_token_ciphertext: string
+          access_token_expires_at: string
+          access_token_iv: string
+          athlete_id: string
+          connected_at: string
+          connection_status: string
+          granted_scopes: string[]
+          id: string
+          refresh_lock_token: string | null
+          refresh_locked_until: string | null
+          refresh_token_ciphertext: string
+          refresh_token_iv: string
+          strava_athlete_id: number
+          strava_display_name: string | null
+          token_version: number
+          updated_at: string
+        }
+        Insert: {
+          access_token_ciphertext: string
+          access_token_expires_at: string
+          access_token_iv: string
+          athlete_id: string
+          connected_at?: string
+          connection_status: string
+          granted_scopes: string[]
+          id?: string
+          refresh_lock_token?: string | null
+          refresh_locked_until?: string | null
+          refresh_token_ciphertext: string
+          refresh_token_iv: string
+          strava_athlete_id: number
+          strava_display_name?: string | null
+          token_version?: number
+          updated_at?: string
+        }
+        Update: {
+          access_token_ciphertext?: string
+          access_token_expires_at?: string
+          access_token_iv?: string
+          athlete_id?: string
+          connected_at?: string
+          connection_status?: string
+          granted_scopes?: string[]
+          id?: string
+          refresh_lock_token?: string | null
+          refresh_locked_until?: string | null
+          refresh_token_ciphertext?: string
+          refresh_token_iv?: string
+          strava_athlete_id?: number
+          strava_display_name?: string | null
+          token_version?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strava_connections_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      strava_oauth_states: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          expires_at: string
+          state_hash: string
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          expires_at: string
+          state_hash: string
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          expires_at?: string
+          state_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strava_oauth_states_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_claims: {
         Row: {
           athlete_id: string
@@ -739,9 +833,47 @@ export type Database = {
         Args: { p_claim_id: string }
         Returns: boolean
       }
+      claim_strava_token_refresh: {
+        Args: {
+          p_athlete_id: string
+          p_lease_seconds?: number
+          p_lock_token: string
+          p_refresh_before: string
+        }
+        Returns: {
+          access_token_ciphertext: string
+          access_token_expires_at: string
+          access_token_iv: string
+          refresh_state: string
+          refresh_token_ciphertext: string
+          refresh_token_iv: string
+          token_version: number
+        }[]
+      }
+      complete_strava_token_refresh: {
+        Args: {
+          p_access_token_ciphertext: string
+          p_access_token_expires_at: string
+          p_access_token_iv: string
+          p_athlete_id: string
+          p_lock_token: string
+          p_refresh_token_ciphertext: string
+          p_refresh_token_iv: string
+          p_token_version: number
+        }
+        Returns: boolean
+      }
       confirm_training_import: {
         Args: { p_preview_id: string }
         Returns: string
+      }
+      consume_strava_oauth_state: {
+        Args: { p_state_hash: string }
+        Returns: boolean
+      }
+      create_strava_oauth_state: {
+        Args: { p_expires_at: string; p_state_hash: string }
+        Returns: undefined
       }
       create_training_claim_draft: {
         Args: {
@@ -771,6 +903,10 @@ export type Database = {
         }
         Returns: string
       }
+      delete_strava_connection: {
+        Args: { p_athlete_id: string }
+        Returns: boolean
+      }
       delete_training_claim_draft: {
         Args: { p_claim_id: string }
         Returns: undefined
@@ -779,7 +915,29 @@ export type Database = {
         Args: { p_claim_id: string }
         Returns: string
       }
+      get_strava_connection_credentials: {
+        Args: { p_athlete_id: string }
+        Returns: {
+          access_token_ciphertext: string
+          access_token_expires_at: string
+          access_token_iv: string
+          connection_status: string
+          granted_scopes: string[]
+          refresh_token_ciphertext: string
+          refresh_token_iv: string
+          strava_athlete_id: number
+          token_version: number
+        }[]
+      }
       has_role: { Args: { p_role_code: string }; Returns: boolean }
+      release_strava_token_refresh: {
+        Args: {
+          p_athlete_id: string
+          p_lock_token: string
+          p_token_version: number
+        }
+        Returns: boolean
+      }
       review_training_claim: {
         Args: { p_claim_id: string; p_result: string; p_reviewer_note?: string }
         Returns: {
@@ -843,6 +1001,21 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      upsert_strava_connection: {
+        Args: {
+          p_access_token_ciphertext: string
+          p_access_token_expires_at: string
+          p_access_token_iv: string
+          p_athlete_id: string
+          p_connection_status: string
+          p_granted_scopes: string[]
+          p_refresh_token_ciphertext: string
+          p_refresh_token_iv: string
+          p_strava_athlete_id: number
+          p_strava_display_name: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

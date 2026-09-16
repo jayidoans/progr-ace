@@ -4,13 +4,15 @@ import { getAthleteClaims } from "@/src/features/claims/queries";
 import { getCurrentProfile } from "@/src/features/profiles/queries";
 import { ActiveRaceGoalCard } from "@/src/features/race-goals/components/active-race-goal-card";
 import { getActiveRaceGoal } from "@/src/features/race-goals/queries";
+import { isCurrentUserAthlete } from "@/src/features/strava/queries";
 import { validationLabel } from "@/src/features/validation/format";
 
 export default async function DashboardPage() {
-  const [profile, activeGoal, claims] = await Promise.all([
+  const [profile, activeGoal, claims, isAthlete] = await Promise.all([
     getCurrentProfile(),
     getActiveRaceGoal(),
     getAthleteClaims(3),
+    isCurrentUserAthlete(),
   ]);
 
   return (
@@ -91,6 +93,17 @@ export default async function DashboardPage() {
             Record what you actually did, independently from prescriptions.
           </span>
         </Link>
+        {isAthlete ? (
+          <Link
+            className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 hover:ring-indigo-300"
+            href="/dashboard/integrations/strava"
+          >
+            <span className="font-bold text-gray-950">Strava integration</span>
+            <span className="mt-1 block text-sm text-gray-600">
+              Connect and manage your external activity-evidence provider.
+            </span>
+          </Link>
+        ) : null}
       </section>
     </div>
   );

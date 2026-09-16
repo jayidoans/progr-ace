@@ -282,7 +282,11 @@ select is((select proconfig[1] from pg_proc join pg_namespace on pg_namespace.oi
 select is((select prosecdef from pg_proc join pg_namespace on pg_namespace.oid = pg_proc.pronamespace where nspname = 'public' and proname = 'evaluate_training_claim_internal'), false, 'internal evaluator is SECURITY INVOKER');
 select ok(not has_function_privilege('anon', 'public.review_training_claim(uuid,text,text)', 'EXECUTE'), 'anonymous cannot execute review RPC');
 select ok(not has_function_privilege('authenticated', 'public.evaluate_training_claim_internal(uuid)', 'EXECUTE'), 'application users cannot invoke internal evaluation directly');
-select ok(to_regclass('public.strava_connections') is null, 'M6 introduces no Strava integration table');
+select is(
+  (select count(*) from public.activities where source = 'STRAVA'),
+  0::bigint,
+  'M7 connection support does not import Strava Activity Evidence into M6 data'
+);
 select ok((select bool_and(status in ('DRAFT', 'SUBMITTED')) from public.training_claims), 'Claim lifecycle status remains separate from Validation result');
 
 select * from finish();

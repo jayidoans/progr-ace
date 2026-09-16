@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit --incremental false",
     "test:training": "tsx --test src/features/training-import/tests/*.test.ts",
     "test:activities": "tsx --test src/features/activities/tests/*.test.ts",
-    "test:validation": "tsx --test src/features/validation/engine/*.test.ts"
+    "test:validation": "tsx --test src/features/validation/engine/*.test.ts",
+    "test:strava": "tsx --test src/features/strava/tests/*.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
