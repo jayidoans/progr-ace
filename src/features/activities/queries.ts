@@ -2,6 +2,12 @@ import "server-only";
 
 import { notFound, redirect } from "next/navigation";
 
+import {
+  activityListCutoff,
+  activityListQueryLimit,
+  paginateActivityList,
+  type ActivityListLimit,
+} from "@/src/features/activities/listing";
 import { activityIdSchema } from "@/src/features/activities/schemas";
 import { createClient } from "@/src/lib/supabase/server";
 import type { Tables } from "@/src/types/database";
@@ -50,15 +56,23 @@ async function attachClaimUsage(
   }));
 }
 
-export async function getActivities(): Promise<ActivityWithClaimUsage[]> {
+export async function getActivities(
+  visibleLimit: ActivityListLimit,
+): Promise<{ activities: ActivityWithClaimUsage[]; hasMore: boolean }> {
   const { supabase, user } = await activityContext();
+  const queryLimit = activityListQueryLimit(visibleLimit);
   const { data, error } = await supabase
     .from("activities")
     .select("*")
     .eq("athlete_id", user.id)
-    .order("started_at", { ascending: false });
+    .gte("started_at", activityListCutoff())
+    .order("started_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(queryLimit);
   if (error) throw new Error("Unable to load activities.");
-  return attachClaimUsage(supabase, data);
+  const page = paginateActivityList(data, visibleLimit);
+  const activities = await attachClaimUsage(supabase, page.records);
+  return { activities, hasMore: page.hasMore };
 }
 
 export async function getActivity(id: string): Promise<ActivityWithClaimUsage> {

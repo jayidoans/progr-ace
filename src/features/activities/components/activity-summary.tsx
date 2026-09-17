@@ -16,14 +16,14 @@ export function ActivitySummary({ activity }: { activity: ActivityWithClaimUsage
       href={`/dashboard/activities/${activity.id}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">
             {formatSportType(activity.sport_type)}
           </p>
-          <h2 className="mt-1 text-lg font-bold text-gray-950">{activity.name}</h2>
+          <h2 className="mt-1 break-words text-lg font-bold text-gray-950">{activity.name}</h2>
           <p className="mt-1 text-sm text-gray-500">{formatActivityDate(activity.started_at)}</p>
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
           <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">
             {activity.source}
           </span>

@@ -2,6 +2,7 @@ import "server-only";
 
 import { redirect } from "next/navigation";
 
+import { getCurrentSession } from "@/src/features/auth/session";
 import { createClient } from "@/src/lib/supabase/server";
 import type { Json, Tables } from "@/src/types/database";
 
@@ -40,6 +41,14 @@ export type WeekWithPrescriptions = TrainingWeek & {
   prescriptions: PrescriptionWithComponents[];
 };
 export type TrainingProgramDetail = TrainingProgramWithGoal & { weeks: WeekWithPrescriptions[] };
+export type HomepageTrainingProgram = Pick<
+  TrainingProgram,
+  "id" | "name" | "start_date" | "end_date" | "status"
+> & {
+  race_goal: {
+    race: Pick<Tables<"races">, "name" | "distance_m">;
+  };
+};
 
 const goalSelection = `
   id,
@@ -89,6 +98,29 @@ export async function getTrainingDashboardData() {
     programs: programsResult.data as TrainingProgramWithGoal[],
     raceGoals: goalsResult.data as ProgramRaceGoal[],
   };
+}
+
+export async function getHomepageTrainingPrograms(): Promise<HomepageTrainingProgram[]> {
+  const { supabase, user, authError } = await getCurrentSession();
+  if (authError || !user) return [];
+
+  const { data, error } = await supabase
+    .from("training_programs")
+    .select(`
+      id,
+      name,
+      start_date,
+      end_date,
+      status,
+      race_goal:athlete_race_goals (
+        race:races (name, distance_m)
+      )
+    `)
+    .eq("status", "PUBLISHED")
+    .order("start_date", { ascending: false })
+    .limit(6);
+  if (error) throw new Error("Unable to load available training programs.");
+  return data as HomepageTrainingProgram[];
 }
 
 export async function getTrainingProgram(programId: string) {

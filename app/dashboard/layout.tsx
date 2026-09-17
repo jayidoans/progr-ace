@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { signOut } from "@/src/features/auth/actions";
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
+import { DashboardNavigation } from "@/src/features/navigation/dashboard-navigation";
 
 export default async function DashboardLayout({
   children,
@@ -21,80 +21,17 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-gray-50 text-gray-950">
       <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+        <div className="relative mx-auto flex min-h-20 max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Link className="text-lg font-bold text-indigo-700" href="/dashboard">
             ProgrACE
           </Link>
-          <div className="flex items-center gap-4">
-            <nav className="hidden items-center gap-4 text-sm font-semibold text-gray-700 md:flex">
-              <Link className="hover:text-indigo-600" href="/dashboard">
-                Dashboard
-              </Link>
-              <Link className="hover:text-indigo-600" href="/dashboard/race-goals">
-                Race goals
-              </Link>
-              <Link className="hover:text-indigo-600" href="/dashboard/training">
-                Training
-              </Link>
-              <Link className="hover:text-indigo-600" href="/dashboard/activities">
-                Activities
-              </Link>
-              {isAthlete ? (
-                <Link className="hover:text-indigo-600" href="/dashboard/integrations/strava">
-                  Integrations
-                </Link>
-              ) : null}
-              {canReview ? (
-                <Link className="hover:text-indigo-600" href="/dashboard/validation">
-                  Validation
-                </Link>
-              ) : null}
-              <Link className="hover:text-indigo-600" href="/dashboard/profile">
-                Profile
-              </Link>
-            </nav>
-            <span className="hidden text-sm text-gray-600 sm:inline">{user.email}</span>
-            <form action={signOut}>
-              <button
-                className="rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-50"
-                type="submit"
-              >
-                Sign out
-              </button>
-            </form>
-          </div>
+          <DashboardNavigation
+            access={{ canReview: Boolean(canReview), isAthlete: Boolean(isAthlete) }}
+            email={user.email}
+          />
         </div>
       </header>
-      <nav className="border-b border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 md:hidden">
-        <div className="mx-auto flex max-w-6xl gap-5">
-          <Link className="hover:text-indigo-600" href="/dashboard">
-            Dashboard
-          </Link>
-          <Link className="hover:text-indigo-600" href="/dashboard/race-goals">
-            Race goals
-          </Link>
-          <Link className="hover:text-indigo-600" href="/dashboard/training">
-            Training
-          </Link>
-          <Link className="hover:text-indigo-600" href="/dashboard/activities">
-            Activities
-          </Link>
-          {isAthlete ? (
-            <Link className="hover:text-indigo-600" href="/dashboard/integrations/strava">
-              Integrations
-            </Link>
-          ) : null}
-          {canReview ? (
-            <Link className="hover:text-indigo-600" href="/dashboard/validation">
-              Validation
-            </Link>
-          ) : null}
-          <Link className="hover:text-indigo-600" href="/dashboard/profile">
-            Profile
-          </Link>
-        </div>
-      </nav>
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
     </div>
   );
 }
