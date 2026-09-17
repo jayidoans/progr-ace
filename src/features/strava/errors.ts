@@ -13,6 +13,7 @@ export type StravaErrorCode =
   | "revoke_failed"
   | "storage_failed"
   | "sync_busy"
+  | "sync_limit_reached"
   | "rate_limited"
   | "reauth_required"
   | "activity_sync_failed";

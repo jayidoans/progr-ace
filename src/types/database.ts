@@ -393,7 +393,9 @@ export type Database = {
           access_token_ciphertext: string
           access_token_expires_at: string
           access_token_iv: string
+          activity_sync_attempt_count: number
           activity_sync_cursor_at: string | null
+          activity_sync_hour_started_at: string | null
           activity_sync_status: string
           athlete_id: string
           connected_at: string
@@ -418,7 +420,9 @@ export type Database = {
           access_token_ciphertext: string
           access_token_expires_at: string
           access_token_iv: string
+          activity_sync_attempt_count?: number
           activity_sync_cursor_at?: string | null
+          activity_sync_hour_started_at?: string | null
           activity_sync_status?: string
           athlete_id: string
           connected_at?: string
@@ -443,7 +447,9 @@ export type Database = {
           access_token_ciphertext?: string
           access_token_expires_at?: string
           access_token_iv?: string
+          activity_sync_attempt_count?: number
           activity_sync_cursor_at?: string | null
+          activity_sync_hour_started_at?: string | null
           activity_sync_status?: string
           athlete_id?: string
           connected_at?: string

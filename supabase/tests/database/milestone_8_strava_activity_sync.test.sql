@@ -133,6 +133,11 @@ select is(
   'successful sync advances the cursor to its start watermark'
 );
 
+update public.strava_connections
+set activity_sync_hour_started_at = null,
+    activity_sync_attempt_count = 0
+where athlete_id = '61000000-0000-4000-8000-000000000003';
+
 select public.claim_strava_activity_sync(
   '61000000-0000-4000-8000-000000000003',
   '85000000-0000-4000-8000-000000000003', 60
@@ -146,6 +151,11 @@ select * from public.complete_strava_activity_sync(
 );
 select is((select unchanged_count from retry_result), 1, 'identical retry is idempotent');
 select is((select count(*) from public.activities where source = 'STRAVA' and external_activity_id = '800001'), 1::bigint, 'duplicate provider ID remains one row');
+
+update public.strava_connections
+set activity_sync_hour_started_at = null,
+    activity_sync_attempt_count = 0
+where athlete_id = '61000000-0000-4000-8000-000000000003';
 
 select public.claim_strava_activity_sync(
   '61000000-0000-4000-8000-000000000003',
@@ -200,6 +210,42 @@ select ok(
   and not has_function_privilege('authenticated', 'public.complete_strava_activity_sync(uuid,uuid,timestamptz,jsonb)', 'EXECUTE')
   and not has_function_privilege('authenticated', 'public.fail_strava_activity_sync(uuid,uuid,text,text,boolean)', 'EXECUTE'),
   'all M8 sync RPCs are server-only'
+);
+
+update public.strava_connections
+set activity_sync_hour_started_at = null,
+    activity_sync_attempt_count = 0
+where athlete_id = '61000000-0000-4000-8000-000000000004';
+
+select public.claim_strava_activity_sync(
+  '61000000-0000-4000-8000-000000000004',
+  '85000000-0000-4000-8000-000000000007', 60
+);
+select public.complete_strava_activity_sync(
+  '61000000-0000-4000-8000-000000000004',
+  '85000000-0000-4000-8000-000000000007', now(), '[]'::jsonb
+);
+select public.claim_strava_activity_sync(
+  '61000000-0000-4000-8000-000000000004',
+  '85000000-0000-4000-8000-000000000008', 60
+);
+select public.complete_strava_activity_sync(
+  '61000000-0000-4000-8000-000000000004',
+  '85000000-0000-4000-8000-000000000008', now(), '[]'::jsonb
+);
+select is(
+  (select sync_state from public.claim_strava_activity_sync(
+    '61000000-0000-4000-8000-000000000004',
+    '85000000-0000-4000-8000-000000000009', 60
+  )),
+  'RATE_LIMITED',
+  'a third synchronization in the same clock hour is rejected'
+);
+select is(
+  (select activity_sync_attempt_count from public.strava_connections
+    where athlete_id = '61000000-0000-4000-8000-000000000004'),
+  2::smallint,
+  'rejected synchronization does not increment the hourly allowance'
 );
 reset role;
 

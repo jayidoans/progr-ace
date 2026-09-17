@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
   activitySyncAfterEpochSeconds,
+  availableActivitySyncsThisHour,
   normalizeStravaActivity,
   normalizeStravaSportType,
   stravaSummaryActivitiesSchema,
@@ -104,4 +105,18 @@ test("initial sync uses 30 days and incremental sync uses a 24-hour overlap", ()
     activitySyncAfterEpochSeconds({ syncStartedAt, cursor: "2026-09-16T10:00:00Z" }),
     Math.floor(Date.parse("2026-09-15T10:00:00Z") / 1000),
   );
+});
+
+test("hourly availability resets on the next fixed clock-hour boundary", () => {
+  const now = new Date("2026-09-17T05:45:00Z");
+  assert.equal(availableActivitySyncsThisHour({
+    hourStartedAt: "2026-09-17T05:00:00Z",
+    attemptCount: 1,
+    now,
+  }), 1);
+  assert.equal(availableActivitySyncsThisHour({
+    hourStartedAt: "2026-09-17T04:00:00Z",
+    attemptCount: 2,
+    now,
+  }), 2);
 });

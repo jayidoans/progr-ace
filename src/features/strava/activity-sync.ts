@@ -6,6 +6,7 @@ export const STRAVA_ACTIVITY_PER_PAGE = 100;
 export const STRAVA_ACTIVITY_MAX_PAGES = 10;
 export const STRAVA_INITIAL_SYNC_DAYS = 30;
 export const STRAVA_INCREMENTAL_OVERLAP_HOURS = 24;
+export const STRAVA_ACTIVITY_SYNCS_PER_HOUR = 2;
 
 const optionalMetric = z.number().finite().nonnegative().nullable().optional();
 const optionalHeartRate = z.number().finite().positive().max(300).nullable().optional();
@@ -112,4 +113,17 @@ export function activitySyncAfterEpochSeconds(input: {
     ? input.syncStartedAt.valueOf() - STRAVA_INITIAL_SYNC_DAYS * 86_400_000
     : cursorMillis - STRAVA_INCREMENTAL_OVERLAP_HOURS * 3_600_000;
   return Math.floor(lowerBoundMillis / 1000);
+}
+
+export function availableActivitySyncsThisHour(input: {
+  hourStartedAt: string | null;
+  attemptCount: number;
+  now?: Date;
+}) {
+  const now = input.now ?? new Date();
+  const currentHour = new Date(now);
+  currentHour.setUTCMinutes(0, 0, 0);
+  const recordedHour = input.hourStartedAt ? new Date(input.hourStartedAt) : null;
+  const attempts = recordedHour?.valueOf() === currentHour.valueOf() ? input.attemptCount : 0;
+  return Math.max(0, STRAVA_ACTIVITY_SYNCS_PER_HOUR - attempts);
 }

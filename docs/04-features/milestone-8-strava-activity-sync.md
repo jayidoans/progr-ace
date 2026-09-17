@@ -20,6 +20,11 @@ Pagination uses 100 Activities per request and a fixed safety page limit. Reachi
 full final page fails the sync rather than recording an incomplete success. No background polling or
 OAuth-callback synchronization occurs.
 
+The Activities page exposes the same server action through a visible **Sync from Strava** button. A
+connected Athlete may start at most two synchronizations in each fixed clock-hour bucket (`HH:00`
+through `HH:59`). Database lease acquisition enforces the allowance atomically; the UI only reports
+the authoritative stored attempt count.
+
 ## Normalization and idempotency
 
 Strava SummaryActivity data is validated with Zod and normalized into `activities`. Canonical units

@@ -55,6 +55,17 @@ export async function createRace(formData: FormData) {
   }
 
   const { supabase, user } = await authenticatedContext();
+  const [adminRole, coachRole] = await Promise.all([
+    supabase.rpc("has_role", { p_role_code: "ADMIN" }),
+    supabase.rpc("has_role", { p_role_code: "COACH" }),
+  ]);
+  if (
+    adminRole.error
+    || coachRole.error
+    || (!adminRole.data && !coachRole.data)
+  ) {
+    redirect(raceGoalPath("error", "race-create-forbidden"));
+  }
   const { data, error } = await supabase
     .from("races")
     .insert({

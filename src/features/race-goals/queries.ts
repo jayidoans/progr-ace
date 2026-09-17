@@ -47,7 +47,7 @@ export async function getActiveRaceGoal(): Promise<RaceGoalWithRace | null> {
 export async function getRaceGoalPageData() {
   const { supabase, user } = await requireAuthenticatedSession();
 
-  const [racesResult, activeResult, historyResult] = await Promise.all([
+  const [racesResult, activeResult, historyResult, adminRoleResult, coachRoleResult] = await Promise.all([
     supabase.from("races").select("*").order("event_date", { ascending: true }),
     supabase
       .from("athlete_race_goals")
@@ -61,9 +61,17 @@ export async function getRaceGoalPageData() {
       .eq("athlete_id", user.id)
       .in("status", ["COMPLETED", "CANCELLED"])
       .order("updated_at", { ascending: false }),
+    supabase.rpc("has_role", { p_role_code: "ADMIN" }),
+    supabase.rpc("has_role", { p_role_code: "COACH" }),
   ]);
 
-  if (racesResult.error || activeResult.error || historyResult.error) {
+  if (
+    racesResult.error
+    || activeResult.error
+    || historyResult.error
+    || adminRoleResult.error
+    || coachRoleResult.error
+  ) {
     throw new Error("Unable to load race goal information.");
   }
 
@@ -71,5 +79,6 @@ export async function getRaceGoalPageData() {
     races: racesResult.data,
     activeGoal: activeResult.data,
     history: historyResult.data,
+    canManageRaces: Boolean(adminRoleResult.data || coachRoleResult.data),
   };
 }

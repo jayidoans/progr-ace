@@ -16,6 +16,7 @@ const errors: Record<string, string> = {
   "invalid-race": "Check the race name, date, distance, and location.",
   "race-exists": "That race edition and distance already exists.",
   "race-create-failed": "The race could not be created. Please try again.",
+  "race-create-forbidden": "Only an Admin or Coach may add shared race records.",
   "invalid-goal": "Choose a race and enter the target time as HH:MM:SS.",
   "goal-switch-failed": "The active race goal could not be changed. Please try again.",
   "goal-update-failed": "The active race goal could not be updated.",
@@ -65,7 +66,7 @@ export default async function RaceGoalsPage({ searchParams }: RaceGoalsPageProps
         races={data.races}
         selectedRaceId={selectedRaceId}
       />
-      <CreateRaceForm />
+      {data.canManageRaces ? <CreateRaceForm /> : null}
       <RaceGoalHistory goals={data.history} />
     </div>
   );

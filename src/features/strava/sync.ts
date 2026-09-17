@@ -32,6 +32,9 @@ export async function synchronizeStravaActivities() {
   if (lease.sync_state === "BUSY") {
     throw new StravaIntegrationError("sync_busy", "A Strava synchronization is already running.");
   }
+  if (lease.sync_state === "RATE_LIMITED") {
+    throw new StravaIntegrationError("sync_limit_reached", "The hourly synchronization limit has been reached.");
+  }
   if (lease.sync_state === "MISSING" || lease.sync_state === "REAUTH_REQUIRED") {
     throw new StravaIntegrationError("reauth_required", "Reconnect Strava before synchronizing.");
   }

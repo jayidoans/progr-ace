@@ -3,18 +3,25 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(22);
+select plan(23);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
   ('10000000-0000-0000-0000-000000000001', 'athlete-one@example.test', '{"full_name":"Athlete One"}'),
   ('10000000-0000-0000-0000-000000000002', 'athlete-two@example.test', '{"full_name":"Athlete Two"}'),
-  ('10000000-0000-0000-0000-000000000003', 'admin@example.test', '{"full_name":"Admin User"}');
+  ('10000000-0000-0000-0000-000000000003', 'admin@example.test', '{"full_name":"Admin User"}'),
+  ('10000000-0000-0000-0000-000000000004', 'coach@example.test', '{"full_name":"Coach User"}');
 
 insert into public.user_roles (user_id, role_id)
 select '10000000-0000-0000-0000-000000000003', id
 from public.roles
 where name = 'ADMIN'
+on conflict (user_id, role_id) do nothing;
+
+insert into public.user_roles (user_id, role_id)
+select '10000000-0000-0000-0000-000000000004', id
+from public.roles
+where name = 'COACH'
 on conflict (user_id, role_id) do nothing;
 
 insert into public.races (id, name, event_date, distance_m, location)
@@ -53,7 +60,7 @@ select is(
   'authenticated users can read shared races'
 );
 
-select lives_ok(
+select throws_ok(
   $$
     insert into public.races (
       name, event_date, distance_m, created_by
@@ -64,8 +71,30 @@ select lives_ok(
       '10000000-0000-0000-0000-000000000001'
     )
   $$,
-  'an authenticated user can create a race with their own provenance'
+  '42501',
+  'new row violates row-level security policy for table "races"',
+  'a normal athlete cannot create shared race master data'
 );
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000004', true);
+select lives_ok(
+  $$
+    insert into public.races (
+      name, event_date, distance_m, created_by
+    ) values (
+      'Coach-created Marathon',
+      '2027-04-18',
+      42195,
+      '10000000-0000-0000-0000-000000000004'
+    )
+  $$,
+  'the existing COACH role can create shared race master data'
+);
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
 select throws_ok(
   $$

@@ -41,7 +41,10 @@ export async function disconnectStrava() {
   }
 }
 
-export async function syncStravaActivities() {
+export async function syncStravaActivities(formData?: FormData) {
+  const returnPath = formData?.get("returnTo") === "activities"
+    ? "/dashboard/activities"
+    : "/dashboard/integrations/strava";
   try {
     const result = await synchronizeStravaActivities();
     revalidatePath("/dashboard");
@@ -54,9 +57,15 @@ export async function syncStravaActivities() {
       unchanged: String(result.unchanged_count),
       locked: String(result.locked_count),
     });
-    redirect(`/dashboard/integrations/strava?${params.toString()}`);
+    if (returnPath === "/dashboard/activities") {
+      params.set("message", "strava-synced");
+    }
+    redirect(`${returnPath}?${params.toString()}`);
   } catch (error) {
     if (error instanceof StravaIntegrationError) {
+      if (returnPath === "/dashboard/activities") {
+        redirect(`${returnPath}?error=${encodeURIComponent(error.code)}`);
+      }
       redirect(stravaErrorRedirect(error.code));
     }
     throw error;

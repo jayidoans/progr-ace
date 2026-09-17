@@ -28,6 +28,7 @@ const errors: Record<string, string> = {
   revoke_failed: "Strava could not be disconnected right now. No local credentials were removed; please retry.",
   storage_failed: "The Strava connection could not be saved. Please try again.",
   sync_busy: "A Strava synchronization is already in progress.",
+  sync_limit_reached: "The limit of two Strava synchronizations for this clock hour has been reached.",
   rate_limited: "Strava rate limit reached. Please try again later.",
   reauth_required: "Strava authorization is no longer valid. Please reconnect.",
   activity_sync_failed: "Strava activities could not be synchronized. Existing evidence was preserved.",
