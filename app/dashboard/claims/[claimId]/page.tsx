@@ -170,7 +170,10 @@ export default async function TrainingClaimPage({
           <div className="mt-5 space-y-3">
             {availableActivities.map((activity) => (
               <div key={activity.id}>
-                <ActivityEvidenceCard activity={activity} />
+                <ActivityEvidenceCard
+                  activity={activity}
+                  proximityLabel={activity.proximityLabel}
+                />
                 <form action={addClaimActivity} className="mt-2 text-right">
                   <input name="claimId" type="hidden" value={claim.id} />
                   <input name="activityId" type="hidden" value={activity.id} />

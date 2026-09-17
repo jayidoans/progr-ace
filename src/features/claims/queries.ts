@@ -2,7 +2,9 @@ import "server-only";
 
 import { notFound } from "next/navigation";
 
+import { activityListCutoff } from "@/src/features/activities/listing";
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
+import { prepareClaimCandidates } from "@/src/features/claims/candidates";
 import { claimIdSchema, prescriptionIdSchema } from "@/src/features/claims/schemas";
 import type { Tables } from "@/src/types/database";
 import type { ValidationWithChecks } from "@/src/features/validation/types";
@@ -47,13 +49,28 @@ async function claimContext() {
   return requireAuthenticatedSession("/dashboard/training");
 }
 
-function sortByScheduledDate<T extends Tables<"activities">>(activities: T[], scheduledDate: string) {
-  const scheduled = new Date(`${scheduledDate}T12:00:00Z`).valueOf();
-  return activities.sort(
-    (left, right) =>
-      Math.abs(new Date(left.started_at).valueOf() - scheduled) -
-      Math.abs(new Date(right.started_at).valueOf() - scheduled),
-  );
+function availableActivityQuery(
+  supabase: Awaited<ReturnType<typeof claimContext>>["supabase"],
+  athleteId: string,
+) {
+  return supabase
+    .from("activities")
+    .select("*, claim_usage:claim_activities!left(activity_id)")
+    .eq("athlete_id", athleteId)
+    .gte("started_at", activityListCutoff())
+    .is("claim_usage", null)
+    .order("started_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(30);
+}
+
+function removeClaimUsage(
+  activities: (Tables<"activities"> & { claim_usage: { activity_id: string }[] })[],
+) {
+  return activities.map(({ claim_usage: claimUsage, ...activity }) => {
+    if (claimUsage.length > 0) throw new Error("Claimed evidence cannot be offered as a candidate.");
+    return activity;
+  });
 }
 
 export async function getClaimBuilder(prescriptionId: string) {
@@ -61,18 +78,17 @@ export async function getClaimBuilder(prescriptionId: string) {
   if (!parsedId.success) notFound();
   const { supabase, user } = await claimContext();
 
-  const [prescriptionResult, activitiesResult, claimedResult, existingResult] = await Promise.all([
+  const [prescriptionResult, activitiesResult, existingResult] = await Promise.all([
     supabase
       .from("training_prescriptions")
       .select(prescriptionSelection)
       .eq("id", parsedId.data)
       .maybeSingle(),
-    supabase.from("activities").select("*").eq("athlete_id", user.id).order("started_at", { ascending: false }),
-    supabase.from("claim_activities").select("activity_id"),
+    availableActivityQuery(supabase, user.id),
     supabase.from("training_claims").select("id").eq("prescription_id", parsedId.data).maybeSingle(),
   ]);
 
-  if (prescriptionResult.error || activitiesResult.error || claimedResult.error || existingResult.error) {
+  if (prescriptionResult.error || activitiesResult.error || existingResult.error) {
     throw new Error("Unable to load claim preparation data.");
   }
   if (!prescriptionResult.data) notFound();
@@ -85,13 +101,12 @@ export async function getClaimBuilder(prescriptionId: string) {
     notFound();
   }
 
-  const usedActivityIds = new Set(claimedResult.data.map((row) => row.activity_id));
   return {
     prescription,
     programId: prescription.training_week.program.id,
     existingClaimId: existingResult.data?.id ?? null,
-    candidates: sortByScheduledDate(
-      activitiesResult.data.filter((activity) => !usedActivityIds.has(activity.id)),
+    candidates: prepareClaimCandidates(
+      removeClaimUsage(activitiesResult.data),
       prescription.scheduled_date,
     ),
   };
@@ -125,14 +140,10 @@ export async function getClaim(claimId: string): Promise<ClaimDetail> {
 export async function getAvailableActivitiesForClaim(claim: ClaimDetail) {
   const { supabase, user } = await claimContext();
   if (claim.status !== "DRAFT" || claim.athlete_id !== user.id) return [];
-  const [activitiesResult, usedResult] = await Promise.all([
-    supabase.from("activities").select("*").eq("athlete_id", user.id),
-    supabase.from("claim_activities").select("activity_id"),
-  ]);
-  if (activitiesResult.error || usedResult.error) throw new Error("Unable to load available evidence.");
-  const used = new Set(usedResult.data.map((row) => row.activity_id));
-  return sortByScheduledDate(
-    activitiesResult.data.filter((activity) => !used.has(activity.id)),
+  const activitiesResult = await availableActivityQuery(supabase, user.id);
+  if (activitiesResult.error) throw new Error("Unable to load available evidence.");
+  return prepareClaimCandidates(
+    removeClaimUsage(activitiesResult.data),
     claim.prescription.scheduled_date,
   );
 }

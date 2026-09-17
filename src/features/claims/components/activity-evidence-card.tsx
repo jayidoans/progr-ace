@@ -10,32 +10,41 @@ import type { Activity } from "@/src/features/activities/queries";
 type ActivityEvidenceCardProps = {
   activity: Activity;
   control?: React.ReactNode;
+  proximityLabel?: string;
   showNote?: boolean;
 };
 
 export function ActivityEvidenceCard({
   activity,
   control,
+  proximityLabel,
   showNote = false,
 }: ActivityEvidenceCardProps) {
   return (
-    <article className="rounded-lg border border-gray-200 p-4">
+    <article className="min-w-0 rounded-lg border border-gray-200 p-3 sm:p-4">
       <div className="flex items-start gap-3">
         {control}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-2">
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">
                 {formatSportType(activity.sport_type)}
               </p>
-              <h3 className="mt-1 font-bold text-gray-950">{activity.name}</h3>
+              <h3 className="mt-1 break-words font-bold text-gray-950">{activity.name}</h3>
               <p className="mt-1 text-sm text-gray-500">
                 {formatActivityDate(activity.started_at)}
               </p>
             </div>
-            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-600">
-              {activity.source}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {proximityLabel ? (
+                <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700">
+                  {proximityLabel}
+                </span>
+              ) : null}
+              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-600">
+                {activity.source}
+              </span>
+            </div>
           </div>
           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
             {activity.distance_m !== null ? (
