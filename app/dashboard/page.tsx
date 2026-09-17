@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { getAthleteClaims } from "@/src/features/claims/queries";
+import { getWeeklyStravaStats } from "@/src/features/dashboard/queries";
+import { WeeklyStravaStatsCard } from "@/src/features/dashboard/weekly-strava-stats";
 import { getCurrentProfile } from "@/src/features/profiles/queries";
 import { ActiveRaceGoalCard } from "@/src/features/race-goals/components/active-race-goal-card";
 import { getActiveRaceGoal } from "@/src/features/race-goals/queries";
@@ -8,11 +10,12 @@ import { isCurrentUserAthlete } from "@/src/features/strava/queries";
 import { validationLabel } from "@/src/features/validation/format";
 
 export default async function DashboardPage() {
-  const [profile, activeGoal, claims, isAthlete] = await Promise.all([
+  const [profile, activeGoal, claims, isAthlete, weeklyStravaStats] = await Promise.all([
     getCurrentProfile(),
     getActiveRaceGoal(),
     getAthleteClaims(3),
     isCurrentUserAthlete(),
+    getWeeklyStravaStats(),
   ]);
 
   return (
@@ -29,6 +32,8 @@ export default async function DashboardPage() {
       </section>
 
       <ActiveRaceGoalCard goal={activeGoal} />
+
+      <WeeklyStravaStatsCard stats={weeklyStravaStats} />
 
       <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
         <div className="flex items-center justify-between gap-4">
