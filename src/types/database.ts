@@ -1064,6 +1064,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      update_strava_activity_context: {
+        Args: {
+          p_activity_id: string
+          p_notes: string | null
+          p_rpe: number | null
+        }
+        Returns: string
+      }
       upsert_strava_connection: {
         Args: {
           p_access_token_ciphertext: string

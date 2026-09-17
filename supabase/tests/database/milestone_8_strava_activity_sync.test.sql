@@ -123,6 +123,16 @@ select * from public.complete_strava_activity_sync(
 select is((select created_count from first_result), 1, 'new Strava evidence is inserted once');
 select is((select locked_count from first_result), 1, 'submitted evidence is counted as locked');
 select is(
+  (select rpe from public.activities where external_activity_id = '800001'),
+  null::smallint,
+  'new Strava evidence starts with null RPE'
+);
+select is(
+  (select notes from public.activities where external_activity_id = '800001'),
+  null::text,
+  'new Strava evidence starts with null Notes'
+);
+select is(
   (select name from public.activities where external_activity_id = '800002'),
   'Locked Strava snapshot',
   'submitted evidence remains completely unchanged'
@@ -132,6 +142,11 @@ select is(
   '2026-09-17T05:00:00+00'::timestamptz,
   'successful sync advances the cursor to its start watermark'
 );
+
+update public.activities
+set rpe = 7,
+    notes = 'Athlete context must survive provider refreshes.'
+where external_activity_id = '800001';
 
 update public.strava_connections
 set activity_sync_hour_started_at = null,
@@ -168,6 +183,16 @@ select is(
     '2026-09-17T07:00:00Z',
     '[{"external_activity_id":"800001","name":"Updated Strava Run","sport_type":"RUNNING","started_at":"2026-09-17T00:00:00Z","distance_m":5100,"duration_sec":1810,"average_hr_bpm":151,"max_hr_bpm":171,"elevation_gain_m":26,"raw_data":{"sport_type":"Run"}}]'::jsonb
   )), 1, 'unlocked Strava evidence updates'
+);
+select is(
+  (select rpe from public.activities where external_activity_id = '800001'),
+  7::smallint,
+  'provider update preserves athlete-authored RPE'
+);
+select is(
+  (select notes from public.activities where external_activity_id = '800001'),
+  'Athlete context must survive provider refreshes.',
+  'provider update preserves athlete-authored Notes'
 );
 select is((select name from public.activities where id = '68000000-0000-4000-8000-000000000001'), 'Morning Easy Run', 'manual Activity is never overwritten');
 

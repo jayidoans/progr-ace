@@ -13,7 +13,19 @@ const optionalInteger = (maximum: number) =>
     z.coerce.number().int().positive().max(maximum).nullable(),
   );
 
+const optionalRpe = optionalInteger(10);
+const optionalNotes = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? null : value),
+  z.string().trim().max(4000).nullable(),
+);
+
 export const activityIdSchema = z.string().uuid();
+
+export const stravaActivityContextSchema = z.object({
+  activityId: activityIdSchema,
+  rpe: optionalRpe,
+  notes: optionalNotes,
+});
 
 export const activityFormSchema = z
   .object({
@@ -29,11 +41,8 @@ export const activityFormSchema = z
       (value) => (typeof value === "string" && value.trim() === "" ? null : value),
       z.coerce.number().int().min(0).max(20_000).nullable(),
     ),
-    rpe: optionalInteger(10),
-    notes: z.preprocess(
-      (value) => (typeof value === "string" && value.trim() === "" ? null : value),
-      z.string().trim().max(4000).nullable(),
-    ),
+    rpe: optionalRpe,
+    notes: optionalNotes,
   })
   .transform((data, context) => {
     const startedAtIso = localDateTimeToIso(data.startedAt, data.timezoneOffsetMinutes);
@@ -57,4 +66,3 @@ export const activityFormSchema = z
     }
     return { ...data, startedAtIso };
   });
-

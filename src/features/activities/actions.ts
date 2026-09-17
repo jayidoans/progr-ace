@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { z } from "zod";
 
-import { activityFormSchema, activityIdSchema } from "@/src/features/activities/schemas";
+import {
+  activityFormSchema,
+  activityIdSchema,
+  stravaActivityContextSchema,
+} from "@/src/features/activities/schemas";
 import { createClient } from "@/src/lib/supabase/server";
 
 async function activityContext() {
@@ -82,6 +86,35 @@ export async function updateActivity(formData: FormData) {
   revalidatePath("/dashboard/activities");
   revalidatePath(`/dashboard/activities/${activityId.data}`);
   redirect(`/dashboard/activities/${activityId.data}?message=updated`);
+}
+
+export async function updateStravaActivityContext(formData: FormData) {
+  const activityId = activityIdSchema.safeParse(formData.get("activityId"));
+  if (!activityId.success) redirect("/dashboard/activities?error=invalid-activity");
+
+  const parsed = stravaActivityContextSchema.safeParse({
+    activityId: activityId.data,
+    rpe: formData.get("rpe"),
+    notes: formData.get("notes"),
+  });
+  if (!parsed.success) {
+    redirect(`/dashboard/activities/${activityId.data}?error=invalid-context`);
+  }
+
+  const { supabase } = await activityContext();
+  const { data, error } = await supabase.rpc("update_strava_activity_context", {
+    p_activity_id: parsed.data.activityId,
+    p_rpe: parsed.data.rpe,
+    p_notes: parsed.data.notes,
+  });
+  if (error || !data) {
+    redirect(`/dashboard/activities/${parsed.data.activityId}?error=context-update-failed`);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/activities");
+  revalidatePath(`/dashboard/activities/${parsed.data.activityId}`);
+  redirect(`/dashboard/activities/${parsed.data.activityId}?message=context-updated`);
 }
 
 export async function deleteActivity(formData: FormData) {

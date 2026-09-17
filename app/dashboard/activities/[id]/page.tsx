@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { deleteActivity } from "@/src/features/activities/actions";
+import { StravaActivityContextForm } from "@/src/features/activities/components/strava-activity-context-form";
 import {
   formatActivityDate,
   formatDistance,
@@ -44,19 +45,52 @@ export default async function ActivityDetailPage({
         </div>
       </header>
 
-      {feedback.message ? <p className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800" role="status">{feedback.message === "created" ? "Activity created." : "Activity updated."}</p> : null}
-      {feedback.error ? <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">The activity could not be changed.</p> : null}
+      {feedback.message ? <p className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800" role="status">{feedback.message === "created" ? "Activity created." : feedback.message === "context-updated" ? "Training notes updated." : "Activity updated."}</p> : null}
+      {feedback.error ? <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{feedback.error === "invalid-context" ? "Use an RPE from 1 to 10 and keep notes within 4,000 characters." : feedback.error === "context-update-failed" ? "Your training notes could not be updated." : "The activity could not be changed."}</p> : null}
 
       <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+        {activity.source === "STRAVA" ? (
+          <p className="mb-5 rounded-md bg-orange-50 px-4 py-3 text-sm text-orange-800">
+            Synced Strava metrics are read-only. Your RPE and notes are athlete-provided context.
+          </p>
+        ) : null}
         <dl className="grid grid-cols-2 gap-6 sm:grid-cols-4">
           {metrics.map(([label, value]) => <div key={label}><dt className="text-sm text-gray-500">{label}</dt><dd className="mt-1 font-semibold text-gray-950">{value}</dd></div>)}
         </dl>
       </section>
 
-      <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
-        <h2 className="text-lg font-bold">Private notes</h2>
-        <p className="mt-3 whitespace-pre-wrap text-sm text-gray-700">{activity.notes ?? "No notes recorded."}</p>
-      </section>
+      {activity.source === "STRAVA" ? (
+        <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+          <h2 className="text-lg font-bold">Your Training Notes</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            Add how the session felt without changing the evidence synchronized from Strava.
+          </p>
+          {isSubmittedEvidence ? (
+            <div className="mt-5 space-y-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">RPE</p>
+                <p className="mt-1 text-sm text-gray-700">{activity.rpe === null ? "Not recorded" : `${activity.rpe}/10`}</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Notes</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">{activity.notes ?? "No notes recorded."}</p>
+              </div>
+              <p className="rounded-md bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                This evidence has already been submitted, so its training context is now read-only.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-5">
+              <StravaActivityContextForm activity={activity} />
+            </div>
+          )}
+        </section>
+      ) : (
+        <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+          <h2 className="text-lg font-bold">Private notes</h2>
+          <p className="mt-3 whitespace-pre-wrap text-sm text-gray-700">{activity.notes ?? "No notes recorded."}</p>
+        </section>
+      )}
 
       <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
         <h2 className="text-lg font-bold">Claim usage</h2>
