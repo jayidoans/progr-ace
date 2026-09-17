@@ -2,6 +2,7 @@ import "server-only";
 
 import { getCurrentSession } from "@/src/features/auth/session";
 import type { EncryptedToken } from "@/src/features/strava/crypto";
+import type { NormalizedStravaActivity } from "@/src/features/strava/activity-sync";
 import { StravaIntegrationError } from "@/src/features/strava/errors";
 import { createAdminClient } from "@/src/lib/supabase/admin";
 
@@ -158,4 +159,54 @@ export async function removeStravaConnection() {
   if (error) {
     throw new StravaIntegrationError("storage_failed", "Strava connection could not be removed.");
   }
+}
+
+export async function claimActivitySyncLease(lockToken: string) {
+  const { user } = await requireAthleteSession();
+  const admin = createStravaAdminClient();
+  const { data, error } = await admin.rpc("claim_strava_activity_sync", {
+    p_athlete_id: user.id,
+    p_lock_token: lockToken,
+    p_lease_seconds: 60,
+  });
+  if (error || !data[0]) {
+    throw new StravaIntegrationError("storage_failed", "Activity sync state could not be loaded.");
+  }
+  return { lease: data[0], user };
+}
+
+export async function completeActivitySync(input: {
+  lockToken: string;
+  syncStartedAt: Date;
+  activities: NormalizedStravaActivity[];
+}) {
+  const { user } = await requireAthleteSession();
+  const admin = createStravaAdminClient();
+  const { data, error } = await admin.rpc("complete_strava_activity_sync", {
+    p_athlete_id: user.id,
+    p_lock_token: input.lockToken,
+    p_sync_started_at: input.syncStartedAt.toISOString(),
+    p_activities: input.activities,
+  });
+  if (error || !data[0]) {
+    throw new StravaIntegrationError("storage_failed", "Synchronized Activities could not be saved.");
+  }
+  return data[0];
+}
+
+export async function failActivitySync(input: {
+  lockToken: string;
+  status: "FAILED" | "RATE_LIMITED";
+  errorCode: string;
+  requireReauth?: boolean;
+}) {
+  const { user } = await requireAthleteSession();
+  const admin = createStravaAdminClient();
+  await admin.rpc("fail_strava_activity_sync", {
+    p_athlete_id: user.id,
+    p_lock_token: input.lockToken,
+    p_sync_status: input.status,
+    p_error_code: input.errorCode,
+    p_require_reauth: input.requireReauth ?? false,
+  });
 }

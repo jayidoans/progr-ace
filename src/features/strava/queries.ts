@@ -12,6 +12,11 @@ export type StravaConnectionSummary = {
   strava_display_name: string | null;
   granted_scopes: string[];
   connection_status: "CONNECTED" | "REAUTH_REQUIRED";
+  activity_sync_status: "NEVER" | "SYNCING" | "SUCCEEDED" | "FAILED" | "RATE_LIMITED";
+  last_sync_attempt_at: string | null;
+  last_successful_sync_at: string | null;
+  activity_sync_cursor_at: string | null;
+  last_sync_error_code: string | null;
   connected_at: string;
   updated_at: string;
 };
@@ -29,7 +34,7 @@ export async function getStravaConnectionSummary(): Promise<StravaConnectionSumm
   const { data, error } = await supabase
     .from("strava_connections")
     .select(
-      "id, athlete_id, strava_athlete_id, strava_display_name, granted_scopes, connection_status, connected_at, updated_at",
+      "id, athlete_id, strava_athlete_id, strava_display_name, granted_scopes, connection_status, activity_sync_status, last_sync_attempt_at, last_successful_sync_at, activity_sync_cursor_at, last_sync_error_code, connected_at, updated_at",
     )
     .eq("athlete_id", user.id)
     .maybeSingle();

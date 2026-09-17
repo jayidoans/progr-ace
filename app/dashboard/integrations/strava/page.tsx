@@ -1,12 +1,16 @@
 import Link from "next/link";
 
-import { disconnectStrava } from "@/src/features/strava/actions";
-import { getStravaConnectionSummary } from "@/src/features/strava/queries";
+import { disconnectStrava, syncStravaActivities } from "@/src/features/strava/actions";
+import {
+  getStravaConnectionSummary,
+  type StravaConnectionSummary,
+} from "@/src/features/strava/queries";
 
 const messages: Record<string, string> = {
   connected: "Strava is connected.",
   "permission-required": "Strava is connected, but additional activity permission is required.",
   disconnected: "Strava has been disconnected.",
+  synced: "Strava activities synchronized.",
 };
 
 const errors: Record<string, string> = {
@@ -23,12 +27,38 @@ const errors: Record<string, string> = {
   refresh_busy: "The Strava connection is being refreshed. Please try again shortly.",
   revoke_failed: "Strava could not be disconnected right now. No local credentials were removed; please retry.",
   storage_failed: "The Strava connection could not be saved. Please try again.",
+  sync_busy: "A Strava synchronization is already in progress.",
+  rate_limited: "Strava rate limit reached. Please try again later.",
+  reauth_required: "Strava authorization is no longer valid. Please reconnect.",
+  activity_sync_failed: "Strava activities could not be synchronized. Existing evidence was preserved.",
 };
+
+function safeCount(value: string | undefined) {
+  if (!value || !/^\d+$/.test(value)) return 0;
+  return Number(value);
+}
+
+function syncStatusLabel(status: StravaConnectionSummary["activity_sync_status"]) {
+  return {
+    NEVER: "Never synced",
+    SYNCING: "Syncing",
+    SUCCEEDED: "Succeeded",
+    FAILED: "Failed",
+    RATE_LIMITED: "Rate limited",
+  }[status];
+}
 
 export default async function StravaIntegrationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; message?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    message?: string;
+    created?: string;
+    updated?: string;
+    unchanged?: string;
+    locked?: string;
+  }>;
 }) {
   const [connection, params] = await Promise.all([
     getStravaConnectionSummary(),
@@ -37,6 +67,14 @@ export default async function StravaIntegrationPage({
   const message = params.message ? messages[params.message] : undefined;
   const error = params.error ? errors[params.error] : undefined;
   const needsPermission = connection?.connection_status === "REAUTH_REQUIRED";
+  const syncCounts = params.message === "synced"
+    ? {
+        created: safeCount(params.created),
+        updated: safeCount(params.updated),
+        unchanged: safeCount(params.unchanged),
+        locked: safeCount(params.locked),
+      }
+    : null;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -57,6 +95,14 @@ export default async function StravaIntegrationPage({
       {error ? (
         <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
       ) : null}
+      {syncCounts ? (
+        <dl className="grid grid-cols-2 gap-3 rounded-lg bg-emerald-50 p-4 text-sm text-emerald-900 sm:grid-cols-4">
+          <div><dt>Created</dt><dd className="font-bold">{syncCounts.created}</dd></div>
+          <div><dt>Updated</dt><dd className="font-bold">{syncCounts.updated}</dd></div>
+          <div><dt>Unchanged</dt><dd className="font-bold">{syncCounts.unchanged}</dd></div>
+          <div><dt>Locked/skipped</dt><dd className="font-bold">{syncCounts.locked}</dd></div>
+        </dl>
+      ) : null}
 
       <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
@@ -69,6 +115,13 @@ export default async function StravaIntegrationPage({
               <div className="mt-3 space-y-1 text-sm text-gray-600">
                 <p>Strava athlete: {connection.strava_display_name ?? connection.strava_athlete_id}</p>
                 <p>Connected: {new Date(connection.connected_at).toLocaleDateString("en-GB")}</p>
+                <p>Activity sync: {syncStatusLabel(connection.activity_sync_status)}</p>
+                <p>
+                  Last successful sync:{" "}
+                  {connection.last_successful_sync_at
+                    ? new Date(connection.last_successful_sync_at).toLocaleString("en-GB")
+                    : "Never"}
+                </p>
               </div>
             ) : (
               <p className="mt-3 max-w-xl text-sm text-gray-600">
@@ -86,6 +139,16 @@ export default async function StravaIntegrationPage({
               >
                 {connection ? "Reconnect with Strava" : "Connect with Strava"}
               </Link>
+            ) : null}
+            {connection && !needsPermission ? (
+              <form action={syncStravaActivities}>
+                <button
+                  className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                  type="submit"
+                >
+                  Sync recent activities
+                </button>
+              </form>
             ) : null}
             {connection ? (
               <form action={disconnectStrava}>

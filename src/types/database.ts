@@ -393,17 +393,24 @@ export type Database = {
           access_token_ciphertext: string
           access_token_expires_at: string
           access_token_iv: string
+          activity_sync_cursor_at: string | null
+          activity_sync_status: string
           athlete_id: string
           connected_at: string
           connection_status: string
           granted_scopes: string[]
           id: string
+          last_successful_sync_at: string | null
+          last_sync_attempt_at: string | null
+          last_sync_error_code: string | null
           refresh_lock_token: string | null
           refresh_locked_until: string | null
           refresh_token_ciphertext: string
           refresh_token_iv: string
           strava_athlete_id: number
           strava_display_name: string | null
+          sync_lock_token: string | null
+          sync_locked_until: string | null
           token_version: number
           updated_at: string
         }
@@ -411,17 +418,24 @@ export type Database = {
           access_token_ciphertext: string
           access_token_expires_at: string
           access_token_iv: string
+          activity_sync_cursor_at?: string | null
+          activity_sync_status?: string
           athlete_id: string
           connected_at?: string
           connection_status: string
           granted_scopes: string[]
           id?: string
+          last_successful_sync_at?: string | null
+          last_sync_attempt_at?: string | null
+          last_sync_error_code?: string | null
           refresh_lock_token?: string | null
           refresh_locked_until?: string | null
           refresh_token_ciphertext: string
           refresh_token_iv: string
           strava_athlete_id: number
           strava_display_name?: string | null
+          sync_lock_token?: string | null
+          sync_locked_until?: string | null
           token_version?: number
           updated_at?: string
         }
@@ -429,17 +443,24 @@ export type Database = {
           access_token_ciphertext?: string
           access_token_expires_at?: string
           access_token_iv?: string
+          activity_sync_cursor_at?: string | null
+          activity_sync_status?: string
           athlete_id?: string
           connected_at?: string
           connection_status?: string
           granted_scopes?: string[]
           id?: string
+          last_successful_sync_at?: string | null
+          last_sync_attempt_at?: string | null
+          last_sync_error_code?: string | null
           refresh_lock_token?: string | null
           refresh_locked_until?: string | null
           refresh_token_ciphertext?: string
           refresh_token_iv?: string
           strava_athlete_id?: number
           strava_display_name?: string | null
+          sync_lock_token?: string | null
+          sync_locked_until?: string | null
           token_version?: number
           updated_at?: string
         }
@@ -833,6 +854,17 @@ export type Database = {
         Args: { p_claim_id: string }
         Returns: boolean
       }
+      claim_strava_activity_sync: {
+        Args: {
+          p_athlete_id: string
+          p_lease_seconds?: number
+          p_lock_token: string
+        }
+        Returns: {
+          activity_sync_cursor_at: string
+          sync_state: string
+        }[]
+      }
       claim_strava_token_refresh: {
         Args: {
           p_athlete_id: string
@@ -848,6 +880,20 @@ export type Database = {
           refresh_token_ciphertext: string
           refresh_token_iv: string
           token_version: number
+        }[]
+      }
+      complete_strava_activity_sync: {
+        Args: {
+          p_activities: Json
+          p_athlete_id: string
+          p_lock_token: string
+          p_sync_started_at: string
+        }
+        Returns: {
+          created_count: number
+          locked_count: number
+          unchanged_count: number
+          updated_count: number
         }[]
       }
       complete_strava_token_refresh: {
@@ -914,6 +960,16 @@ export type Database = {
       evaluate_training_claim_internal: {
         Args: { p_claim_id: string }
         Returns: string
+      }
+      fail_strava_activity_sync: {
+        Args: {
+          p_athlete_id: string
+          p_error_code: string
+          p_lock_token: string
+          p_require_reauth?: boolean
+          p_sync_status: string
+        }
+        Returns: boolean
       }
       get_strava_connection_credentials: {
         Args: { p_athlete_id: string }

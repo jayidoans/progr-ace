@@ -11,7 +11,11 @@ export type StravaErrorCode =
   | "refresh_failed"
   | "refresh_busy"
   | "revoke_failed"
-  | "storage_failed";
+  | "storage_failed"
+  | "sync_busy"
+  | "rate_limited"
+  | "reauth_required"
+  | "activity_sync_failed";
 
 export class StravaIntegrationError extends Error {
   constructor(
