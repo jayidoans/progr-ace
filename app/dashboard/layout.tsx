@@ -1,20 +1,12 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { signOut } from "@/src/features/auth/actions";
-import { createClient } from "@/src/lib/supabase/server";
+import { requireAuthenticatedSession } from "@/src/features/auth/session";
 
 export default async function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login?next=/dashboard");
-  }
+  const { supabase, user } = await requireAuthenticatedSession();
 
   const { data: roleRows, error: roleError } = await supabase
     .from("user_roles")

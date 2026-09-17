@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createClient } from "@/src/lib/supabase/server";
+import { requireAuthenticatedSession } from "@/src/features/auth/session";
 import type { Tables } from "@/src/types/database";
 
 export type Race = Tables<"races">;
@@ -28,22 +28,8 @@ const goalWithRaceSelection = `
   )
 `;
 
-async function authenticatedClient() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    throw new Error("Authentication is required.");
-  }
-
-  return { supabase, user };
-}
-
 export async function getActiveRaceGoal(): Promise<RaceGoalWithRace | null> {
-  const { supabase, user } = await authenticatedClient();
+  const { supabase, user } = await requireAuthenticatedSession();
   const { data, error } = await supabase
     .from("athlete_race_goals")
     .select(goalWithRaceSelection)
@@ -59,7 +45,7 @@ export async function getActiveRaceGoal(): Promise<RaceGoalWithRace | null> {
 }
 
 export async function getRaceGoalPageData() {
-  const { supabase, user } = await authenticatedClient();
+  const { supabase, user } = await requireAuthenticatedSession();
 
   const [racesResult, activeResult, historyResult] = await Promise.all([
     supabase.from("races").select("*").order("event_date", { ascending: true }),

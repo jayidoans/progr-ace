@@ -1,16 +1,12 @@
 import "server-only";
 
+import { getCurrentSession } from "@/src/features/auth/session";
 import type { EncryptedToken } from "@/src/features/strava/crypto";
 import { StravaIntegrationError } from "@/src/features/strava/errors";
 import { createAdminClient } from "@/src/lib/supabase/admin";
-import { createClient } from "@/src/lib/supabase/server";
 
 export async function requireAthleteSession() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const { supabase, user, authError } = await getCurrentSession();
 
   if (authError || !user) {
     throw new StravaIntegrationError("authentication", "Athlete authentication is required.");

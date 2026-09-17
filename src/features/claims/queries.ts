@@ -1,9 +1,9 @@
 import "server-only";
 
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
+import { requireAuthenticatedSession } from "@/src/features/auth/session";
 import { claimIdSchema, prescriptionIdSchema } from "@/src/features/claims/schemas";
-import { createClient } from "@/src/lib/supabase/server";
 import type { Tables } from "@/src/types/database";
 import type { ValidationWithChecks } from "@/src/features/validation/types";
 
@@ -44,13 +44,7 @@ const prescriptionSelection = `
 `;
 
 async function claimContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) redirect("/login?next=/dashboard/training");
-  return { supabase, user };
+  return requireAuthenticatedSession("/dashboard/training");
 }
 
 function sortByScheduledDate<T extends Tables<"activities">>(activities: T[], scheduledDate: string) {

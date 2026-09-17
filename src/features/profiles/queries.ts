@@ -1,20 +1,12 @@
 import "server-only";
 
-import { createClient } from "@/src/lib/supabase/server";
+import { requireAuthenticatedSession } from "@/src/features/auth/session";
 import type { Tables } from "@/src/types/database";
 
 export type Profile = Tables<"profiles">;
 
 export async function getCurrentProfile(): Promise<Profile | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return null;
-  }
+  const { supabase, user } = await requireAuthenticatedSession();
 
   const { data, error } = await supabase
     .from("profiles")

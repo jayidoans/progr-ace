@@ -2,8 +2,8 @@ import "server-only";
 
 import { notFound } from "next/navigation";
 
+import { requireAuthenticatedSession } from "@/src/features/auth/session";
 import { requireAthleteSession } from "@/src/features/strava/repository";
-import { createClient } from "@/src/lib/supabase/server";
 
 export type StravaConnectionSummary = {
   id: string;
@@ -17,12 +17,7 @@ export type StravaConnectionSummary = {
 };
 
 export async function isCurrentUserAthlete() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) return false;
+  const { supabase } = await requireAuthenticatedSession();
   const { data, error } = await supabase.rpc("has_role", { p_role_code: "ATHLETE" });
   if (error) throw new Error("Unable to determine Strava integration access.");
   return data;
