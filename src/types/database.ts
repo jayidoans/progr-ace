@@ -848,6 +848,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_authorized_program_claim_states: {
+        Args: { p_program_ids: string[] }
+        Returns: {
+          claim_status: string | null
+          prescription_id: string
+          program_id: string
+        }[]
+      }
       can_read_training_claim: {
         Args: { p_claim_id: string }
         Returns: boolean
