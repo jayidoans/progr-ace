@@ -80,7 +80,7 @@ export function ActivityEvidenceCard({
             <div className="mt-4 border-t border-gray-100 pt-3">
               <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Activity note</p>
               <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">
-                {activity.notes ?? "No activity note."}
+                {activity.notes ?? "No notes added yet."}
               </p>
             </div>
           ) : null}

@@ -14,7 +14,7 @@ export function SubmitClaimForm({ claimId }: { claimId: string }) {
         onClick={() => setConfirmed(true)}
         type="button"
       >
-        Submit claim
+        Submit training session
       </button>
     );
   }
@@ -22,7 +22,7 @@ export function SubmitClaimForm({ claimId }: { claimId: string }) {
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
       <p className="text-sm font-semibold text-amber-900">
-        After submission, this claim and its activity evidence can no longer be edited.
+        After submission, this training session and its activities can no longer be edited.
       </p>
       <div className="mt-3 flex flex-wrap gap-3">
         <form action={submitClaim}>

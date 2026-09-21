@@ -25,7 +25,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
           </p>
           <h1 className="mt-2 text-3xl font-bold text-gray-950">Create an account</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Registration creates an athlete profile for the signed-in user.
+            Create your profile and start planning your training.
           </p>
         </div>
 

@@ -15,18 +15,18 @@ import { ValidationSummary } from "@/src/features/validation/components/validati
 
 const messages: Record<string, string> = {
   "draft-created": "Draft saved. Review the evidence before submission.",
-  "note-updated": "Claim note updated.",
+  "note-updated": "Training note updated.",
   "evidence-added": "Activity evidence added.",
   "evidence-removed": "Activity evidence removed.",
-  submitted: "Claim submitted. The claim and its evidence are now read-only.",
+  submitted: "Training session submitted. Its activities can no longer be changed.",
 };
 
 const errors: Record<string, string> = {
-  "claim-update-failed": "The claim note could not be updated.",
-  "evidence-add-failed": "The activity could not be added. It may already be used in another claim.",
-  "evidence-already-used": "That activity is already evidence in another claim.",
+  "claim-update-failed": "The training note could not be updated.",
+  "evidence-add-failed": "That activity couldn't be added. It may already be part of another training session.",
+  "evidence-already-used": "That activity is already part of another training session.",
   "evidence-remove-failed": "The activity could not be removed from this draft.",
-  "claim-submit-failed": "The claim could not be submitted. Add valid evidence and try again.",
+  "claim-submit-failed": "The training session couldn't be submitted. Add at least one activity and try again.",
 };
 
 export default async function TrainingClaimPage({
@@ -59,7 +59,7 @@ export default async function TrainingClaimPage({
         <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">
-              Training claim
+              Training session
             </p>
             <h1 className="mt-2 text-3xl font-bold">Review claim</h1>
           </div>
@@ -85,7 +85,7 @@ export default async function TrainingClaimPage({
       ) : null}
       {feedback.error ? (
         <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
-          {errors[feedback.error] ?? "The claim request failed."}
+          {errors[feedback.error] ?? "The training session couldn't be updated."}
         </p>
       ) : null}
 
@@ -139,7 +139,7 @@ export default async function TrainingClaimPage({
         </div>
         {claim.evidence.length === 0 ? (
           <p className="mt-5 rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-600">
-            No evidence selected. At least one activity is required before submission.
+            No activities selected yet. Add at least one activity before submitting.
           </p>
         ) : (
           <div className="mt-5 space-y-3">
@@ -188,7 +188,7 @@ export default async function TrainingClaimPage({
       ) : null}
 
       <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
-        <h2 className="text-xl font-bold">Claim note</h2>
+        <h2 className="text-xl font-bold">Training note</h2>
         {isDraft ? (
           <form action={updateClaimNote} className="mt-4">
             <input name="claimId" type="hidden" value={claim.id} />
@@ -207,7 +207,7 @@ export default async function TrainingClaimPage({
           </form>
         ) : (
           <p className="mt-3 whitespace-pre-wrap text-sm text-gray-700">
-            {claim.athlete_note ?? "No claim note."}
+            {claim.athlete_note ?? "No training note added."}
           </p>
         )}
       </section>
@@ -224,7 +224,7 @@ export default async function TrainingClaimPage({
         </section>
       ) : (
         <p className="rounded-lg bg-gray-100 px-4 py-3 text-sm text-gray-700">
-          This submitted Claim and its Activity Evidence are read-only.
+          This submitted training session and its activities are read-only.
         </p>
       )}
     </div>

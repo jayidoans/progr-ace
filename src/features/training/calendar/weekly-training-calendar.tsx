@@ -40,7 +40,7 @@ export function WeeklyTrainingCalendar({ canClaim = false, week }: WeeklyTrainin
               <span className="text-xs text-gray-400">{day.day}</span>
             </div>
             {day.prescriptions.length === 0 ? (
-              <p className="mt-5 text-sm font-medium text-gray-400">Rest Day</p>
+              <p className="mt-5 text-sm font-medium text-gray-400">Rest day</p>
             ) : (
               <div className="mt-3 space-y-3">
                 {day.prescriptions.map((prescription) => (

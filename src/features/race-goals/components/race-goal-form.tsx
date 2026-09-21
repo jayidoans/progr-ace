@@ -28,7 +28,7 @@ export function RaceGoalForm({ activeGoal, races, selectedRaceId }: RaceGoalForm
           {activeGoal ? "Replace target race" : "Set target race"}
         </h2>
         <p className="mt-2 text-sm text-gray-600">
-          Replacing an active goal cancels it and creates the new goal in one database transaction.
+          Choose a race and target time to guide your training toward race day.
         </p>
 
         <form action={setActiveRaceGoal} className="mt-6 space-y-5">

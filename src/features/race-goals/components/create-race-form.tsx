@@ -8,8 +8,7 @@ export function CreateRaceForm() {
     <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
       <h2 className="text-xl font-bold text-gray-950">Create a race</h2>
       <p className="mt-2 text-sm text-gray-600">
-        Race records are shared master data. Create one only when the event edition and distance are
-        not already listed.
+        Add an event and distance when it is not already available in the race list.
       </p>
 
       <form action={createRace} className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -35,7 +34,7 @@ export function CreateRaceForm() {
             step="any"
             type="number"
           />
-          <span className="mt-1 block text-xs text-gray-500">Stored canonically as whole meters.</span>
+          <span className="mt-1 block text-xs text-gray-500">Enter the distance in kilometers.</span>
         </label>
 
         <label className="block text-sm font-medium text-gray-800 sm:col-span-2">

@@ -15,7 +15,7 @@ export function CoachEvaluationDashboard({ data }: { data: CoachEvaluationDashbo
         </p>
         <h1 className="mt-2 text-3xl font-bold text-gray-950">Training overview</h1>
         <p className="mt-3 max-w-2xl text-gray-600">
-          Operational visibility across authorized published programs, without athlete rankings or opaque scores.
+          See how your athletes are progressing and identify training sessions that may need your attention.
         </p>
       </section>
 
@@ -38,12 +38,12 @@ export function CoachEvaluationDashboard({ data }: { data: CoachEvaluationDashbo
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-bold text-gray-950">Program overview</h2>
-            <p className="mt-1 text-sm text-gray-600">Session-based outcomes from M6 Validation.</p>
+            <p className="mt-1 text-sm text-gray-600">Review training progress and completion across each program.</p>
           </div>
           <Link className="text-sm font-semibold text-indigo-700" href="/dashboard/training">Manage training</Link>
         </div>
         {data.programs.length === 0 ? (
-          <p className="rounded-xl bg-white p-6 text-sm text-gray-600 shadow-sm ring-1 ring-gray-200">No authorized published programs are available.</p>
+          <p className="rounded-xl bg-white p-6 text-sm text-gray-600 shadow-sm ring-1 ring-gray-200">No published training programs are available yet.</p>
         ) : (
           <div className="space-y-4">
             {data.programs.map((program) => (
@@ -65,7 +65,7 @@ export function CoachEvaluationDashboard({ data }: { data: CoachEvaluationDashbo
 
       <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6">
         <h2 className="text-xl font-bold text-gray-950">Athlete overview</h2>
-        <p className="mt-1 text-sm text-gray-600">Alphabetical operational summary; athletes are not ranked.</p>
+        <p className="mt-1 text-sm text-gray-600">See each athlete&apos;s training progress and sessions that may need follow-up.</p>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {data.athletes.map((athlete) => (
             <article className="min-w-0 rounded-lg border border-gray-200 p-4" key={athlete.athleteId}>
@@ -86,8 +86,8 @@ export function CoachEvaluationDashboard({ data }: { data: CoachEvaluationDashbo
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6">
           <h2 className="text-xl font-bold text-gray-950">Needs review</h2>
-          <p className="mt-1 text-sm text-gray-600">Continue in the existing M6 coach review workflow.</p>
-          {data.needsReview.length === 0 ? <p className="mt-4 text-sm text-gray-600">No results need review.</p> : (
+          <p className="mt-1 text-sm text-gray-600">Open a session to review its training result.</p>
+          {data.needsReview.length === 0 ? <p className="mt-4 text-sm text-gray-600">You&apos;re all caught up. No training sessions need review.</p> : (
             <ul className="mt-4 space-y-3">
               {data.needsReview.map((item) => (
                 <li className="rounded-lg border border-gray-200 p-4" key={item.claimId}>
@@ -102,8 +102,8 @@ export function CoachEvaluationDashboard({ data }: { data: CoachEvaluationDashbo
         </section>
         <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6">
           <h2 className="text-xl font-bold text-gray-950">Missed training</h2>
-          <p className="mt-1 text-sm text-gray-600">Past prescriptions with no submitted or draft Claim; today is not marked missed.</p>
-          {data.missed.length === 0 ? <p className="mt-4 text-sm text-gray-600">No missed sessions in this view.</p> : (
+          <p className="mt-1 text-sm text-gray-600">Past workouts without a submitted training session. Today&apos;s workout is still open.</p>
+          {data.missed.length === 0 ? <p className="mt-4 text-sm text-gray-600">No missed training sessions in this view.</p> : (
             <ul className="mt-4 space-y-3">
               {data.missed.map((item) => (
                 <li className="rounded-lg border border-gray-200 p-4" key={`${item.programId}-${item.prescriptionTitle}-${item.scheduledDate}`}>

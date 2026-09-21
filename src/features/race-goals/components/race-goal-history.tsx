@@ -14,12 +14,12 @@ export function RaceGoalHistory({ goals }: RaceGoalHistoryProps) {
     <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
       <h2 className="text-xl font-bold text-gray-950">Previous race goals</h2>
       <p className="mt-2 text-sm text-gray-600">
-        Completed and cancelled goals remain immutable history.
+        Review the races you have completed or moved on from.
       </p>
 
       {goals.length === 0 ? (
         <p className="mt-6 rounded-md bg-gray-50 px-4 py-5 text-sm text-gray-600">
-          No previous race goals yet.
+          Your previous race goals will appear here.
         </p>
       ) : (
         <div className="mt-6 overflow-x-auto">

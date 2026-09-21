@@ -45,7 +45,7 @@ export default async function RaceGoalsPage({ searchParams }: RaceGoalsPageProps
         <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">Race goals</p>
         <h1 className="mt-2 text-3xl font-bold text-gray-950">What are you preparing for?</h1>
         <p className="mt-3 max-w-2xl text-gray-600">
-          Keep one active target while preserving completed and cancelled goals as athlete history.
+          Set the race you are training for and keep your preparation focused on the goal ahead.
         </p>
       </header>
 

@@ -16,7 +16,7 @@ export default async function ProfilePage() {
       </p>
       <h1 className="mt-2 text-3xl font-bold text-gray-950">Your profile</h1>
       <p className="mt-3 text-gray-600">
-        This identity anchors your race goals and future training history.
+        Keep your profile details in one place for your race goals and training history.
       </p>
 
       <dl className="mt-8 grid gap-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200 sm:grid-cols-2">
@@ -29,7 +29,7 @@ export default async function ProfilePage() {
           <dd className="mt-2 font-semibold text-gray-950">{profile.email ?? "Not available"}</dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Profile ID</dt>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Account reference</dt>
           <dd className="mt-2 break-all font-mono text-sm text-gray-700">{profile.id}</dd>
         </div>
         <div>

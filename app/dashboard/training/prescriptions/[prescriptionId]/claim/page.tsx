@@ -7,7 +7,7 @@ import { getClaimBuilder } from "@/src/features/claims/queries";
 const errors: Record<string, string> = {
   "invalid-claim": "Select at least one valid activity and check the claim note.",
   "claim-create-failed":
-    "The draft could not be created. The prescription or selected evidence may no longer be available.",
+    "The saved training session could not be created. The workout or selected activities may no longer be available.",
 };
 
 export default async function NewTrainingClaimPage({
@@ -31,12 +31,11 @@ export default async function NewTrainingClaimPage({
           ← Training program
         </Link>
         <p className="mt-4 text-sm font-semibold uppercase tracking-wider text-indigo-600">
-          Training claim
+          Training session
         </p>
-        <h1 className="mt-2 text-3xl font-bold">Choose your evidence</h1>
+        <h1 className="mt-2 text-3xl font-bold">Choose activities</h1>
         <p className="mt-3 text-gray-600">
-          A claim records your assertion that selected activities relate to this prescription. It
-          does not validate or evaluate the workout.
+          Select the activities that represent this workout. You can review your selection before submitting it for review.
         </p>
       </header>
 

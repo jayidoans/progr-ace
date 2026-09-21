@@ -3,7 +3,7 @@ export function getHomepageActions(authenticated: boolean) {
     ? {
         header: { href: "/dashboard", label: "Dashboard" },
         primary: { href: "/dashboard/training", label: "Open Training" },
-        secondary: { href: "/dashboard/activities", label: "View Activity Evidence" },
+        secondary: { href: "/dashboard/activities", label: "View activities" },
       }
     : {
         header: { href: "/register", label: "Get started" },

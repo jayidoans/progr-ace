@@ -89,15 +89,15 @@ export default async function Home() {
               <p className="text-sm font-bold uppercase tracking-wider text-indigo-600">Structured progress</p>
               <h2 className="mt-2 text-3xl font-bold tracking-tight">Available Training Programs</h2>
               <p className="mt-3 text-gray-600">
-                Training prescriptions stay distinct from the Activity Evidence you record.
+                Explore structured training programs built around your race goals.
               </p>
             </div>
 
             {!user ? (
               <div className="mt-8 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200 sm:p-8">
-                <h3 className="text-lg font-bold">Sign in to view your available programs</h3>
+                <h3 className="text-lg font-bold">Sign in to view training programs</h3>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
-                  Program access is private and follows your existing ProgrACE training permissions.
+                  Sign in to see the programs available for your training.
                 </p>
                 <Link className="mt-5 inline-flex min-h-11 items-center font-bold text-indigo-700" href="/login">
                   Sign in to ProgrACE →
@@ -105,7 +105,7 @@ export default async function Home() {
               </div>
             ) : programs.length === 0 ? (
               <div className="mt-8 rounded-xl bg-white p-6 text-sm text-gray-600 shadow-sm ring-1 ring-gray-200">
-                No published training programs are currently available to your account.
+                No training programs are available for your account yet.
               </div>
             ) : (
               <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">

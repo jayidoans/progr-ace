@@ -51,7 +51,7 @@ export default async function ActivitiesPage({
           <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">Evidence</p>
           <h1 className="mt-2 text-3xl font-bold">Activities</h1>
           <p className="mt-3 max-w-2xl text-gray-600">
-            Record what actually happened. Activities remain separate from your training prescriptions.
+            Review your recorded activities, add training details, and use them as evidence for scheduled workouts.
           </p>
         </div>
         <div className="w-full space-y-2 sm:w-52">
@@ -92,7 +92,7 @@ export default async function ActivitiesPage({
             </div>
           ) : (
             <p className="w-full text-center text-xs leading-5 text-gray-500">
-              Connect Strava to synchronize Activity Evidence.
+              Connect Strava to sync recent activities.
             </p>
           )}
         </div>
@@ -104,7 +104,7 @@ export default async function ActivitiesPage({
       {activities.length === 0 ? (
         <section className="rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-200">
           <h2 className="text-xl font-bold">No activities in the last 30 days</h2>
-          <p className="mt-2 text-sm text-gray-600">Add a manual activity or synchronize recent Activity Evidence from Strava.</p>
+          <p className="mt-2 text-sm text-gray-600">Add an activity manually or sync your recent Strava activities.</p>
         </section>
       ) : (
         <>

@@ -11,7 +11,7 @@ const messages: Record<string, string> = {
 };
 const errors: Record<string, string> = {
   "invalid-review": "Choose a valid decision and provide a reason for Partial or Rejected.",
-  "review-failed": "The review could not be saved. Check your authorization and the current validation state.",
+  "review-failed": "The review couldn't be saved. Please refresh the page and try again.",
 };
 
 export default async function ValidationReviewPage({
@@ -45,7 +45,7 @@ export default async function ValidationReviewPage({
       ) : null}
       {feedback.error ? (
         <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
-          {errors[feedback.error] ?? "The review request failed."}
+          {errors[feedback.error] ?? "The review couldn't be completed."}
         </p>
       ) : null}
 
@@ -73,7 +73,7 @@ export default async function ValidationReviewPage({
           ))}
         </div>
         <div className="mt-5 border-t border-gray-100 pt-5">
-          <p className="text-sm font-bold">Claim note</p>
+          <p className="text-sm font-bold">Training note</p>
           <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">
             {review.claim.athlete_note ?? "No Claim Note."}
           </p>

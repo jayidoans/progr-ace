@@ -22,9 +22,9 @@ export function ValidationSummary({ validation }: { validation: ValidationWithCh
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">Validation</p>
-          <h2 className="mt-1 text-xl font-bold">Training compliance</h2>
+          <h2 className="mt-1 text-xl font-bold">Training result</h2>
           <p className="mt-2 text-sm text-gray-600">
-            Evaluated from structured Prescription targets and immutable submitted evidence.
+            Based on the planned workout and the activities submitted for review.
           </p>
         </div>
         <span className={`rounded-full px-3 py-1 text-sm font-bold ${resultStyles[validation.result]}`}>
@@ -34,7 +34,7 @@ export function ValidationSummary({ validation }: { validation: ValidationWithCh
 
       <dl className="mt-5 grid gap-4 border-t border-gray-100 pt-5 text-sm sm:grid-cols-3">
         <div>
-          <dt className="text-gray-500">Current source</dt>
+          <dt className="text-gray-500">Reviewed by</dt>
           <dd className="font-semibold">{validationLabel(validation.evaluation_source)}</dd>
         </div>
         <div>

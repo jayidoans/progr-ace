@@ -11,13 +11,13 @@ export function ProgramEvaluationOverview({ evaluation }: { evaluation: ProgramE
       <div>
         <p className="text-xs font-bold uppercase tracking-wide text-indigo-600">Program evaluation</p>
         <h2 className="mt-1 text-xl font-bold text-gray-950">Session status overview</h2>
-        <p className="mt-1 text-sm text-gray-600">M6 Validation results and derived date states; no athlete score or ranking.</p>
+        <p className="mt-1 text-sm text-gray-600">Review training progress and completion for this program.</p>
       </div>
       <StatusSummary counts={evaluation.program.compliance} />
       <div className="grid gap-5 border-t border-gray-200 pt-5 lg:grid-cols-2">
         <div>
           <h3 className="font-bold text-gray-950">Needs review</h3>
-          {evaluation.needsReview.length === 0 ? <p className="mt-2 text-sm text-gray-600">No results need review.</p> : (
+          {evaluation.needsReview.length === 0 ? <p className="mt-2 text-sm text-gray-600">No training sessions need review.</p> : (
             <ul className="mt-3 space-y-2">
               {evaluation.needsReview.map((item) => (
                 <li className="rounded-lg bg-gray-50 p-3" key={item.claimId}>
@@ -31,7 +31,7 @@ export function ProgramEvaluationOverview({ evaluation }: { evaluation: ProgramE
         </div>
         <div>
           <h3 className="font-bold text-gray-950">Missed sessions</h3>
-          {evaluation.missed.length === 0 ? <p className="mt-2 text-sm text-gray-600">No missed sessions.</p> : (
+          {evaluation.missed.length === 0 ? <p className="mt-2 text-sm text-gray-600">No missed training sessions.</p> : (
             <ul className="mt-3 space-y-2">
               {evaluation.missed.map((item) => (
                 <li className="rounded-lg bg-gray-50 p-3" key={`${item.prescriptionTitle}-${item.scheduledDate}`}>

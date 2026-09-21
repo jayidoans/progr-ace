@@ -59,14 +59,14 @@ export function ClaimBuilder({ candidates, prescription, programId }: ClaimBuild
         <input name="programId" type="hidden" value={programId} />
 
         <section className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
-          <h2 className="text-xl font-bold">Select activity evidence</h2>
+          <h2 className="text-xl font-bold">Choose activities</h2>
           <p className="mt-2 text-sm text-gray-600">
             Activities are organized by date to help you find your evidence. You decide which
             activity belongs to this workout.
           </p>
           {candidates.length === 0 ? (
             <div className="mt-5 rounded-lg border border-dashed border-gray-300 p-5 text-sm text-gray-600">
-              No available activity evidence. Activities already used in another claim are excluded.
+              No available activities found. Activities already used in another training session are not shown.
               <Link className="ml-1 font-semibold text-indigo-700" href="/dashboard/activities/new">
                 Add an activity
               </Link>
@@ -103,11 +103,11 @@ export function ClaimBuilder({ candidates, prescription, programId }: ClaimBuild
 
         <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
           <label className="block text-sm font-bold text-gray-900" htmlFor="athleteNote">
-            Claim note <span className="font-normal text-gray-500">(optional)</span>
+            Training note <span className="font-normal text-gray-500">(optional)</span>
           </label>
           <p className="mt-1 text-sm text-gray-600">
-            Explain why these activities relate to this prescription. This is separate from each
-            activity&apos;s own note.
+            Add any context about why these activities represent this workout. This is separate from each
+            activity&apos;s own notes.
           </p>
           <textarea
             className="mt-3 min-h-28 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
@@ -123,7 +123,7 @@ export function ClaimBuilder({ candidates, prescription, programId }: ClaimBuild
             disabled={candidates.length === 0}
             type="submit"
           >
-            Save draft and review
+            Save and review
           </button>
           <Link className="min-h-11 text-center text-sm font-semibold leading-[2.75rem] text-gray-600 hover:text-gray-900" href={`/dashboard/training/${programId}`}>
             Cancel

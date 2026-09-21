@@ -96,7 +96,7 @@ export function AthleteEvaluationDashboard({ data }: { data: AthleteEvaluationDa
           <div>
             <h2 className="text-xl font-bold text-gray-950">This week&apos;s session status</h2>
             <p className="mt-1 text-sm text-gray-600">
-              Session counts use existing Claim and Validation states. They are not a performance score.
+              Session counts show how each workout is progressing. They are not a performance score.
             </p>
           </div>
           <StatusSummary counts={data.compliance} />

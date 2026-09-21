@@ -85,8 +85,7 @@ export default async function StravaIntegrationPage({
         </p>
         <h1 className="mt-2 text-3xl font-bold text-gray-950">Strava</h1>
         <p className="mt-3 text-gray-600">
-          Connect Strava as an activity-evidence provider. ProgrACE continues to own your training
-          prescriptions, claims, and validation.
+          Bring your recent Strava activities into ProgrACE while keeping your training plan and review in one place.
         </p>
       </div>
 
@@ -101,7 +100,7 @@ export default async function StravaIntegrationPage({
           <div><dt>Created</dt><dd className="font-bold">{syncCounts.created}</dd></div>
           <div><dt>Updated</dt><dd className="font-bold">{syncCounts.updated}</dd></div>
           <div><dt>Unchanged</dt><dd className="font-bold">{syncCounts.unchanged}</dd></div>
-          <div><dt>Locked/skipped</dt><dd className="font-bold">{syncCounts.locked}</dd></div>
+          <div><dt>Skipped</dt><dd className="font-bold">{syncCounts.locked}</dd></div>
         </dl>
       ) : null}
 
@@ -126,8 +125,7 @@ export default async function StravaIntegrationPage({
               </div>
             ) : (
               <p className="mt-3 max-w-xl text-sm text-gray-600">
-                Authorization requests read-only profile and private activity access for future
-                activity import. Milestone 7 does not import activities.
+                Connect Strava to bring your recent activities into your training record. You can disconnect at any time.
               </p>
             )}
           </div>
@@ -166,7 +164,7 @@ export default async function StravaIntegrationPage({
       </section>
 
       <p className="text-xs text-gray-500">
-        Access and refresh tokens are encrypted and are never displayed in the browser.
+        Your Strava connection is kept secure and your credentials are never shown here.
       </p>
     </div>
   );

@@ -51,7 +51,7 @@ export default async function ActivityDetailPage({
       <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
         {activity.source === "STRAVA" ? (
           <p className="mb-5 rounded-md bg-orange-50 px-4 py-3 text-sm text-orange-800">
-            Synced Strava metrics are read-only. Your RPE and notes are athlete-provided context.
+            Strava metrics cannot be edited. Add your own RPE and notes to describe the session.
           </p>
         ) : null}
         <dl className="grid grid-cols-2 gap-6 sm:grid-cols-4">
@@ -63,7 +63,7 @@ export default async function ActivityDetailPage({
         <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
           <h2 className="text-lg font-bold">Your Training Notes</h2>
           <p className="mt-1 text-sm text-gray-600">
-            Add how the session felt without changing the evidence synchronized from Strava.
+            Add how the session felt and any useful training notes.
           </p>
           {isSubmittedEvidence ? (
             <div className="mt-5 space-y-4">
@@ -76,7 +76,7 @@ export default async function ActivityDetailPage({
                 <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">{activity.notes ?? "No notes recorded."}</p>
               </div>
               <p className="rounded-md bg-gray-50 px-4 py-3 text-sm text-gray-600">
-                This evidence has already been submitted, so its training context is now read-only.
+                This activity has already been submitted for review, so its RPE and notes can no longer be changed.
               </p>
             </div>
           ) : (
@@ -87,21 +87,21 @@ export default async function ActivityDetailPage({
         </section>
       ) : (
         <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
-          <h2 className="text-lg font-bold">Private notes</h2>
-          <p className="mt-3 whitespace-pre-wrap text-sm text-gray-700">{activity.notes ?? "No notes recorded."}</p>
+          <h2 className="text-lg font-bold">Training notes</h2>
+          <p className="mt-3 whitespace-pre-wrap text-sm text-gray-700">{activity.notes ?? "No notes added yet."}</p>
         </section>
       )}
 
       <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
-        <h2 className="text-lg font-bold">Claim usage</h2>
+        <h2 className="text-lg font-bold">Training session use</h2>
         <p className="mt-2 text-sm text-gray-700">
           {activity.claimUsage?.status === "SUBMITTED"
-            ? "Submitted as evidence. This activity is locked and cannot be edited or deleted."
+            ? "This activity was submitted with a training session and can no longer be changed."
             : activity.claimUsage?.status === "DRAFT"
-              ? "Used in a draft claim. It remains editable until that claim is submitted."
-              : "Available for a training claim."}
+              ? "This activity is part of a saved draft and can still be edited."
+              : "Available to add to a training session."}
         </p>
-        {activity.claimUsage ? <Link className="mt-3 inline-flex text-sm font-semibold text-indigo-700" href={`/dashboard/claims/${activity.claimUsage.claimId}`}>View claim</Link> : null}
+        {activity.claimUsage ? <Link className="mt-3 inline-flex text-sm font-semibold text-indigo-700" href={`/dashboard/claims/${activity.claimUsage.claimId}`}>View training session</Link> : null}
       </section>
 
       {activity.source === "MANUAL" && !activity.claimUsage ? <form action={deleteActivity} className="border-t border-gray-200 pt-6"><input name="activityId" type="hidden" value={activity.id} /><button className="rounded-md border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" type="submit">Delete activity</button><p className="mt-2 text-xs text-gray-500">Deletion is permanent.</p></form> : null}

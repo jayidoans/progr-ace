@@ -19,12 +19,12 @@ export default async function ValidationQueuePage() {
         <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">Validation</p>
         <h1 className="mt-2 text-3xl font-bold">Coach review queue</h1>
         <p className="mt-3 max-w-2xl text-gray-600">
-          Only Claims from Training Programs you created are shown. Admin access follows the existing administrative policy.
+          Review submitted training sessions that need your attention and revisit previously resolved results.
         </p>
       </header>
 
-      <ReviewList empty="No Claims currently need Coach review." reviews={unresolved} title="Needs review" />
-      <ReviewList empty="No resolved Claims are available." reviews={resolved} title="Resolved claims" />
+      <ReviewList empty="You're all caught up. There are no training sessions waiting for review." reviews={unresolved} title="Needs review" />
+      <ReviewList empty="No resolved training sessions yet." reviews={resolved} title="Resolved sessions" />
     </div>
   );
 }
