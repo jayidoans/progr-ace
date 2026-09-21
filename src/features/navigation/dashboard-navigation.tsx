@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { signOut } from "@/src/features/auth/actions";
+import { ModeSwitcher } from "@/src/features/navigation/mode-switcher";
 import {
   getDashboardNavigationGroups,
   type DashboardNavigationAccess,
@@ -56,9 +57,13 @@ function GroupedNavigationLinks({
 export function DashboardNavigation({
   access,
   email,
+  roles,
+  activeMode,
 }: {
   access: DashboardNavigationAccess;
   email: string | undefined;
+  roles: string[];
+  activeMode: "ATHLETE" | "COACH" | "ADMIN" | null;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -79,6 +84,7 @@ export function DashboardNavigation({
   return (
     <>
       <div className="hidden items-center gap-2 lg:flex">
+        <ModeSwitcher activeMode={activeMode} roles={roles} />
         <nav aria-label="Primary navigation" className="flex items-center gap-1">
           <Link
             aria-current={pathname === "/dashboard" ? "page" : undefined}
@@ -122,6 +128,7 @@ export function DashboardNavigation({
             aria-label="Mobile primary navigation"
             className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-3 sm:px-6"
           >
+            <ModeSwitcher activeMode={activeMode} roles={roles} />
             <Link
               aria-current={pathname === "/dashboard" ? "page" : undefined}
               className={navigationLinkClass(pathname === "/dashboard")}

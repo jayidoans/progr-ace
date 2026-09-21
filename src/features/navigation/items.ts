@@ -1,6 +1,5 @@
 export type DashboardNavigationAccess = {
-  canReview: boolean;
-  isAthlete: boolean;
+  activeMode: "ATHLETE" | "COACH" | "ADMIN" | null;
 };
 
 export type DashboardNavigationGroup = {
@@ -9,23 +8,22 @@ export type DashboardNavigationGroup = {
 };
 
 export function getDashboardNavigationGroups({
-  canReview,
-  isAthlete,
+  activeMode,
 }: DashboardNavigationAccess): DashboardNavigationGroup[] {
-  const groups: DashboardNavigationGroup[] = [
-    {
+  const groups: DashboardNavigationGroup[] = [];
+
+  if (activeMode === "ATHLETE") {
+    groups.push({
       label: "Training",
       items: [
         { href: "/dashboard/race-goals", label: "Race Goals" },
-        ...(isAthlete
-          ? [{ href: "/dashboard/training", label: "Personal Training Schedule" }]
-          : []),
+        { href: "/dashboard/training", label: "Personal Training Schedule" },
         { href: "/dashboard/activities", label: "Activities" },
       ],
-    },
-  ];
+    });
+  }
 
-  if (canReview) {
+  if (activeMode === "COACH" || activeMode === "ADMIN") {
     groups.push({
       label: "Coaching",
       items: [
@@ -39,7 +37,7 @@ export function getDashboardNavigationGroups({
     label: "Profile",
     items: [
       { href: "/dashboard/profile", label: "Edit Profile" },
-      ...(isAthlete
+      ...(activeMode === "ATHLETE"
         ? [{ href: "/dashboard/integrations/strava", label: "Connect to Strava" }]
         : []),
     ],

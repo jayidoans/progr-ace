@@ -1,7 +1,13 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
 import { DashboardNavigation } from "@/src/features/navigation/dashboard-navigation";
+import {
+  ACTIVE_MODE_STORAGE_KEY,
+  resolveActiveMode,
+  type ActiveMode,
+} from "@/src/features/navigation/active-mode";
 
 export default async function DashboardLayout({
   children,
@@ -13,10 +19,11 @@ export default async function DashboardLayout({
     .select("role:roles(name)")
     .eq("user_id", user.id);
   if (roleError) throw new Error("Unable to determine dashboard access.");
-  const canReview = roleRows?.some(
-    (row) => row.role.name === "COACH" || row.role.name === "ADMIN",
-  );
-  const isAthlete = roleRows?.some((row) => row.role.name === "ATHLETE");
+  const roles = roleRows?.map((row) => row.role.name) ?? [];
+  const activeMode = resolveActiveMode(
+    roles,
+    (await cookies()).get(ACTIVE_MODE_STORAGE_KEY)?.value,
+  ) as ActiveMode | null;
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-950">
@@ -26,8 +33,10 @@ export default async function DashboardLayout({
             ProgrACE
           </Link>
           <DashboardNavigation
-            access={{ canReview: Boolean(canReview), isAthlete: Boolean(isAthlete) }}
+            access={{ activeMode }}
+            activeMode={activeMode}
             email={user.email}
+            roles={roles}
           />
         </div>
       </header>

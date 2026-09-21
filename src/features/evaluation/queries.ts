@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cookies } from "next/headers";
+
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
 import {
   complianceCounts,
@@ -17,6 +19,10 @@ import {
 import type { Profile } from "@/src/features/profiles/queries";
 import type { RaceGoalWithRace } from "@/src/features/race-goals/queries";
 import { utcDateString } from "@/src/features/validation/engine/compliance";
+import {
+  ACTIVE_MODE_STORAGE_KEY,
+  resolveActiveMode,
+} from "@/src/features/navigation/active-mode";
 
 const evaluationProgramSelection = `
   id,
@@ -419,7 +425,11 @@ export async function getEvaluationDashboard(): Promise<EvaluationDashboard> {
   const roles = await getRoles(supabase, user.id);
   const today = utcDateString();
   const isAdmin = roles.includes("ADMIN");
-  if (isAdmin || roles.includes("COACH")) {
+  const activeMode = resolveActiveMode(
+    roles,
+    (await cookies()).get(ACTIVE_MODE_STORAGE_KEY)?.value,
+  );
+  if (activeMode === "COACH" || activeMode === "ADMIN") {
     return coachDashboard(supabase, user.id, isAdmin, today);
   }
   return athleteDashboard(supabase, user.id, today);

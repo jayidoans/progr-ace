@@ -1,10 +1,12 @@
 import "server-only";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 import { getCurrentSession } from "@/src/features/auth/session";
 import { createClient } from "@/src/lib/supabase/server";
 import type { Json, Tables } from "@/src/types/database";
+import { ACTIVE_MODE_STORAGE_KEY, resolveActiveMode } from "@/src/features/navigation/active-mode";
 
 export type TrainingProgram = Tables<"training_programs">;
 export type TrainingWeek = Tables<"training_weeks">;
@@ -74,7 +76,17 @@ async function context() {
   if (roleError) throw new Error("Unable to determine training access.");
 
   const roles = roleRows.map((row) => row.role.name);
-  return { supabase, user, roles, isAuthor: roles.includes("COACH") || roles.includes("ADMIN") };
+  const activeMode = resolveActiveMode(
+    roles,
+    (await cookies()).get(ACTIVE_MODE_STORAGE_KEY)?.value,
+  );
+  return {
+    supabase,
+    user,
+    roles,
+    activeMode,
+    isAuthor: activeMode !== "ATHLETE" && (roles.includes("COACH") || roles.includes("ADMIN")),
+  };
 }
 
 export async function getTrainingDashboardData() {

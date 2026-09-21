@@ -4,7 +4,7 @@ import test from "node:test";
 import { getDashboardNavigationGroups, getDashboardNavigationItems } from "./items";
 
 test("athletes see the Training and Profile groups", () => {
-  const groups = getDashboardNavigationGroups({ canReview: false, isAthlete: true });
+  const groups = getDashboardNavigationGroups({ activeMode: "ATHLETE" });
   assert.deepEqual(groups.map((group) => group.label), ["Training", "Profile"]);
   assert.deepEqual(groups[0].items.map((item) => item.label), [
     "Race Goals",
@@ -12,7 +12,7 @@ test("athletes see the Training and Profile groups", () => {
     "Activities",
   ]);
   assert.deepEqual(
-    getDashboardNavigationItems({ canReview: false, isAthlete: true }).map((item) => item.href),
+    getDashboardNavigationItems({ activeMode: "ATHLETE" }).map((item) => item.href),
     [
       "/dashboard",
       "/dashboard/race-goals",
@@ -25,9 +25,9 @@ test("athletes see the Training and Profile groups", () => {
 });
 
 test("coach and admin reviewers see Coaching without athlete-only Strava", () => {
-  const groups = getDashboardNavigationGroups({ canReview: true, isAthlete: false });
-  assert.deepEqual(groups.map((group) => group.label), ["Training", "Coaching", "Profile"]);
-  const paths = getDashboardNavigationItems({ canReview: true, isAthlete: false }).map(
+  const groups = getDashboardNavigationGroups({ activeMode: "COACH" });
+  assert.deepEqual(groups.map((group) => group.label), ["Coaching", "Profile"]);
+  const paths = getDashboardNavigationItems({ activeMode: "COACH" }).map(
     (item) => item.href,
   );
   assert.ok(paths.includes("/dashboard/validation"));

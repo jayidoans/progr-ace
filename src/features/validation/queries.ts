@@ -1,11 +1,13 @@
 import "server-only";
 
+import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 import { claimIdSchema } from "@/src/features/claims/schemas";
 import { createClient } from "@/src/lib/supabase/server";
 import type { Tables } from "@/src/types/database";
 import type { ValidationWithChecks } from "@/src/features/validation/types";
+import { ACTIVE_MODE_STORAGE_KEY, resolveActiveMode } from "@/src/features/navigation/active-mode";
 
 type ReviewPrescription = Tables<"training_prescriptions"> & {
   components: Tables<"prescription_components">[];
@@ -64,6 +66,11 @@ async function reviewerContext() {
   if (roleError) throw new Error("Unable to determine validation access.");
   const roles = roleRows.map((row) => row.role.name);
   if (!roles.includes("COACH") && !roles.includes("ADMIN")) notFound();
+  const activeMode = resolveActiveMode(
+    roles,
+    (await cookies()).get(ACTIVE_MODE_STORAGE_KEY)?.value,
+  );
+  if (activeMode !== "COACH" && activeMode !== "ADMIN") notFound();
   return { supabase, user, roles };
 }
 

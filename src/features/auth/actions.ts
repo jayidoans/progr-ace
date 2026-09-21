@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { getSiteUrl } from "@/src/lib/supabase/env";
 import { createClient } from "@/src/lib/supabase/server";
+import { ACTIVE_MODE_STORAGE_KEY } from "@/src/features/navigation/active-mode";
 
 const credentialsSchema = z.object({
   email: z.string().trim().email("Enter a valid email address."),
@@ -112,6 +114,7 @@ export async function register(formData: FormData) {
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  (await cookies()).delete(ACTIVE_MODE_STORAGE_KEY);
   revalidatePath("/", "layout");
   redirect("/login");
 }
