@@ -29,7 +29,7 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-gray-50 text-gray-950">
       <header className="border-b border-gray-200 bg-white">
         <div className="relative mx-auto flex min-h-20 max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link className="text-lg font-bold text-indigo-700" href="/dashboard">
+          <Link className={`text-lg font-bold ${activeMode === "ATHLETE" ? "text-emerald-600" : "text-blue-700"}`} href="/dashboard">
             ProgrACE
           </Link>
           <DashboardNavigation

@@ -14,12 +14,12 @@ import type {
 const input =
   "mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200";
 
-export function ProgramForm({ raceGoals }: { raceGoals: ProgramRaceGoal[] }) {
+export function ProgramForm({ raceGoals, selectedRaceGoalId }: { raceGoals: ProgramRaceGoal[]; selectedRaceGoalId?: string }) {
   return (
     <form action={createTrainingProgram} className="mt-8 grid gap-5 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200 sm:grid-cols-2">
       <label className="block text-sm font-medium text-gray-800 sm:col-span-2">
         Athlete race goal
-        <select className={input} name="raceGoalId" required>
+        <select className={input} defaultValue={selectedRaceGoalId ?? ""} name="raceGoalId" required>
           <option value="">Select a race goal</option>
           {raceGoals.map((goal) => (
             <option key={goal.id} value={goal.id}>

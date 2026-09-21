@@ -32,11 +32,11 @@ export function ModeSwitcher({
   }
 
   return (
-    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+    <label className={`flex items-center gap-2 text-sm font-semibold ${mode === "ATHLETE" ? "text-emerald-700" : "text-blue-700"}`}>
       <span className="sr-only">Active mode</span>
       <select
         aria-label="Active mode"
-        className="min-h-11 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold"
+        className={`min-h-11 rounded-md border bg-white px-3 py-2 text-sm font-semibold ${mode === "ATHLETE" ? "border-emerald-300 text-emerald-700" : "border-blue-300 text-blue-700"}`}
         onChange={(event) => changeMode(event.target.value as ActiveMode)}
         value={mode}
       >

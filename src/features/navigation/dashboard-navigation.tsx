@@ -11,11 +11,11 @@ import {
   type DashboardNavigationAccess,
 } from "@/src/features/navigation/items";
 
-function navigationLinkClass(active: boolean) {
+function navigationLinkClass(active: boolean, activeMode: DashboardNavigationAccess["activeMode"]) {
   return `rounded-md px-3 py-2.5 text-sm font-semibold transition-colors ${
     active
-      ? "bg-indigo-50 text-indigo-700"
-      : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
+      ? activeMode === "ATHLETE" ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-blue-700"
+      : activeMode === "ATHLETE" ? "text-gray-700 hover:bg-emerald-50 hover:text-emerald-700" : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
   }`;
 }
 
@@ -54,7 +54,7 @@ function GroupedNavigationLinks({
     return (
       <Link
         aria-current={active ? "page" : undefined}
-        className={`block w-full ${navigationLinkClass(active)}`}
+        className={`block w-full ${navigationLinkClass(active, access.activeMode)}`}
         href={item.href}
         key={item.href}
         onClick={onNavigate}
@@ -76,7 +76,7 @@ function GroupedNavigationLinks({
               aria-expanded={openGroup === group.label}
               aria-haspopup="menu"
               className={`flex min-h-11 ${mobile ? "w-full" : ""} cursor-pointer list-none items-center justify-between gap-2 rounded-md px-3 py-2.5 text-sm font-semibold ${
-                active ? "bg-indigo-50 text-indigo-700" : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
+                active ? (access.activeMode === "ATHLETE" ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-blue-700") : (access.activeMode === "ATHLETE" ? "text-gray-700 hover:bg-emerald-50 hover:text-emerald-700" : "text-gray-700 hover:bg-blue-50 hover:text-blue-700")
               } [&::-webkit-details-marker]:hidden`}
               onClick={() => setOpenGroup((current) => (current === group.label ? null : group.label))}
               type="button"
@@ -137,7 +137,7 @@ export function DashboardNavigation({
         <nav aria-label="Primary navigation" className="flex items-center gap-1">
           <Link
             aria-current={pathname === "/dashboard" ? "page" : undefined}
-            className={navigationLinkClass(pathname === "/dashboard")}
+            className={navigationLinkClass(pathname === "/dashboard", activeMode)}
             href="/dashboard"
           >
             Dashboard
@@ -180,7 +180,7 @@ export function DashboardNavigation({
             <ModeSwitcher activeMode={activeMode} roles={roles} />
             <Link
               aria-current={pathname === "/dashboard" ? "page" : undefined}
-              className={navigationLinkClass(pathname === "/dashboard")}
+              className={navigationLinkClass(pathname === "/dashboard", activeMode)}
               href="/dashboard"
               onClick={() => setOpen(false)}
             >
