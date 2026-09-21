@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { signOut } from "@/src/features/auth/actions";
 import { ModeSwitcher } from "@/src/features/navigation/mode-switcher";
@@ -30,6 +30,24 @@ function GroupedNavigationLinks({
 }) {
   const pathname = usePathname();
   const groups = getDashboardNavigationGroups(access);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const navigationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setOpenGroup(null);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!openGroup) return;
+
+    const closeWhenClickedOutside = (event: PointerEvent) => {
+      if (navigationRef.current && !navigationRef.current.contains(event.target as Node)) {
+        setOpenGroup(null);
+      }
+    };
+    document.addEventListener("pointerdown", closeWhenClickedOutside);
+    return () => document.removeEventListener("pointerdown", closeWhenClickedOutside);
+  }, [openGroup]);
 
   const renderLink = (item: { href: string; label: string }) => {
     const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -46,32 +64,43 @@ function GroupedNavigationLinks({
     );
   };
 
-  return groups.map((group) => {
-    const active = group.items.some(
-      (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
-    );
-    return (
-      <details className={mobile ? "border-t border-gray-100 pt-2" : "group relative"} key={group.label}>
-        <summary
-          className={`flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-md px-3 py-2.5 text-sm font-semibold ${
-            active ? "bg-indigo-50 text-indigo-700" : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
-          } [&::-webkit-details-marker]:hidden`}
-        >
-          <span>{group.label}</span>
-          <span aria-hidden="true" className="text-xs">⌄</span>
-        </summary>
-        <div
-          className={
-            mobile
-              ? "mt-1 space-y-1 pl-2"
-              : "absolute left-0 top-full z-30 mt-1 min-w-56 rounded-lg border border-gray-200 bg-white p-2 shadow-lg"
-          }
-        >
-          {group.items.map(renderLink)}
-        </div>
-      </details>
-    );
-  });
+  return (
+    <div className={mobile ? "contents" : "flex items-center gap-1"} ref={navigationRef}>
+      {groups.map((group) => {
+        const active = group.items.some(
+          (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+        );
+        return (
+          <div className={mobile ? "border-t border-gray-100 pt-2" : "group relative"} key={group.label}>
+            <button
+              aria-expanded={openGroup === group.label}
+              aria-haspopup="menu"
+              className={`flex min-h-11 ${mobile ? "w-full" : ""} cursor-pointer list-none items-center justify-between gap-2 rounded-md px-3 py-2.5 text-sm font-semibold ${
+                active ? "bg-indigo-50 text-indigo-700" : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
+              } [&::-webkit-details-marker]:hidden`}
+              onClick={() => setOpenGroup((current) => (current === group.label ? null : group.label))}
+              type="button"
+            >
+              <span>{group.label}</span>
+              <span aria-hidden="true" className="text-xs">⌄</span>
+            </button>
+            {openGroup === group.label ? (
+              <div
+                className={
+                  mobile
+                    ? "mt-1 space-y-1 pl-2"
+                    : "absolute left-0 top-full z-30 mt-1 min-w-56 rounded-lg border border-gray-200 bg-white p-2 shadow-lg"
+                }
+                role="menu"
+              >
+                {group.items.map(renderLink)}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function DashboardNavigation({
