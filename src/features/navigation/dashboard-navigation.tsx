@@ -22,9 +22,11 @@ function navigationLinkClass(active: boolean) {
 function GroupedNavigationLinks({
   access,
   onNavigate,
+  mobile = false,
 }: {
   access: DashboardNavigationAccess;
   onNavigate?: () => void;
+  mobile?: boolean;
 }) {
   const pathname = usePathname();
   const groups = getDashboardNavigationGroups(access);
@@ -34,7 +36,7 @@ function GroupedNavigationLinks({
     return (
       <Link
         aria-current={active ? "page" : undefined}
-        className={navigationLinkClass(active)}
+        className={`block w-full ${navigationLinkClass(active)}`}
         href={item.href}
         key={item.href}
         onClick={onNavigate}
@@ -44,14 +46,32 @@ function GroupedNavigationLinks({
     );
   };
 
-  return groups.map((group) => (
-    <div className="flex items-center gap-1" key={group.label}>
-      <span className="px-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-        {group.label}
-      </span>
-      {group.items.map(renderLink)}
-    </div>
-  ));
+  return groups.map((group) => {
+    const active = group.items.some(
+      (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+    );
+    return (
+      <details className={mobile ? "border-t border-gray-100 pt-2" : "group relative"} key={group.label}>
+        <summary
+          className={`flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-md px-3 py-2.5 text-sm font-semibold ${
+            active ? "bg-indigo-50 text-indigo-700" : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
+          } [&::-webkit-details-marker]:hidden`}
+        >
+          <span>{group.label}</span>
+          <span aria-hidden="true" className="text-xs">⌄</span>
+        </summary>
+        <div
+          className={
+            mobile
+              ? "mt-1 space-y-1 pl-2"
+              : "absolute left-0 top-full z-30 mt-1 min-w-56 rounded-lg border border-gray-200 bg-white p-2 shadow-lg"
+          }
+        >
+          {group.items.map(renderLink)}
+        </div>
+      </details>
+    );
+  });
 }
 
 export function DashboardNavigation({
@@ -137,30 +157,7 @@ export function DashboardNavigation({
             >
               Dashboard
             </Link>
-            {getDashboardNavigationGroups(access).map((group) => (
-              <div className="border-t border-gray-100 pt-2" key={group.label}>
-                <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                  {group.label}
-                </p>
-                {group.items.map((item) => (
-                  <Link
-                    aria-current={
-                      pathname === item.href || pathname.startsWith(`${item.href}/`)
-                        ? "page"
-                        : undefined
-                    }
-                    className={`block ${navigationLinkClass(
-                      pathname === item.href || pathname.startsWith(`${item.href}/`),
-                    )}`}
-                    href={item.href}
-                    key={item.href}
-                    onClick={() => setOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            ))}
+            <GroupedNavigationLinks access={access} mobile onNavigate={() => setOpen(false)} />
             <div className="mt-2 border-t border-gray-200 pt-3">
               {email ? <p className="mb-2 break-all px-3 text-xs text-gray-500">{email}</p> : null}
               <form action={signOut}>
