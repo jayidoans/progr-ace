@@ -83,6 +83,7 @@ async function context() {
   return {
     supabase,
     user,
+    userId: user.id,
     roles,
     activeMode,
     isAuthor: activeMode !== "ATHLETE" && (roles.includes("COACH") || roles.includes("ADMIN")),
@@ -90,7 +91,7 @@ async function context() {
 }
 
 export async function getTrainingDashboardData() {
-  const { supabase, roles, isAuthor } = await context();
+  const { supabase, userId, roles, isAuthor } = await context();
   const programsQuery = supabase
     .from("training_programs")
     .select(`*, race_goal:athlete_race_goals (${goalSelection})`)
@@ -105,6 +106,7 @@ export async function getTrainingDashboardData() {
   if (programsResult.error || goalsResult.error) throw new Error("Unable to load training programs.");
 
   return {
+    userId,
     roles,
     isAuthor,
     programs: programsResult.data as TrainingProgramWithGoal[],
