@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 import { WeeklyTrainingCalendar } from "@/src/features/training/calendar/weekly-training-calendar";
 import {
@@ -10,6 +10,7 @@ import {
   visibleWeekIndexes,
 } from "@/src/features/training/calendar/training-schedule-utils";
 import type { WeekWithPrescriptions } from "@/src/features/training/queries";
+import { usePrependScrollAnchor } from "@/src/features/ui/use-prepend-scroll-anchor";
 
 type TrainingScheduleProps = {
   activeMode: "ATHLETE" | "COACH" | "ADMIN" | null;
@@ -18,28 +19,15 @@ type TrainingScheduleProps = {
   weeks: WeekWithPrescriptions[];
 };
 
-type ScrollAnchor = { top: number; weekId: string };
-
 export function TrainingSchedule({ activeMode, canClaim, today, weeks }: TrainingScheduleProps) {
   const anchor = resolveTrainingScheduleAnchor(weeks, today);
   const [firstVisible, setFirstVisible] = useState(anchor.index);
   const [lastVisible, setLastVisible] = useState(anchor.index);
-  const pendingScrollAnchor = useRef<ScrollAnchor | null>(null);
-
-  useLayoutEffect(() => {
-    const pending = pendingScrollAnchor.current;
-    if (!pending) return;
-    const element = document.getElementById(`training-week-${pending.weekId}`);
-    if (element) window.scrollBy({ top: element.getBoundingClientRect().top - pending.top });
-    pendingScrollAnchor.current = null;
-  }, [firstVisible]);
+  const preserveScrollAnchor = usePrependScrollAnchor(firstVisible);
 
   const loadPreviousWeeks = () => {
     const firstWeek = weeks[firstVisible];
-    const element = document.getElementById(`training-week-${firstWeek.id}`);
-    if (element) {
-      pendingScrollAnchor.current = { weekId: firstWeek.id, top: element.getBoundingClientRect().top };
-    }
+    preserveScrollAnchor(`training-week-${firstWeek.id}`);
     setFirstVisible(revealPreviousWeekIndex);
   };
 

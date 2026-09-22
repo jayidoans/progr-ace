@@ -1,10 +1,6 @@
 import Link from "next/link";
 
-import { ActivitySummary } from "@/src/features/activities/components/activity-summary";
-import {
-  nextActivityListLimit,
-  parseActivityListLimit,
-} from "@/src/features/activities/listing";
+import { ActivityHistory } from "@/src/features/activities/components/activity-history";
 import { getActivities } from "@/src/features/activities/queries";
 import { syncStravaActivities } from "@/src/features/strava/actions";
 import { availableActivitySyncsThisHour } from "@/src/features/strava/activity-sync";
@@ -28,12 +24,11 @@ const errors: Record<string, string> = {
 export default async function ActivitiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; limit?: string | string[]; message?: string }>;
+  searchParams: Promise<{ error?: string; message?: string }>;
 }) {
   const params = await searchParams;
-  const visibleLimit = parseActivityListLimit(params.limit);
-  const [{ activities, hasMore }, stravaConnection] = await Promise.all([
-    getActivities(visibleLimit),
+  const [activities, stravaConnection] = await Promise.all([
+    getActivities(),
     getOptionalStravaConnectionSummary(),
   ]);
   const availableSyncs = stravaConnection
@@ -101,28 +96,7 @@ export default async function ActivitiesPage({
       {params.message ? <p className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800" role="status">{messages[params.message] ?? "Activity saved."}</p> : null}
       {params.error ? <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{errors[params.error] ?? "The activity request failed."}</p> : null}
 
-      {activities.length === 0 ? (
-        <section className="rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-200">
-          <h2 className="text-xl font-bold">No activities in the last 30 days</h2>
-          <p className="mt-2 text-sm text-gray-600">Add an activity manually or sync your recent Strava activities.</p>
-        </section>
-      ) : (
-        <>
-          <div className="space-y-4">
-            {activities.map((activity) => <ActivitySummary activity={activity} key={activity.id} />)}
-          </div>
-          {hasMore && nextActivityListLimit(visibleLimit) ? (
-            <div className="text-center">
-              <Link
-                className="inline-flex min-h-11 items-center justify-center rounded-md border border-indigo-600 px-5 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
-                href={`/dashboard/activities?limit=${nextActivityListLimit(visibleLimit)}`}
-              >
-                Load more
-              </Link>
-            </div>
-          ) : null}
-        </>
-      )}
+      <ActivityHistory activities={activities} today={new Date().toISOString().slice(0, 10)} />
     </div>
   );
 }
