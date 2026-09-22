@@ -3,34 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { revokeStravaToken } from "@/src/features/strava/api";
-import { getStravaServerConfig } from "@/src/features/strava/config";
-import { decryptToken, tokenEncryptionContext } from "@/src/features/strava/crypto";
+import { disconnectAuthorizedStravaConnection } from "@/src/features/strava/disconnect";
 import { StravaIntegrationError, stravaErrorRedirect } from "@/src/features/strava/errors";
-import {
-  getEncryptedStravaCredentials,
-  removeStravaConnection,
-} from "@/src/features/strava/repository";
+import { requireAthleteSession } from "@/src/features/strava/repository";
 import { synchronizeStravaActivities } from "@/src/features/strava/sync";
 
 export async function disconnectStrava() {
   try {
-    const config = getStravaServerConfig();
-    const { credentials, user } = await getEncryptedStravaCredentials();
-    if (!credentials) {
-      redirect("/dashboard/integrations/strava?message=disconnected");
-    }
-
-    const refreshToken = await decryptToken(
-      {
-        ciphertext: credentials.refresh_token_ciphertext,
-        iv: credentials.refresh_token_iv,
-      },
-      config.encryptionKey,
-      tokenEncryptionContext(user.id, "refresh"),
-    );
-    await revokeStravaToken(refreshToken);
-    await removeStravaConnection();
+    const { user } = await requireAthleteSession();
+    await disconnectAuthorizedStravaConnection(user.id);
     revalidatePath("/dashboard/integrations/strava");
     redirect("/dashboard/integrations/strava?message=disconnected");
   } catch (error) {

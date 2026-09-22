@@ -888,6 +888,19 @@ export type Database = {
           sync_state: string
         }[]
       }
+      current_user_strava_permission: { Args: Record<PropertyKey, never>; Returns: boolean }
+      admin_get_user_strava_status: {
+        Args: { p_user_id: string }
+        Returns: {
+          user_id: string
+          permission_allowed: boolean
+          permission_granted_at: string | null
+          connection_status: string | null
+          last_successful_sync_at: string | null
+        }[]
+      }
+      admin_allow_strava_connection: { Args: { p_user_id: string }; Returns: undefined }
+      admin_revoke_strava_permission: { Args: { p_user_id: string }; Returns: undefined }
       claim_strava_token_refresh: {
         Args: {
           p_athlete_id: string

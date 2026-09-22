@@ -82,6 +82,10 @@ select ok(
 
 reset role;
 set local role service_role;
+insert into public.strava_access_permissions (user_id, allowed, granted_at)
+values
+  ('61000000-0000-4000-8000-000000000003', true, now()),
+  ('61000000-0000-4000-8000-000000000004', true, now());
 select set_config('request.jwt.claim.sub', '61000000-0000-4000-8000-000000000003', true);
 select lives_ok(
   $$ select public.upsert_strava_connection(

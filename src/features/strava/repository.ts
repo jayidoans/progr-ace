@@ -81,21 +81,12 @@ export async function saveStravaConnection(input: {
   if (error?.code === "23505") {
     throw new StravaIntegrationError("identity_conflict", "This Strava identity is already connected.");
   }
+  if (error?.code === "42501") {
+    throw new StravaIntegrationError("permission_denied", "Strava connection is not allowed for this account.");
+  }
   if (error) {
     throw new StravaIntegrationError("storage_failed", "Strava connection could not be saved.");
   }
-}
-
-export async function getEncryptedStravaCredentials() {
-  const { user } = await requireAthleteSession();
-  const admin = createStravaAdminClient();
-  const { data, error } = await admin.rpc("get_strava_connection_credentials", {
-    p_athlete_id: user.id,
-  });
-  if (error) {
-    throw new StravaIntegrationError("storage_failed", "Strava credentials could not be loaded.");
-  }
-  return { credentials: data[0] ?? null, user };
 }
 
 export type RefreshLease = Awaited<ReturnType<typeof claimRefreshLease>>;
@@ -148,17 +139,6 @@ export async function releaseRefreshLease(lockToken: string, tokenVersion: numbe
     p_lock_token: lockToken,
     p_token_version: tokenVersion,
   });
-}
-
-export async function removeStravaConnection() {
-  const { user } = await requireAthleteSession();
-  const admin = createStravaAdminClient();
-  const { error } = await admin.rpc("delete_strava_connection", {
-    p_athlete_id: user.id,
-  });
-  if (error) {
-    throw new StravaIntegrationError("storage_failed", "Strava connection could not be removed.");
-  }
 }
 
 export async function claimActivitySyncLease(lockToken: string) {

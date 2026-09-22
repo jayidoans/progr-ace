@@ -55,6 +55,10 @@ select public.submit_training_claim('84000000-0000-4000-8000-000000000001');
 reset role;
 
 set local role service_role;
+insert into public.strava_access_permissions (user_id, allowed, granted_at)
+values
+  ('61000000-0000-4000-8000-000000000003', true, now()),
+  ('61000000-0000-4000-8000-000000000004', true, now());
 select public.upsert_strava_connection(
   '61000000-0000-4000-8000-000000000003', 800001, 'M8 Athlete A',
   array['read', 'activity:read_all'], 'CONNECTED',

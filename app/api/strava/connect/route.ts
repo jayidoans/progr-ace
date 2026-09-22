@@ -9,6 +9,7 @@ import {
   hashOAuthState,
 } from "@/src/features/strava/oauth";
 import { requireAthleteSession, storeOAuthState } from "@/src/features/strava/repository";
+import { requireStravaPermission } from "@/src/features/strava/permission";
 import { getSiteUrl } from "@/src/lib/supabase/env";
 
 export const runtime = "nodejs";
@@ -16,6 +17,7 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     await requireAthleteSession();
+    await requireStravaPermission();
     const config = getStravaServerConfig();
     const state = generateOAuthState();
     const stateHash = await hashOAuthState(state);

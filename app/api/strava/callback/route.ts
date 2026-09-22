@@ -14,6 +14,7 @@ import {
   oauthStatesMatch,
   parseGrantedScopes,
 } from "@/src/features/strava/oauth";
+import { requireStravaPermission } from "@/src/features/strava/permission";
 import {
   consumeOAuthState,
   requireAthleteSession,
@@ -69,6 +70,8 @@ export async function GET(request: NextRequest) {
       throw new StravaIntegrationError("missing_code", "Strava authorization code is missing.");
     }
 
+    await requireStravaPermission();
+
     const tokenResponse = await exchangeStravaAuthorizationCode(parsed.data.code);
     const callbackScopes = parseGrantedScopes(parsed.data.scope);
     const responseScopes = parseGrantedScopes(tokenResponse.scope);
@@ -91,6 +94,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     try {
+      await requireStravaPermission();
       await saveStravaConnection({
         stravaAthleteId: tokenResponse.athlete.id,
         displayName: stravaAthleteDisplayName(tokenResponse.athlete),

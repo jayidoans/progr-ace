@@ -5,7 +5,8 @@ import { getActivities } from "@/src/features/activities/queries";
 import { syncStravaActivities } from "@/src/features/strava/actions";
 import { availableActivitySyncsThisHour } from "@/src/features/strava/activity-sync";
 import { LocalSyncTime } from "@/src/features/strava/components/local-sync-time";
-import { getOptionalStravaConnectionSummary } from "@/src/features/strava/queries";
+import { isCurrentAthleteStravaAllowed } from "@/src/features/strava/permission";
+import { getOptionalStravaConnectionSummary, isCurrentUserAthlete } from "@/src/features/strava/queries";
 
 const messages: Record<string, string> = {
   deleted: "Activity deleted.",
@@ -19,6 +20,7 @@ const errors: Record<string, string> = {
   rate_limited: "Strava rate limit reached. Please try again later.",
   reauth_required: "Reconnect Strava before synchronizing activities.",
   activity_sync_failed: "Strava activities could not be synchronized. Existing evidence was preserved.",
+  permission_denied: "Strava integration is not currently available for your account.",
 };
 
 export default async function ActivitiesPage({
@@ -31,13 +33,14 @@ export default async function ActivitiesPage({
     getActivities(),
     getOptionalStravaConnectionSummary(),
   ]);
+  const stravaAllowed = await isCurrentUserAthlete() ? await isCurrentAthleteStravaAllowed() : false;
   const availableSyncs = stravaConnection
     ? availableActivitySyncsThisHour({
         hourStartedAt: stravaConnection.activity_sync_hour_started_at,
         attemptCount: stravaConnection.activity_sync_attempt_count,
       })
     : 2;
-  const canSync = stravaConnection?.connection_status === "CONNECTED" && availableSyncs > 0;
+  const canSync = stravaAllowed && stravaConnection?.connection_status === "CONNECTED" && availableSyncs > 0;
 
   return (
     <div className="space-y-8">
@@ -56,7 +59,7 @@ export default async function ActivitiesPage({
           >
             Add manual activity
           </Link>
-          {stravaConnection?.connection_status === "CONNECTED" ? (
+          {stravaAllowed && stravaConnection?.connection_status === "CONNECTED" ? (
             <form action={syncStravaActivities}>
               <input name="returnTo" type="hidden" value="activities" />
               <button
@@ -67,14 +70,14 @@ export default async function ActivitiesPage({
                 Sync from Strava
               </button>
             </form>
-          ) : (
+          ) : stravaAllowed ? (
             <Link
               className="block w-full rounded-md bg-gray-200 px-4 py-2 text-center text-sm font-semibold text-gray-700 hover:bg-gray-300"
               href="/dashboard/integrations/strava"
             >
               {stravaConnection ? "Reconnect Strava" : "Connect Strava"}
             </Link>
-          )}
+          ) : <p className="w-full rounded-md bg-gray-100 px-3 py-2 text-center text-xs text-gray-600">Strava is not available for this account.</p>}
           {stravaConnection ? (
             <div className="w-full rounded-md bg-white px-3 py-2 text-xs leading-5 text-gray-600 ring-1 ring-gray-200">
               <p>
@@ -85,11 +88,11 @@ export default async function ActivitiesPage({
               </p>
               <p>Available this hour: {availableSyncs} of 2</p>
             </div>
-          ) : (
+          ) : stravaAllowed ? (
             <p className="w-full text-center text-xs leading-5 text-gray-500">
               Connect Strava to sync recent activities.
             </p>
-          )}
+          ) : null}
         </div>
       </header>
 

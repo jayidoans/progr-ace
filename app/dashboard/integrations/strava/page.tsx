@@ -1,10 +1,13 @@
 import Link from "next/link";
 
+import { stravaAccessActions } from "@/src/features/strava/access-state";
+
 import { disconnectStrava, syncStravaActivities } from "@/src/features/strava/actions";
 import {
   getStravaConnectionSummary,
   type StravaConnectionSummary,
 } from "@/src/features/strava/queries";
+import { isCurrentAthleteStravaAllowed } from "@/src/features/strava/permission";
 
 const messages: Record<string, string> = {
   connected: "Strava is connected.",
@@ -16,6 +19,7 @@ const messages: Record<string, string> = {
 const errors: Record<string, string> = {
   configuration: "Strava is not configured on this environment.",
   authentication: "An athlete account is required to manage Strava.",
+  permission_denied: "Strava integration is not currently available for your account.",
   authorization_denied: "Strava authorization was cancelled.",
   invalid_state: "The Strava authorization request expired or was already used. Please try again.",
   missing_code: "Strava did not return an authorization code. Please try again.",
@@ -61,13 +65,12 @@ export default async function StravaIntegrationPage({
     locked?: string;
   }>;
 }) {
-  const [connection, params] = await Promise.all([
-    getStravaConnectionSummary(),
-    searchParams,
-  ]);
+  const connection = await getStravaConnectionSummary();
+  const [allowed, params] = await Promise.all([isCurrentAthleteStravaAllowed(), searchParams]);
   const message = params.message ? messages[params.message] : undefined;
   const error = params.error ? errors[params.error] : undefined;
   const needsPermission = connection?.connection_status === "REAUTH_REQUIRED";
+  const actions = stravaAccessActions({ isAthlete: true, allowed, connectionStatus: connection?.connection_status ?? null });
   const syncCounts = params.message === "synced"
     ? {
         created: safeCount(params.created),
@@ -105,6 +108,8 @@ export default async function StravaIntegrationPage({
       ) : null}
 
       <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+        <p className="mb-4 text-sm text-gray-600">Permission: <span className="font-semibold">{allowed ? "Allowed" : "Not allowed"}</span></p>
+        {!allowed && !connection ? <p className="mb-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-700">Strava integration is not currently available for your account.</p> : null}
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
           <div>
             <p className="text-sm font-semibold text-gray-500">Connection status</p>
@@ -125,13 +130,13 @@ export default async function StravaIntegrationPage({
               </div>
             ) : (
               <p className="mt-3 max-w-xl text-sm text-gray-600">
-                Connect Strava to bring your recent activities into your training record. You can disconnect at any time.
+                {allowed ? "Connect Strava to bring your recent activities into your training record. You can disconnect at any time." : "Ask an administrator if you need Strava access."}
               </p>
             )}
           </div>
 
           <div className="flex flex-col gap-3 sm:items-end">
-            {!connection || needsPermission ? (
+            {actions.canConnect ? (
               <Link
                 className="rounded-md bg-[#FC4C02] px-4 py-2 text-center text-sm font-bold text-white hover:bg-[#e34402]"
                 href="/api/strava/connect"
@@ -139,7 +144,7 @@ export default async function StravaIntegrationPage({
                 {connection ? "Reconnect with Strava" : "Connect with Strava"}
               </Link>
             ) : null}
-            {connection && !needsPermission ? (
+            {actions.canSync ? (
               <form action={syncStravaActivities}>
                 <button
                   className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"

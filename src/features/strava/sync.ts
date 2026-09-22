@@ -14,6 +14,7 @@ import {
 } from "@/src/features/strava/activity-transport";
 import { StravaIntegrationError } from "@/src/features/strava/errors";
 import { getValidStravaAccessToken } from "@/src/features/strava/refresh";
+import { requireStravaPermission } from "@/src/features/strava/permission";
 import {
   claimActivitySyncLease,
   completeActivitySync,
@@ -25,6 +26,7 @@ async function safelyFailSync(input: Parameters<typeof failActivitySync>[0]) {
 }
 
 export async function synchronizeStravaActivities() {
+  await requireStravaPermission();
   const syncStartedAt = new Date();
   const lockToken = crypto.randomUUID();
   const { lease } = await claimActivitySyncLease(lockToken);

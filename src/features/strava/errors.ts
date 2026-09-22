@@ -1,6 +1,7 @@
 export type StravaErrorCode =
   | "configuration"
   | "authentication"
+  | "permission_denied"
   | "authorization_denied"
   | "invalid_state"
   | "missing_code"
