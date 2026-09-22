@@ -24,6 +24,12 @@ test("athletes see the Training and Profile groups", () => {
   );
 });
 
+test("admin mode shows Manage Users", () => {
+  const groups = getDashboardNavigationGroups({ activeMode: "ADMIN" });
+  assert.ok(groups.some((group) => group.label === "Admin"));
+  assert.ok(getDashboardNavigationItems({ activeMode: "ADMIN" }).some((item) => item.href === "/dashboard/admin/users"));
+});
+
 test("coach and admin reviewers see Coaching without athlete-only Strava", () => {
   const groups = getDashboardNavigationGroups({ activeMode: "COACH" });
   assert.deepEqual(groups.map((group) => group.label), ["Coaching", "Profile"]);

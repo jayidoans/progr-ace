@@ -3,7 +3,7 @@ export type DashboardNavigationAccess = {
 };
 
 export type DashboardNavigationGroup = {
-  label: "Training" | "Coaching" | "Profile";
+  label: "Training" | "Coaching" | "Profile" | "Admin";
   items: { href: string; label: string }[];
 };
 
@@ -30,6 +30,13 @@ export function getDashboardNavigationGroups({
         { href: "/dashboard/training", label: "Training Schedule" },
         { href: "/dashboard/validation", label: "Validation" },
       ],
+    });
+  }
+
+  if (activeMode === "ADMIN") {
+    groups.push({
+      label: "Admin",
+      items: [{ href: "/dashboard/admin/users", label: "Manage Users" }],
     });
   }
 

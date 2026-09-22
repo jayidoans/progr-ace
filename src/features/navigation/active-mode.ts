@@ -16,7 +16,7 @@ export function resolveActiveMode(
 
   if (storedMode === "ATHLETE" && hasAthlete) return "ATHLETE";
   if (storedMode === "COACH" && hasCoach) return "COACH";
-  if (storedMode === "ADMIN" && hasAdmin && !hasAthlete && !hasCoach) return "ADMIN";
+  if (storedMode === "ADMIN" && hasAdmin) return "ADMIN";
   if (hasAthlete && hasCoach) return "ATHLETE";
   if (hasAdmin && !hasCoach) return "ADMIN";
   if (hasAthlete) return "ATHLETE";
@@ -26,5 +26,5 @@ export function resolveActiveMode(
 }
 
 export function switchableModes(roles: readonly string[]): ActiveMode[] {
-  return ["ATHLETE", "COACH"].filter((mode) => roles.includes(mode)) as ActiveMode[];
+  return ["ATHLETE", "COACH", "ADMIN"].filter((mode) => roles.includes(mode)) as ActiveMode[];
 }

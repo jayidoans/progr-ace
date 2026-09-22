@@ -14,6 +14,7 @@ test("stored modes cannot grant a role the user does not own", () => {
   assert.equal(resolveActiveMode(["COACH"], "ATHLETE"), "COACH");
   assert.equal(resolveActiveMode(["ADMIN"], "COACH"), "ADMIN");
   assert.equal(resolveActiveMode(["ADMIN", "ATHLETE"]), "ADMIN");
-  assert.equal(resolveActiveMode(["ADMIN", "ATHLETE", "COACH"], "ADMIN"), "ATHLETE");
-  assert.deepEqual(switchableModes(["ADMIN"]), []);
+  assert.equal(resolveActiveMode(["ADMIN", "ATHLETE", "COACH"], "ADMIN"), "ADMIN");
+  assert.deepEqual(switchableModes(["ADMIN"]), ["ADMIN"]);
+  assert.deepEqual(switchableModes(["ADMIN", "ATHLETE", "COACH"]), ["ATHLETE", "COACH", "ADMIN"]);
 });

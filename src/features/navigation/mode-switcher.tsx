@@ -42,7 +42,7 @@ export function ModeSwitcher({
       >
         {modes.map((item) => (
           <option key={item} value={item}>
-            {item === "ATHLETE" ? "Athlete" : "Coach"}
+            {item === "ATHLETE" ? "Athlete" : item === "COACH" ? "Coach" : "Admin"}
           </option>
         ))}
       </select>
