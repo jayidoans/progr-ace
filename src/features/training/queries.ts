@@ -138,7 +138,7 @@ export async function getHomepageTrainingPrograms(): Promise<HomepageTrainingPro
 }
 
 export async function getTrainingProgram(programId: string) {
-  const { supabase, user, roles, isAuthor } = await context();
+  const { supabase, user, roles, activeMode, isAuthor } = await context();
   const { data, error } = await supabase
     .from("training_programs")
     .select(
@@ -157,7 +157,7 @@ export async function getTrainingProgram(programId: string) {
     .eq("id", programId)
     .maybeSingle();
   if (error) throw new Error("Unable to load the training program.");
-  if (!data) return { program: null, user, roles, isAuthor: false, canEdit: false };
+  if (!data) return { program: null, user, roles, activeMode, isAuthor: false, canEdit: false };
 
   const program = data as TrainingProgramDetail;
   program.weeks.sort((a, b) => a.week_number - b.week_number);
@@ -190,6 +190,7 @@ export async function getTrainingProgram(programId: string) {
     program,
     user,
     roles,
+    activeMode,
     isAuthor,
     canEdit: program.status === "DRAFT" && (roles.includes("ADMIN") || program.created_by === user.id),
     canClaim: program.status === "PUBLISHED" && program.race_goal.athlete_id === user.id,

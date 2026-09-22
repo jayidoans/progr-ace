@@ -10,6 +10,24 @@ export function formatTrainingDate(value: string) {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
+function utcDateParts(value: string) {
+  const date = new Date(`${value}T00:00:00Z`);
+  return {
+    day: date.getUTCDate(),
+    month: new Intl.DateTimeFormat("en-GB", { month: "long", timeZone: "UTC" }).format(date),
+    monthIndex: date.getUTCMonth(),
+    year: date.getUTCFullYear(),
+  };
+}
+
+export function formatTrainingWeekRange(startDate: string, endDate: string) {
+  const start = utcDateParts(startDate);
+  const end = utcDateParts(endDate);
+  if (start.year === end.year && start.monthIndex === end.monthIndex) return `${start.day}–${end.day} ${start.month} ${start.year}`;
+  if (start.year === end.year) return `${start.day} ${start.month}–${end.day} ${end.month} ${end.year}`;
+  return `${start.day} ${start.month} ${start.year}–${end.day} ${end.month} ${end.year}`;
+}
+
 function formatSeconds(value: number) {
   const hours = Math.floor(value / 3600);
   const minutes = Math.floor((value % 3600) / 60);

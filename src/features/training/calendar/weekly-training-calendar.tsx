@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { formatComponent } from "@/src/features/training/format";
+import { formatComponent, formatTrainingWeekRange } from "@/src/features/training/format";
 import type { WeekWithPrescriptions } from "@/src/features/training/queries";
 import { deriveComplianceState } from "@/src/features/validation/engine/compliance";
 import { distanceCompletion, validationLabel } from "@/src/features/validation/format";
@@ -8,11 +8,20 @@ import { distanceCompletion, validationLabel } from "@/src/features/validation/f
 const weekdays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 type WeeklyTrainingCalendarProps = {
+  activeMode?: "ATHLETE" | "COACH" | "ADMIN" | null;
   canClaim?: boolean;
+  isCurrent?: boolean;
   week: WeekWithPrescriptions;
+  weekContextLabel?: string;
 };
 
-export function WeeklyTrainingCalendar({ canClaim = false, week }: WeeklyTrainingCalendarProps) {
+export function WeeklyTrainingCalendar({
+  activeMode,
+  canClaim = false,
+  isCurrent = false,
+  week,
+  weekContextLabel,
+}: WeeklyTrainingCalendarProps) {
   const start = new Date(`${week.start_date}T00:00:00Z`);
   const days = weekdays.map((label, index) => {
     const date = new Date(start);
@@ -27,10 +36,27 @@ export function WeeklyTrainingCalendar({ canClaim = false, week }: WeeklyTrainin
   });
 
   return (
-    <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200">
+    <section
+      className={`rounded-xl bg-white p-5 shadow-sm ring-1 ${
+        isCurrent
+          ? activeMode === "ATHLETE"
+            ? "ring-emerald-300"
+            : "ring-blue-300"
+          : "ring-gray-200"
+      }`}
+    >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-bold text-gray-950">Week {week.week_number}</h2>
-        <p className="text-sm font-semibold text-indigo-700">{week.phase}</p>
+        <div>
+          {weekContextLabel ? (
+            <p className={`text-xs font-bold uppercase tracking-wide ${activeMode === "ATHLETE" ? "text-emerald-700" : "text-blue-700"}`}>
+              {weekContextLabel}
+            </p>
+          ) : null}
+          <h2 className="text-lg font-bold text-gray-950">
+            Week {week.week_number} · {formatTrainingWeekRange(week.start_date, week.end_date)}
+          </h2>
+        </div>
+        {week.phase ? <p className="text-sm font-semibold text-indigo-700">{week.phase}</p> : null}
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
         {days.map((day) => (
