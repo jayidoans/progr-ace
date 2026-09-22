@@ -9,6 +9,7 @@ export type AdminUserSummary = {
   fullName: string | null;
   email: string | null;
   roles: string[];
+  stravaConnected?: boolean;
 };
 
 export async function getAdminUsers(): Promise<AdminUserSummary[]> {
@@ -21,13 +22,18 @@ export async function getAdminUsers(): Promise<AdminUserSummary[]> {
 
   if (!ownRoleRows.some((row) => row.role.name === "ADMIN")) notFound();
 
-  const { data, error } = await supabase.rpc("admin_list_users");
-  if (error) throw new Error("Unable to load the user directory.");
+  const [{ data, error }, { data: states, error: statesError }] = await Promise.all([
+    supabase.rpc("admin_list_users"),
+    supabase.rpc("admin_list_user_strava_states"),
+  ]);
+  if (error || statesError) throw new Error("Unable to load the user directory.");
+  const connectedByUser = new Map(states.map((row) => [row.user_id, row.strava_connected]));
   return data.map((row) => ({
     userId: row.user_id,
     fullName: row.full_name,
     email: row.email,
     roles: row.roles,
+    stravaConnected: connectedByUser.get(row.user_id) ?? false,
   }));
 }
 
@@ -59,4 +65,12 @@ export async function getAdminStravaStatus(userId: string): Promise<AdminStravaS
     connectionStatus: data[0].connection_status,
     lastSuccessfulSyncAt: data[0].last_successful_sync_at,
   };
+}
+
+export async function getAdminPasswordStatus(userId: string) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) notFound();
+  const { supabase } = await requireAuthenticatedSession("/dashboard/admin/users");
+  const { data, error } = await supabase.rpc("admin_get_user_password_status", { p_user_id: userId });
+  if (error || !data[0]) throw new Error("Unable to load password status.");
+  return data[0].must_change_password;
 }

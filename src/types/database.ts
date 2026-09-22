@@ -308,6 +308,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          must_change_password: boolean
           updated_at: string
         }
         Insert: {
@@ -315,6 +316,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          must_change_password?: boolean
           updated_at?: string
         }
         Update: {
@@ -322,6 +324,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          must_change_password?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -856,6 +859,22 @@ export type Database = {
           email: string | null
           roles: string[]
         }[]
+      }
+      admin_list_user_strava_states: {
+        Args: Record<PropertyKey, never>
+        Returns: { user_id: string; strava_connected: boolean }[]
+      }
+      admin_get_user_password_status: {
+        Args: { p_user_id: string }
+        Returns: { user_id: string; must_change_password: boolean }[]
+      }
+      current_user_must_change_password: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      set_user_must_change_password: {
+        Args: { p_user_id: string; p_required: boolean }
+        Returns: undefined
       }
       get_authorized_program_claim_states: {
         Args: { p_program_ids: string[] }

@@ -15,12 +15,22 @@ export const getCurrentSession = cache(async () => {
   return { supabase, user, authError };
 });
 
-export async function requireAuthenticatedSession(nextPath = "/dashboard") {
+export async function requireAuthenticatedSession(
+  nextPath = "/dashboard",
+  options: { allowForcedPasswordChange?: boolean } = {},
+) {
   const { supabase, user, authError } = await getCurrentSession();
 
   if (authError || !user) {
     const params = new URLSearchParams({ next: nextPath });
     redirect(`/login?${params.toString()}`);
+  }
+
+  if (!options.allowForcedPasswordChange) {
+    const { data: mustChangePassword, error: passwordStatusError } = await supabase.rpc(
+      "current_user_must_change_password",
+    );
+    if (passwordStatusError || mustChangePassword) redirect("/account/change-password");
   }
 
   return { supabase, user };

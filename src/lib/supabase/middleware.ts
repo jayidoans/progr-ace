@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { getSupabasePublicEnv } from "@/src/lib/supabase/env";
 import type { Database } from "@/src/types/database";
+import { requiresPasswordGate } from "@/src/features/auth/password-enforcement";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -32,7 +33,21 @@ export async function updateSession(request: NextRequest) {
   );
 
   // getUser verifies the JWT and refreshes an expired session when possible.
-  await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    if (requiresPasswordGate(request.nextUrl.pathname)) {
+      const { data: mustChange, error: passwordStatusError } = await supabase.rpc("current_user_must_change_password");
+      if (passwordStatusError || mustChange) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/account/change-password";
+        url.search = "";
+        const redirect = NextResponse.redirect(url);
+        response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+        return redirect;
+      }
+    }
+  }
 
   return response;
 }

@@ -13,6 +13,13 @@ export async function requireAthleteSession() {
     throw new StravaIntegrationError("authentication", "Athlete authentication is required.");
   }
 
+  const { data: mustChangePassword, error: passwordStatusError } = await supabase.rpc(
+    "current_user_must_change_password",
+  );
+  if (passwordStatusError || mustChangePassword) {
+    throw new StravaIntegrationError("authentication", "Password change is required before using Strava.");
+  }
+
   const { data: isAthlete, error: roleError } = await supabase.rpc("has_role", {
     p_role_code: "ATHLETE",
   });

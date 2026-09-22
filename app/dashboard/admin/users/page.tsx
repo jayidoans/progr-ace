@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { filterAdminUsers } from "@/src/features/admin/directory";
 import { getAdminUsers } from "@/src/features/admin/queries";
+import { adminRoleBadgeClass, summarizeAdminUsers } from "@/src/features/admin/summary";
 
 export default async function AdminUsersPage({ searchParams }: {
   searchParams: Promise<{ search?: string }>;
@@ -9,6 +10,7 @@ export default async function AdminUsersPage({ searchParams }: {
   const [users, params] = await Promise.all([getAdminUsers(), searchParams]);
   const search = typeof params.search === "string" ? params.search.slice(0, 100) : "";
   const results = filterAdminUsers(users, search);
+  const summary = summarizeAdminUsers(users);
 
   return (
     <div className="space-y-8">
@@ -17,6 +19,19 @@ export default async function AdminUsersPage({ searchParams }: {
         <h1 className="mt-2 text-3xl font-bold">Manage Users</h1>
         <p className="mt-3 max-w-2xl text-gray-600">View registered users and their access roles in ProgrACE.</p>
       </header>
+
+      <section aria-label="User account summary" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          ["Accounts", String(summary.accounts), "Total users"],
+          ["Athletes", String(summary.athletes), "Users"],
+          ["Coaches", String(summary.coaches), "Users"],
+          ["Strava", `${summary.stravaConnectedAthletes} / ${summary.athletes}`, "Connected"],
+        ].map(([label, value, detail]) => <article className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200" key={label}>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+          <p className="mt-1 text-2xl font-bold text-gray-950">{value}</p>
+          <p className="mt-1 text-xs text-gray-500">{detail}</p>
+        </article>)}
+      </section>
 
       <section className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
         <form action="/dashboard/admin/users" className="flex flex-col gap-3 sm:flex-row sm:items-end" method="get" role="search">
@@ -38,7 +53,7 @@ export default async function AdminUsersPage({ searchParams }: {
                   {user.roles.length === 0 ? (
                     <span className="text-sm text-gray-500">No roles assigned</span>
                   ) : user.roles.map((role) => (
-                    <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700" key={role}>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${adminRoleBadgeClass(role, user.stravaConnected)}`} key={role}>
                       {role}
                     </span>
                   ))}

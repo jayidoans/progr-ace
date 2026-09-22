@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 
 import { getCurrentProfile } from "@/src/features/profiles/queries";
+import { ChangePasswordForm } from "@/src/features/auth/change-password-form";
 
-export default async function ProfilePage() {
+export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const profile = await getCurrentProfile();
+  const params = await searchParams;
 
   if (!profile) {
     redirect("/login?next=/dashboard/profile");
@@ -43,6 +45,12 @@ export default async function ProfilePage() {
           </dd>
         </div>
       </dl>
+      <section className="mt-8 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+        <h2 className="text-xl font-bold">Change Password</h2>
+        <p className="mt-2 text-sm text-gray-600">Choose a new password for your ProgrACE account.</p>
+        {params.message === "password-changed" ? <p className="mt-4 rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">Your password has been changed.</p> : null}
+        <ChangePasswordForm />
+      </section>
     </section>
   );
 }
