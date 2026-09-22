@@ -6,13 +6,39 @@ import {
 import {
   formatDistanceKilometers,
   formatDistanceName,
-  formatDuration,
   formatRaceDate,
 } from "@/src/features/race-goals/format";
 import type { Race, RaceGoalWithRace } from "@/src/features/race-goals/queries";
 
 const inputClassName =
   "mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200";
+
+function DurationFields({ totalSeconds = 0 }: { totalSeconds?: number }) {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return (
+    <div>
+      <span className="block text-sm font-medium text-gray-800">Target finish</span>
+      <div className="mt-2 grid grid-cols-3 gap-3">
+        <label className="text-xs font-medium text-gray-600">
+          Hours
+          <input className={inputClassName} defaultValue={hours} inputMode="numeric" max={999} min={0} name="targetFinishHours" required step={1} type="number" />
+        </label>
+        <label className="text-xs font-medium text-gray-600">
+          Minutes
+          <input className={inputClassName} defaultValue={minutes} inputMode="numeric" max={59} min={0} name="targetFinishMinutes" required step={1} type="number" />
+        </label>
+        <label className="text-xs font-medium text-gray-600">
+          Seconds
+          <input className={inputClassName} defaultValue={seconds} inputMode="numeric" max={59} min={0} name="targetFinishSeconds" required step={1} type="number" />
+        </label>
+      </div>
+      <span className="mt-1 block text-xs text-gray-500">Enter the target finish as hours, minutes, and seconds.</span>
+    </div>
+  );
+}
 
 type RaceGoalFormProps = {
   activeGoal: RaceGoalWithRace | null;
@@ -52,18 +78,7 @@ export function RaceGoalForm({ activeGoal, races, selectedRaceId }: RaceGoalForm
             </select>
           </label>
 
-          <label className="block text-sm font-medium text-gray-800">
-            Target finish (HH:MM:SS)
-            <input
-              className={inputClassName}
-              inputMode="numeric"
-              name="targetFinishTime"
-              pattern="\d{1,3}:[0-5]\d:[0-5]\d"
-              placeholder="01:59:00"
-              required
-              type="text"
-            />
-          </label>
+          <DurationFields />
 
           <label className="block text-sm font-medium text-gray-800">
             Notes (optional)
@@ -89,18 +104,7 @@ export function RaceGoalForm({ activeGoal, races, selectedRaceId }: RaceGoalForm
             </p>
             <form action={updateActiveRaceGoal} className="mt-6 space-y-5">
               <input name="goalId" type="hidden" value={activeGoal.id} />
-              <label className="block text-sm font-medium text-gray-800">
-                Target finish (HH:MM:SS)
-                <input
-                  className={inputClassName}
-                  defaultValue={formatDuration(activeGoal.target_finish_time_sec)}
-                  inputMode="numeric"
-                  name="targetFinishTime"
-                  pattern="\d{1,3}:[0-5]\d:[0-5]\d"
-                  required
-                  type="text"
-                />
-              </label>
+              <DurationFields totalSeconds={activeGoal.target_finish_time_sec} />
               <label className="block text-sm font-medium text-gray-800">
                 Notes (optional)
                 <textarea

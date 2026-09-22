@@ -23,6 +23,12 @@ function raceGoalPath(kind: FeedbackKind, code: string, raceId?: string) {
   return `/dashboard/race-goals?${params.toString()}`;
 }
 
+function targetFinishTime(formData: FormData) {
+  return ["targetFinishHours", "targetFinishMinutes", "targetFinishSeconds"]
+    .map((name) => String(formData.get(name) ?? ""))
+    .join(":");
+}
+
 async function authenticatedContext() {
   const supabase = await createClient();
   const {
@@ -90,7 +96,7 @@ export async function createRace(formData: FormData) {
 export async function setActiveRaceGoal(formData: FormData) {
   const parsed = setActiveRaceGoalSchema.safeParse({
     raceId: formData.get("raceId"),
-    targetFinishTimeSec: formData.get("targetFinishTime"),
+    targetFinishTimeSec: targetFinishTime(formData),
     notes: formData.get("notes"),
   });
 
@@ -116,7 +122,7 @@ export async function setActiveRaceGoal(formData: FormData) {
 export async function updateActiveRaceGoal(formData: FormData) {
   const parsed = updateActiveRaceGoalSchema.safeParse({
     goalId: formData.get("goalId"),
-    targetFinishTimeSec: formData.get("targetFinishTime"),
+    targetFinishTimeSec: targetFinishTime(formData),
     notes: formData.get("notes"),
   });
 
