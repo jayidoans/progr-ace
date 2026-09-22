@@ -1,5 +1,6 @@
 export type DashboardNavigationAccess = {
   activeMode: "ATHLETE" | "COACH" | "ADMIN" | null;
+  roles: readonly string[];
 };
 
 export type DashboardNavigationGroup = {
@@ -9,6 +10,7 @@ export type DashboardNavigationGroup = {
 
 export function getDashboardNavigationGroups({
   activeMode,
+  roles,
 }: DashboardNavigationAccess): DashboardNavigationGroup[] {
   const groups: DashboardNavigationGroup[] = [];
 
@@ -33,7 +35,7 @@ export function getDashboardNavigationGroups({
     });
   }
 
-  if (activeMode === "ADMIN") {
+  if (roles.includes("ADMIN")) {
     groups.push({
       label: "Admin",
       items: [{ href: "/dashboard/admin/users", label: "Manage Users" }],

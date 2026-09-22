@@ -4,7 +4,7 @@ import test from "node:test";
 import { getDashboardNavigationGroups, getDashboardNavigationItems } from "./items";
 
 test("athletes see the Training and Profile groups", () => {
-  const groups = getDashboardNavigationGroups({ activeMode: "ATHLETE" });
+  const groups = getDashboardNavigationGroups({ activeMode: "ATHLETE", roles: ["ATHLETE"] });
   assert.deepEqual(groups.map((group) => group.label), ["Training", "Profile"]);
   assert.deepEqual(groups[0].items.map((item) => item.label), [
     "Race Goals",
@@ -12,7 +12,7 @@ test("athletes see the Training and Profile groups", () => {
     "Activities",
   ]);
   assert.deepEqual(
-    getDashboardNavigationItems({ activeMode: "ATHLETE" }).map((item) => item.href),
+    getDashboardNavigationItems({ activeMode: "ATHLETE", roles: ["ATHLETE"] }).map((item) => item.href),
     [
       "/dashboard",
       "/dashboard/race-goals",
@@ -25,15 +25,20 @@ test("athletes see the Training and Profile groups", () => {
 });
 
 test("admin mode shows Manage Users", () => {
-  const groups = getDashboardNavigationGroups({ activeMode: "ADMIN" });
+  const groups = getDashboardNavigationGroups({ activeMode: "ADMIN", roles: ["ADMIN"] });
   assert.ok(groups.some((group) => group.label === "Admin"));
-  assert.ok(getDashboardNavigationItems({ activeMode: "ADMIN" }).some((item) => item.href === "/dashboard/admin/users"));
+  assert.ok(getDashboardNavigationItems({ activeMode: "ADMIN", roles: ["ADMIN"] }).some((item) => item.href === "/dashboard/admin/users"));
+});
+
+test("Admin navigation follows actual roles, never mode alone", () => {
+  assert.ok(getDashboardNavigationGroups({ activeMode: "ATHLETE", roles: ["ATHLETE", "ADMIN"] }).some((group) => group.label === "Admin"));
+  assert.ok(!getDashboardNavigationGroups({ activeMode: "ADMIN", roles: ["ATHLETE"] }).some((group) => group.label === "Admin"));
 });
 
 test("coach and admin reviewers see Coaching without athlete-only Strava", () => {
-  const groups = getDashboardNavigationGroups({ activeMode: "COACH" });
+  const groups = getDashboardNavigationGroups({ activeMode: "COACH", roles: ["COACH"] });
   assert.deepEqual(groups.map((group) => group.label), ["Coaching", "Profile"]);
-  const paths = getDashboardNavigationItems({ activeMode: "COACH" }).map(
+  const paths = getDashboardNavigationItems({ activeMode: "COACH", roles: ["COACH"] }).map(
     (item) => item.href,
   );
   assert.ok(paths.includes("/dashboard/validation"));

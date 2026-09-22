@@ -848,6 +848,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_users: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          full_name: string | null
+          email: string | null
+          roles: string[]
+        }[]
+      }
       get_authorized_program_claim_states: {
         Args: { p_program_ids: string[] }
         Returns: {

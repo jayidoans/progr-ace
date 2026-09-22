@@ -33,7 +33,7 @@ export default async function DashboardLayout({
             ProgrACE
           </Link>
           <DashboardNavigation
-            access={{ activeMode }}
+            access={{ activeMode, roles }}
             activeMode={activeMode}
             email={user.email}
             roles={roles}
