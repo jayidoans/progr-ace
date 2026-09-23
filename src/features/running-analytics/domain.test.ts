@@ -251,6 +251,13 @@ test("weekly outcomes reuse Validation and existing MISSED/current/future semant
   );
 });
 
+test("historical pre-adoption sessions are not reported as missed", () => {
+  const source = { ...program([week("week", 1, "PUBLISHED", [prescription("historical", "2026-09-16")])]), tracking_start_date: "2026-09-17" };
+  const result = buildProgramRunningAnalytics(source, "2026-09-17");
+  assert.equal(result.weeks[0].outcomes.MISSED, 0);
+  assert.equal(result.weeks[0].outcomes.NOT_CLAIMED, 1);
+});
+
 test("SPEED data remains whole-session observation and completed Race Goals retain analytics", () => {
   const speed = prescription("intervals", "2026-09-14", {
     menu: "SPEED",

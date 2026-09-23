@@ -407,7 +407,17 @@ export async function confirmTrainingImport(formData: FormData) {
   if (typeof previewId !== "string") redirect("/dashboard/training?error=invalid-preview");
   const { supabase } = await authenticatedContext();
   const { data, error } = await supabase.rpc("confirm_training_import", { p_preview_id: previewId });
-  if (error || !data) redirect(pathWithFeedback(`/dashboard/training/import/${previewId}`, "error", "import-failed"));
+  if (error || !data) {
+    const message = error?.message ?? "";
+    const code = message.includes("Training week") || message.includes("prescription date")
+      ? "import-domain-invalid"
+      : message.includes("expired")
+        ? "import-expired"
+        : message.includes("active race goal")
+          ? "import-inactive-goal"
+          : "import-failed";
+    redirect(pathWithFeedback(`/dashboard/training/import/${previewId}`, "error", code));
+  }
   revalidatePath("/dashboard/training");
   redirect(`/dashboard/training/${data}?message=import-confirmed`);
 }

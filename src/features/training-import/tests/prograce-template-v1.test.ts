@@ -117,6 +117,15 @@ test("valid menus can use different weekdays, optional MEDIUM, and omitted rest 
   assert.equal(withMedium.plan!.weeks[0].prescriptions.some((item) => item.trainingMenu === "MEDIUM"), true);
 });
 
+test("historical training dates remain valid for mid-program adoption", async () => {
+  const result = await parseRows([
+    baseRow({ Week: 14, Date: "2026-09-22", Phase: "Taper", Session: "historical", Title: "Week 14 run" }),
+  ]);
+  assert.equal(result.status, "VALID");
+  assert.equal(result.plan?.startDate, "2026-09-21");
+  assert.equal(result.plan?.weeks[0].prescriptions[0].scheduledDate, "2026-09-22");
+});
+
 test("8 x 400m and composite sessions preserve ordered structured details", async () => {
   const result = await parseRows([
     baseRow({ Date: "2026-07-23", Session: "intervals", "Training Menu": "SPEED", Title: "8 x 400 m", "Workout Type": "INTERVAL", "Target Distance": null, Repetitions: 8, "Distance Per Rep": "400 m", Recovery: "90 s", Instruction: "Controlled repetitions" }),

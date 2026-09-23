@@ -62,6 +62,7 @@ export type RunningAnalyticsProgramSource = Pick<
   Tables<"training_programs">,
   "id" | "name" | "status" | "start_date" | "end_date" | "created_by"
 > & {
+  tracking_start_date?: string | null;
   race_goal: Pick<Tables<"athlete_race_goals">, "id" | "athlete_id" | "status"> & {
     athlete: Pick<Tables<"profiles">, "id" | "full_name" | "email">;
     race: Pick<Tables<"races">, "id" | "name" | "event_date">;
@@ -165,6 +166,7 @@ function sessionTrend(
   prescription: RunningAnalyticsPrescription,
   today: string,
   claimStates: Map<string, string | null>,
+  trackingStartDate?: string | null,
 ): RunningSessionTrend | null {
   if (!isRunningMenu(prescription.training_menu)) return null;
   const { claim, activities } = submittedRunningActivities(prescription);
@@ -198,6 +200,7 @@ function sessionTrend(
       prescription,
       today,
       claimStates.has(prescription.id) ? claimStates.get(prescription.id) : undefined,
+      trackingStartDate,
     ),
     validationResult: claim?.validation?.result ?? null,
     claimId: claim?.id ?? null,
@@ -214,6 +217,7 @@ function weeklyAnalytics(
   week: RunningAnalyticsWeekSource,
   today: string,
   claimStates: Map<string, string | null>,
+  trackingStartDate?: string | null,
 ): WeeklyRunningAnalytics {
   const runningPrescriptions = week.prescriptions.filter((item) => isRunningMenu(item.training_menu));
   const prescribedDistances = runningPrescriptions.flatMap((prescription) =>
@@ -251,7 +255,7 @@ function weeklyAnalytics(
     durationOnlyRunningPrescriptionCount,
     durationOnlyRunningComponentCount,
     runningActivityCount: uniqueActivities.size,
-    outcomes: complianceCounts(week.prescriptions, today, claimStates),
+    outcomes: complianceCounts(week.prescriptions, today, claimStates, trackingStartDate),
   };
 }
 
@@ -265,12 +269,12 @@ export function buildProgramRunningAnalytics(
     .sort((left, right) => left.start_date.localeCompare(right.start_date) || left.week_number - right.week_number);
   const sessions = weeks.flatMap((week) => {
     const trends = week.prescriptions
-      .map((prescription) => sessionTrend(week, prescription, today, claimStates))
+      .map((prescription) => sessionTrend(week, prescription, today, claimStates, source.tracking_start_date))
       .filter((trend): trend is RunningSessionTrend => trend !== null)
       .sort((left, right) => left.scheduledDate.localeCompare(right.scheduledDate) || left.prescriptionId.localeCompare(right.prescriptionId));
     return trends;
   });
-  const weekly = weeks.map((week) => weeklyAnalytics(week, today, claimStates));
+  const weekly = weeks.map((week) => weeklyAnalytics(week, today, claimStates, source.tracking_start_date));
   const currentWeek = weekly.find((week) => week.isCurrentWeek) ?? null;
 
   return {

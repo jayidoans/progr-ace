@@ -40,6 +40,7 @@ export type EvaluationProgram = Pick<
   Tables<"training_programs">,
   "id" | "name" | "status" | "start_date" | "end_date" | "created_by"
 > & {
+  tracking_start_date?: string | null;
   race_goal: Pick<Tables<"athlete_race_goals">, "id" | "athlete_id" | "status"> & {
     target_finish_time_sec: number;
     completed_at: string | null;
@@ -98,9 +99,13 @@ export function prescriptionComplianceState(
   prescription: EvaluationPrescription,
   today: string,
   claimStatus?: string | null,
+  trackingStartDate?: string | null,
 ) {
   const claim = prescription.claims[0] ?? null;
   const status = claimStatus === undefined ? claim?.status ?? null : claimStatus;
+  if (!status && trackingStartDate && prescription.scheduled_date < trackingStartDate) {
+    return "NOT_CLAIMED" as const;
+  }
   return deriveComplianceState(
     prescription.scheduled_date,
     status
@@ -114,6 +119,7 @@ export function complianceCounts(
   prescriptions: EvaluationPrescription[],
   today: string,
   claimStates = new Map<string, string | null>(),
+  trackingStartDate?: string | null,
 ): ComplianceCounts {
   const counts = Object.fromEntries(COMPLIANCE_STATES.map((state) => [state, 0])) as ComplianceCounts;
   prescriptions.forEach((prescription) => {
@@ -121,6 +127,7 @@ export function complianceCounts(
       prescription,
       today,
       claimStates.has(prescription.id) ? claimStates.get(prescription.id) : undefined,
+      trackingStartDate,
     );
     counts[state] += 1;
   });

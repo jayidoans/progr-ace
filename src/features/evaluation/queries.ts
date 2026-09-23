@@ -33,6 +33,7 @@ const evaluationProgramSelection = `
   status,
   start_date,
   end_date,
+  tracking_start_date,
   created_by,
   race_goal:athlete_race_goals!inner (
     id,
@@ -363,7 +364,7 @@ function coachProgramOverview(
     raceName: program.race_goal.race.name,
     currentWeekNumber: currentWeekFromPrescriptionDates(program, today)?.week_number ?? null,
     prescribedSessions: prescriptions.length,
-    compliance: complianceCounts(prescriptions, today, claimStates),
+    compliance: complianceCounts(prescriptions, today, claimStates, program.tracking_start_date),
   };
 }
 
@@ -380,6 +381,7 @@ function coachOperationalItems(
         prescription,
         today,
         claimStates.get(prescription.id) ?? null,
+        program.tracking_start_date,
       );
       const submittedClaim = prescription.claims.find((claim) => claim.status === "SUBMITTED");
       if (state === "NEEDS_REVIEW" && submittedClaim) {
@@ -432,7 +434,7 @@ async function athleteDashboard(
     null;
   const currentWeek = currentProgram ? currentWeekFromPrescriptionDates(currentProgram, today) : null;
   const weeklyPrescriptions = currentWeek?.prescriptions ?? [];
-  const compliance = currentWeek ? complianceCounts(weeklyPrescriptions, today) : null;
+  const compliance = currentWeek ? complianceCounts(weeklyPrescriptions, today, new Map(), currentProgram?.tracking_start_date) : null;
   const weeklyDistance = currentWeek ? weeklyDistanceSummary(weeklyPrescriptions) : null;
 
   const submitted = programs
@@ -461,7 +463,7 @@ async function athleteDashboard(
   });
   const attention = weeklyPrescriptions
     .map((prescription) => {
-      const state = prescriptionComplianceState(prescription, today);
+      const state = prescriptionComplianceState(prescription, today, undefined, currentProgram?.tracking_start_date);
       return {
         prescriptionId: prescription.id,
         title: prescription.title,

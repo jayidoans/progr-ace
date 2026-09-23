@@ -736,6 +736,7 @@ export type Database = {
           name: string
           race_goal_id: string
           start_date: string
+          tracking_start_date: string
           status: string
           updated_at: string
         }
@@ -748,6 +749,7 @@ export type Database = {
           name: string
           race_goal_id: string
           start_date: string
+          tracking_start_date?: string
           status?: string
           updated_at?: string
         }
@@ -760,6 +762,7 @@ export type Database = {
           name?: string
           race_goal_id?: string
           start_date?: string
+          tracking_start_date?: string
           status?: string
           updated_at?: string
         }
