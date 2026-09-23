@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 
 import ExcelJS from "exceljs";
+import JSZip from "jszip";
 
 import {
   parseDistanceMeters,
@@ -72,6 +73,32 @@ async function parseRows(rows: TemplateRow[], version = 1, headers = [...TEMPLAT
   });
 }
 
+async function prefixedSpreadsheetXmlBuffer(rows: TemplateRow[]) {
+  const archive = await JSZip.loadAsync(await workbookBuffer(rows));
+  const namespace = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+
+  await Promise.all(
+    Object.values(archive.files).map(async (entry) => {
+      if (entry.dir || !entry.name.startsWith("xl/") || !entry.name.endsWith(".xml")) {
+        return;
+      }
+
+      const xml = await entry.async("string");
+      const defaultNamespace = `xmlns="${namespace}"`;
+      if (!xml.includes(defaultNamespace)) return;
+
+      archive.file(
+        entry.name,
+        xml
+          .replace(defaultNamespace, `xmlns:x="${namespace}"`)
+          .replace(/<(\/?)(?![A-Za-z_][\w.-]*:)([A-Za-z_][\w.-]*)(?=[\s/>])/g, "<$1x:$2"),
+      );
+    }),
+  );
+
+  return Buffer.from(await archive.generateAsync({ type: "uint8array" }));
+}
+
 test("official download artifact is a valid, versioned XLSX with stable headers", async () => {
   const bytes = await readFile(templatePath);
   assert.ok(bytes.length > 0);
@@ -89,6 +116,16 @@ test("official download artifact is a valid, versioned XLSX with stable headers"
 
 test("archive preflight rejects non-XLSX input before workbook decompression", () => {
   assert.throws(() => validateXlsxEnvelope(Buffer.from("not an xlsx archive")), UnsafeWorkbookError);
+});
+
+test("valid prefixed SpreadsheetML namespaces are normalized before parsing", async () => {
+  const result = await parsePrograceTemplateV1(
+    await prefixedSpreadsheetXmlBuffer([baseRow()]),
+    { name: "Prefixed workbook", description: null },
+  );
+
+  assert.equal(result.status, "VALID");
+  assert.equal(result.plan?.weeks[0].prescriptions[0].title, "Easy Run");
 });
 
 test("canonical distance and duration formats convert without floating storage", () => {

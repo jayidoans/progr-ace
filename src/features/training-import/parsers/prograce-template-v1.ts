@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import JSZip from "jszip";
 
 import {
   INSTRUCTIONS_SHEET,
@@ -21,6 +22,50 @@ import type {
 } from "@/src/features/training-import/types";
 
 type CellValue = ExcelJS.CellValue;
+
+const spreadsheetMainNamespace =
+  "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+
+async function normalizePrefixedSpreadsheetXml(buffer: Buffer) {
+  const archive = await JSZip.loadAsync(buffer);
+  let changed = false;
+
+  await Promise.all(
+    Object.values(archive.files).map(async (entry) => {
+      if (entry.dir || !entry.name.startsWith("xl/") || !entry.name.endsWith(".xml")) {
+        return;
+      }
+
+      const xml = await entry.async("string");
+      const namespace = `xmlns:x="${spreadsheetMainNamespace}"`;
+      if (!xml.includes(namespace)) return;
+
+      archive.file(
+        entry.name,
+        xml
+          .replace(
+            namespace,
+            `xmlns="${spreadsheetMainNamespace}" ${namespace}`,
+          )
+          .replace(/<(\/?)x:/g, "<$1"),
+      );
+      changed = true;
+    }),
+  );
+
+  if (!changed) return null;
+  return Buffer.from(await archive.generateAsync({ type: "uint8array" }));
+}
+
+async function loadWorkbook(workbook: ExcelJS.Workbook, buffer: Buffer) {
+  try {
+    await workbook.xlsx.load(Uint8Array.from(buffer).buffer);
+  } catch (originalError) {
+    const normalized = await normalizePrefixedSpreadsheetXml(buffer);
+    if (!normalized) throw originalError;
+    await workbook.xlsx.load(Uint8Array.from(normalized).buffer);
+  }
+}
 
 function isFormula(value: CellValue) {
   return Boolean(value && typeof value === "object" && "formula" in value);
@@ -126,7 +171,7 @@ export async function parsePrograceTemplateV1(
   const workbook = new ExcelJS.Workbook();
 
   try {
-    await workbook.xlsx.load(Uint8Array.from(buffer).buffer);
+    await loadWorkbook(workbook, buffer);
   } catch {
     return {
       status: "ERROR",
