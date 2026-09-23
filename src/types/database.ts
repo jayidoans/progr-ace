@@ -163,6 +163,57 @@ export type Database = {
           },
         ]
       }
+      race_results: {
+        Row: {
+          athlete_race_goal_id: string
+          created_at: string
+          finish_time_sec: number | null
+          id: string
+          notes: string | null
+          recorded_by: string
+          result_source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          athlete_race_goal_id: string
+          created_at?: string
+          finish_time_sec?: number | null
+          id?: string
+          notes?: string | null
+          recorded_by: string
+          result_source?: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          athlete_race_goal_id?: string
+          created_at?: string
+          finish_time_sec?: number | null
+          id?: string
+          notes?: string | null
+          recorded_by?: string
+          result_source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "race_results_athlete_race_goal_id_fkey"
+            columns: ["athlete_race_goal_id"]
+            isOneToOne: true
+            referencedRelation: "athlete_race_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "race_results_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claim_activities: {
         Row: {
           activity_id: string
@@ -870,6 +921,28 @@ export type Database = {
       complete_coached_race_goal: {
         Args: { p_race_goal_id: string }
         Returns: string
+      }
+      create_race_result: {
+        Args: {
+          p_athlete_race_goal_id: string
+          p_finish_time_sec?: number | null
+          p_notes?: string | null
+          p_status: string
+        }
+        Returns: Database["public"]["Tables"]["race_results"]["Row"]
+      }
+      update_race_result: {
+        Args: {
+          p_finish_time_sec?: number | null
+          p_notes?: string | null
+          p_race_result_id: string
+          p_status: string
+        }
+        Returns: Database["public"]["Tables"]["race_results"]["Row"]
+      }
+      race_result_actor_can_access_goal: {
+        Args: { p_goal_id: string }
+        Returns: boolean
       }
       admin_list_users: {
         Args: Record<PropertyKey, never>
