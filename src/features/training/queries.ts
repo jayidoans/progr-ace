@@ -1,10 +1,9 @@
 import "server-only";
 
-import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { cache } from "react";
 
-import { getCurrentSession } from "@/src/features/auth/session";
-import { createClient } from "@/src/lib/supabase/server";
+import { getCurrentSession, getCurrentUserRoles, requireAuthenticatedSession } from "@/src/features/auth/session";
 import type { Json, Tables } from "@/src/types/database";
 import { ACTIVE_MODE_STORAGE_KEY, resolveActiveMode } from "@/src/features/navigation/active-mode";
 import {
@@ -20,7 +19,7 @@ export type PrescriptionComponent = Tables<"prescription_components">;
 
 export type ProgramRaceGoal = Pick<
   Tables<"athlete_race_goals">,
-  "id" | "athlete_id" | "target_finish_time_sec" | "status"
+  "id" | "athlete_id" | "target_finish_time_sec" | "status" | "completed_at" | "completed_by"
 > & {
   athlete: Pick<Tables<"profiles">, "id" | "full_name" | "email">;
   race: Pick<Tables<"races">, "id" | "name" | "event_date" | "distance_m" | "location">;
@@ -44,8 +43,19 @@ export type PrescriptionWithComponents = TrainingPrescription & {
     } | null;
   } | null;
 };
+type EvaluationEvidence = {
+  activity: Pick<
+    Tables<"activities">,
+    "id" | "distance_m" | "duration_sec" | "rpe" | "source" | "sport_type" | "started_at"
+  >;
+};
+type PrescriptionWithEvaluationEvidence = Omit<PrescriptionWithComponents, "claim"> & {
+  claim: (NonNullable<PrescriptionWithComponents["claim"]> & {
+    evidence: EvaluationEvidence[];
+  }) | null;
+};
 export type WeekWithPrescriptions = TrainingWeek & {
-  prescriptions: PrescriptionWithComponents[];
+  prescriptions: PrescriptionWithEvaluationEvidence[];
 };
 export type TrainingScheduleWeek = MaterializedScheduleWeek<PrescriptionWithComponents>;
 export type TrainingProgramDetail = TrainingProgramWithGoal & { weeks: WeekWithPrescriptions[] };
@@ -69,21 +79,53 @@ const goalSelection = `
   race:races (id, name, event_date, distance_m, location)
 `;
 
+const trainingProgramSelection = `
+  id,
+  race_goal_id,
+  name,
+  description,
+  start_date,
+  end_date,
+  status,
+  created_by,
+  tracking_start_date,
+  race_goal:athlete_race_goals (${goalSelection}),
+  weeks:training_weeks (
+    id,
+    training_program_id,
+    week_number,
+    phase,
+    planning_status,
+    start_date,
+    end_date,
+    prescriptions:training_prescriptions (
+      id,
+      training_week_id,
+      training_menu,
+      scheduled_date,
+      title,
+      description,
+      components:prescription_components (
+        id,
+        prescription_id,
+        sequence_order,
+        component_type,
+        target_distance_m,
+        target_duration_sec,
+        repetitions,
+        distance_per_rep_m,
+        recovery_duration_sec,
+        target_pace_min_sec_per_km,
+        target_pace_max_sec_per_km,
+        instruction
+      )
+    )
+  )
+`;
+
 async function context() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) redirect("/login?next=/dashboard/training");
-
-  const { data: roleRows, error: roleError } = await supabase
-    .from("user_roles")
-    .select("role:roles(name)")
-    .eq("user_id", user.id);
-  if (roleError) throw new Error("Unable to determine training access.");
-
-  const roles = roleRows.map((row) => row.role.name);
+  const { supabase, user } = await requireAuthenticatedSession("/dashboard/training");
+  const roles = await getCurrentUserRoles();
   const activeMode = resolveActiveMode(
     roles,
     (await cookies()).get(ACTIVE_MODE_STORAGE_KEY)?.value,
@@ -146,23 +188,11 @@ export async function getHomepageTrainingPrograms(): Promise<HomepageTrainingPro
   return data as HomepageTrainingProgram[];
 }
 
-export async function getTrainingProgram(programId: string) {
+export const getTrainingProgram = cache(async (programId: string) => {
   const { supabase, user, roles, activeMode, isAuthor } = await context();
   const { data, error } = await supabase
     .from("training_programs")
-    .select(
-      `
-        *,
-        race_goal:athlete_race_goals (${goalSelection}),
-        weeks:training_weeks (
-          *,
-          prescriptions:training_prescriptions (
-            *,
-            components:prescription_components (*)
-          )
-        )
-      `,
-    )
+    .select(trainingProgramSelection)
     .eq("id", programId)
     .maybeSingle();
   if (error) throw new Error("Unable to load the training program.");
@@ -180,11 +210,11 @@ export async function getTrainingProgram(programId: string) {
   const prescriptionIds = program.weeks.flatMap((week) =>
     week.prescriptions.map((prescription) => prescription.id),
   );
-  const claimByPrescription = new Map<string, PrescriptionWithComponents["claim"]>();
+  const claimByPrescription = new Map<string, PrescriptionWithEvaluationEvidence["claim"]>();
   if (prescriptionIds.length > 0) {
     const { data: claims, error: claimError } = await supabase
       .from("training_claims")
-      .select("id, prescription_id, status, submitted_at, validation:claim_validations(result, automatic_result, evaluation_source, checks:validation_checks(check_type, target_value, actual_value, result, message))")
+      .select("id, prescription_id, status, submitted_at, validation:claim_validations(result, automatic_result, evaluation_source, checks:validation_checks(check_type, target_value, actual_value, result, message)), evidence:claim_activities(activity:activities(id, distance_m, duration_sec, rpe, source, sport_type, started_at))")
       .in("prescription_id", prescriptionIds);
     if (claimError) throw new Error("Unable to load training claim states.");
     claims.forEach((claim) => claimByPrescription.set(claim.prescription_id, claim));
@@ -195,12 +225,21 @@ export async function getTrainingProgram(programId: string) {
     }),
   );
 
-  const scheduleWeeks = materializeProgramCalendar(
+  const scheduleWeeks = materializeProgramCalendar<PrescriptionWithComponents>(
     program.start_date,
     program.end_date,
     program.weeks.map((week) => ({
       ...week,
       planning_status: week.planning_status as WeekPlanningStatus,
+      prescriptions: week.prescriptions.map((prescription) => ({
+        ...prescription,
+        claim: prescription.claim ? {
+          id: prescription.claim.id,
+          status: prescription.claim.status,
+          submitted_at: prescription.claim.submitted_at,
+          validation: prescription.claim.validation,
+        } : null,
+      })),
     })),
   );
 
@@ -218,7 +257,7 @@ export async function getTrainingProgram(programId: string) {
       && (roles.includes("ADMIN") || (roles.includes("COACH") && program.created_by === user.id)),
     canClaim: program.status === "PUBLISHED" && program.race_goal.athlete_id === user.id,
   };
-}
+});
 
 export async function getTrainingImportPreview(previewId: string) {
   const { supabase, isAuthor } = await context();

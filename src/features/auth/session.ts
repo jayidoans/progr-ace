@@ -15,6 +15,28 @@ export const getCurrentSession = cache(async () => {
   return { supabase, user, authError };
 });
 
+const getCurrentPasswordChangeRequirement = cache(async () => {
+  const { supabase, user, authError } = await getCurrentSession();
+  if (authError || !user) return { mustChangePassword: false, error: authError };
+
+  const { data: mustChangePassword, error } = await supabase.rpc(
+    "current_user_must_change_password",
+  );
+  return { mustChangePassword, error };
+});
+
+export const getCurrentUserRoles = cache(async () => {
+  const { supabase, user, authError } = await getCurrentSession();
+  if (authError || !user) return [];
+
+  const { data: roleRows, error } = await supabase
+    .from("user_roles")
+    .select("role:roles(name)")
+    .eq("user_id", user.id);
+  if (error) throw new Error("Unable to determine dashboard access.");
+  return roleRows.map((row) => row.role.name);
+});
+
 export async function requireAuthenticatedSession(
   nextPath = "/dashboard",
   options: { allowForcedPasswordChange?: boolean } = {},
@@ -27,9 +49,7 @@ export async function requireAuthenticatedSession(
   }
 
   if (!options.allowForcedPasswordChange) {
-    const { data: mustChangePassword, error: passwordStatusError } = await supabase.rpc(
-      "current_user_must_change_password",
-    );
+    const { mustChangePassword, error: passwordStatusError } = await getCurrentPasswordChangeRequirement();
     if (passwordStatusError || mustChangePassword) redirect("/account/change-password");
   }
 

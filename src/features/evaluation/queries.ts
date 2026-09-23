@@ -3,7 +3,8 @@ import "server-only";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
-import { requireAuthenticatedSession } from "@/src/features/auth/session";
+import { getCurrentUserRoles, requireAuthenticatedSession } from "@/src/features/auth/session";
+import { getTrainingProgram } from "@/src/features/training/queries";
 import {
   complianceCounts,
   currentWeekFromPrescriptionDates,
@@ -19,6 +20,7 @@ import {
   type EvaluationWeek,
 } from "@/src/features/evaluation/analytics";
 import { groupCoachProgramsByGoal } from "@/src/features/evaluation/coach-athlete-progress";
+import { evaluationProgramFromTrainingProgram } from "@/src/features/evaluation/training-program-adapter";
 import type { Profile } from "@/src/features/profiles/queries";
 import type { RaceGoalWithRace } from "@/src/features/race-goals/queries";
 import { utcDateString } from "@/src/features/validation/engine/compliance";
@@ -238,18 +240,6 @@ function uniqueClaimActivities(prescription: EvaluationPrescription): Evaluation
   const activities = new Map<string, EvaluationActivity>();
   submittedClaim?.evidence.forEach(({ activity }) => activities.set(activity.id, activity));
   return [...activities.values()];
-}
-
-async function getRoles(
-  supabase: Awaited<ReturnType<typeof requireAuthenticatedSession>>["supabase"],
-  userId: string,
-) {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role:roles(name)")
-    .eq("user_id", userId);
-  if (error) throw new Error("Unable to determine evaluation dashboard access.");
-  return data.map((row) => row.role.name);
 }
 
 async function loadPrograms(
@@ -529,7 +519,7 @@ async function coachDashboard(
 
 export async function getEvaluationDashboard(): Promise<EvaluationDashboard> {
   const { supabase, user } = await requireAuthenticatedSession();
-  const roles = await getRoles(supabase, user.id);
+  const roles = await getCurrentUserRoles();
   const today = utcDateString();
   const isAdmin = roles.includes("ADMIN");
   const activeMode = resolveActiveMode(
@@ -546,12 +536,16 @@ export async function getCoachProgramEvaluation(
   programId: string,
 ): Promise<ProgramEvaluationOverview | null> {
   const { supabase, user } = await requireAuthenticatedSession(`/dashboard/training/${programId}`);
-  const roles = await getRoles(supabase, user.id);
+  const roles = await getCurrentUserRoles();
   const isAdmin = roles.includes("ADMIN");
   if (!isAdmin && !roles.includes("COACH")) return null;
-  const programs = await loadPrograms(supabase, { coachId: user.id, isAdmin, programId });
-  const program = programs.find((item) => item.id === programId);
-  if (!program) return null;
+  const trainingProgram = await getTrainingProgram(programId);
+  if (
+    !trainingProgram.program
+    || trainingProgram.program.status !== "PUBLISHED"
+    || (!isAdmin && trainingProgram.program.created_by !== user.id)
+  ) return null;
+  const program = evaluationProgramFromTrainingProgram(trainingProgram.program);
   const today = utcDateString();
   const claimStates = await authorizedClaimStates(supabase, [programId]);
   const operational = coachOperationalItems([program], today, claimStates);
@@ -572,7 +566,7 @@ export async function getCoachAthletesProgress(
     ? `/dashboard/coaching/athletes/${athleteId}`
     : "/dashboard/coaching/athletes";
   const { supabase, user } = await requireAuthenticatedSession(nextPath);
-  const roles = await getRoles(supabase, user.id);
+  const roles = await getCurrentUserRoles();
   const isAdmin = roles.includes("ADMIN");
   if (!isAdmin && !roles.includes("COACH")) notFound();
   const programs = await loadPrograms(supabase, {

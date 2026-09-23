@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 
-import { requireAuthenticatedSession } from "@/src/features/auth/session";
+import { getCurrentUserRoles, requireAuthenticatedSession } from "@/src/features/auth/session";
 import { DashboardNavigation } from "@/src/features/navigation/dashboard-navigation";
 import {
   ACTIVE_MODE_STORAGE_KEY,
@@ -12,14 +12,9 @@ import {
 export default async function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { supabase, user } = await requireAuthenticatedSession();
+  const { user } = await requireAuthenticatedSession();
 
-  const { data: roleRows, error: roleError } = await supabase
-    .from("user_roles")
-    .select("role:roles(name)")
-    .eq("user_id", user.id);
-  if (roleError) throw new Error("Unable to determine dashboard access.");
-  const roles = roleRows?.map((row) => row.role.name) ?? [];
+  const roles = await getCurrentUserRoles();
   const activeMode = resolveActiveMode(
     roles,
     (await cookies()).get(ACTIVE_MODE_STORAGE_KEY)?.value,
