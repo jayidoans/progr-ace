@@ -99,6 +99,51 @@ export const addComponentSchema = z
       value.targetPaceMinSecPerKm <= value.targetPaceMaxSecPerKm,
   );
 
+export const plannerComponentSchema = z
+  .object(componentFields)
+  .omit({ sequenceOrder: true })
+  .refine(hasComponentDetail)
+  .refine(
+    (value) =>
+      value.targetPaceMinSecPerKm === null ||
+      value.targetPaceMaxSecPerKm === null ||
+      value.targetPaceMinSecPerKm <= value.targetPaceMaxSecPerKm,
+  );
+
+export const startWeeklyPlanSchema = z.object({
+  programId: uuid,
+  weekDate: date,
+});
+
+const weeklySessionFields = {
+  programId: uuid,
+  trainingMenu: z.enum(TRAINING_MENUS),
+  scheduledDate: date,
+  title: z.string().trim().min(2).max(160),
+  description: optionalText(2000),
+  components: z.array(plannerComponentSchema).min(1).max(20),
+};
+
+export const createWeeklySessionSchema = z.object({
+  ...weeklySessionFields,
+  weekId: uuid,
+});
+
+export const updateWeeklySessionSchema = z.object({
+  ...weeklySessionFields,
+  prescriptionId: uuid,
+});
+
+export const deleteWeeklySessionSchema = z.object({
+  programId: uuid,
+  prescriptionId: uuid,
+});
+
+export const publishWeeklyPlanSchema = z.object({
+  programId: uuid,
+  weekId: uuid,
+});
+
 export const programIdSchema = z.object({ programId: uuid });
 
 export const importUploadSchema = z.object({

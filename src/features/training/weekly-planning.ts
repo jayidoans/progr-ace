@@ -24,25 +24,26 @@ export function materializeProgramCalendar<TPrescription>(
   const existingByStart = new Map(existingWeeks.map((week) => [week.start_date, week]));
   const startValue = Date.parse(`${programStart}T00:00:00Z`);
   const endValue = Date.parse(`${programEnd}T00:00:00Z`);
-  const first = new Date(startValue);
-  const daysUntilMonday = (8 - first.getUTCDay()) % 7;
-  let cursor = startValue + daysUntilMonday * DAY_MS;
+  let cursor = startValue;
   const result: MaterializedScheduleWeek<TPrescription>[] = [];
   let weekNumber = 1;
 
-  while (cursor + 6 * DAY_MS <= endValue) {
+  while (cursor <= endValue) {
     const startDate = isoDate(cursor);
+    const cursorDate = new Date(cursor);
+    const daysUntilSunday = (7 - (cursorDate.getUTCDay() || 7)) % 7;
+    const weekEndValue = Math.min(endValue, cursor + daysUntilSunday * DAY_MS);
     result.push(existingByStart.get(startDate) ?? {
       id: `unplanned-${startDate}`,
       week_number: weekNumber,
       phase: null,
       planning_status: "UNPLANNED",
       start_date: startDate,
-      end_date: isoDate(cursor + 6 * DAY_MS),
+      end_date: isoDate(weekEndValue),
       prescriptions: [],
     });
     existingByStart.delete(startDate);
-    cursor += 7 * DAY_MS;
+    cursor = weekEndValue + DAY_MS;
     weekNumber += 1;
   }
 

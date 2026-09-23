@@ -16,5 +16,21 @@ test("calendar materialization never exceeds the fixed program end date", () => 
   const weeks = materializeProgramCalendar("2026-11-30", "2026-12-06", []);
   assert.equal(weeks.length, 1);
   assert.equal(weeks[0].end_date, "2026-12-06");
-  assert.equal(materializeProgramCalendar("2026-12-01", "2026-12-06", []).length, 0);
+  const partial = materializeProgramCalendar("2026-12-01", "2026-12-06", []);
+  assert.equal(partial.length, 1);
+  assert.equal(partial[0].start_date, "2026-12-01");
+  assert.equal(partial[0].end_date, "2026-12-06");
+});
+
+test("partial boundary weeks preserve sequential numbering", () => {
+  const weeks = materializeProgramCalendar("2026-09-09", "2026-09-22", []);
+
+  assert.deepEqual(
+    weeks.map((week) => [week.week_number, week.start_date, week.end_date]),
+    [
+      [1, "2026-09-09", "2026-09-13"],
+      [2, "2026-09-14", "2026-09-20"],
+      [3, "2026-09-21", "2026-09-22"],
+    ],
+  );
 });

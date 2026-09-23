@@ -1007,6 +1007,40 @@ export type Database = {
         }
         Returns: string
       }
+      start_training_week_plan: {
+        Args: { p_program_id: string; p_week_date: string; p_phase?: string }
+        Returns: string
+      }
+      create_draft_week_prescription: {
+        Args: {
+          p_week_id: string
+          p_training_menu: string
+          p_scheduled_date: string
+          p_title: string
+          p_description: string
+          p_components: Json
+        }
+        Returns: string
+      }
+      update_draft_week_prescription: {
+        Args: {
+          p_prescription_id: string
+          p_training_menu: string
+          p_scheduled_date: string
+          p_title: string
+          p_description: string
+          p_components: Json
+        }
+        Returns: string
+      }
+      delete_draft_week_prescription: {
+        Args: { p_prescription_id: string }
+        Returns: string
+      }
+      publish_training_week: {
+        Args: { p_week_id: string }
+        Returns: string
+      }
       delete_strava_connection: {
         Args: { p_athlete_id: string }
         Returns: boolean

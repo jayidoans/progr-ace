@@ -163,7 +163,7 @@ export async function getTrainingProgram(programId: string) {
     .eq("id", programId)
     .maybeSingle();
   if (error) throw new Error("Unable to load the training program.");
-  if (!data) return { program: null, scheduleWeeks: [], user, roles, activeMode, isAuthor: false, canEdit: false };
+  if (!data) return { program: null, scheduleWeeks: [], user, roles, activeMode, isAuthor: false, canEdit: false, canPlan: false };
 
   const program = data as TrainingProgramDetail;
   program.weeks.sort((a, b) => a.week_number - b.week_number);
@@ -209,6 +209,10 @@ export async function getTrainingProgram(programId: string) {
     activeMode,
     isAuthor,
     canEdit: program.status === "DRAFT" && (roles.includes("ADMIN") || program.created_by === user.id),
+    canPlan:
+      program.status === "PUBLISHED"
+      && activeMode !== "ATHLETE"
+      && (roles.includes("ADMIN") || (roles.includes("COACH") && program.created_by === user.id)),
     canClaim: program.status === "PUBLISHED" && program.race_goal.athlete_id === user.id,
   };
 }

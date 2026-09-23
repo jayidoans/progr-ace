@@ -15,11 +15,13 @@ import { usePrependScrollAnchor } from "@/src/features/ui/use-prepend-scroll-anc
 type TrainingScheduleProps = {
   activeMode: "ATHLETE" | "COACH" | "ADMIN" | null;
   canClaim: boolean;
+  canPlan: boolean;
+  programId: string;
   today: string;
   weeks: TrainingScheduleWeek[];
 };
 
-export function TrainingSchedule({ activeMode, canClaim, today, weeks }: TrainingScheduleProps) {
+export function TrainingSchedule({ activeMode, canClaim, canPlan, programId, today, weeks }: TrainingScheduleProps) {
   const anchor = resolveTrainingScheduleAnchor(weeks, today);
   const [firstVisible, setFirstVisible] = useState(anchor.index);
   const [lastVisible, setLastVisible] = useState(anchor.index);
@@ -44,7 +46,7 @@ export function TrainingSchedule({ activeMode, canClaim, today, weeks }: Trainin
       {hasPreviousWeeks ? <div className="flex justify-center"><button className="min-h-11 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:border-indigo-300 hover:text-indigo-700" onClick={loadPreviousWeeks} type="button">Load Previous Weeks</button></div> : null}
       {visibleWeeks.map(({ index, week }) => {
         const isAnchorWeek = index === anchor.index;
-        return <div id={`training-week-${week.id}`} key={week.id}><WeeklyTrainingCalendar activeMode={activeMode} canClaim={canClaim} isCurrent={isAnchorWeek} week={week} weekContextLabel={isAnchorWeek ? contextLabel : undefined} /></div>;
+        return <div id={`training-week-${week.id}`} key={week.id}><WeeklyTrainingCalendar activeMode={activeMode} canClaim={canClaim} canPlan={canPlan} isCurrent={isAnchorWeek} programId={programId} week={week} weekContextLabel={isAnchorWeek ? contextLabel : undefined} /></div>;
       })}
       {hasNextWeeks ? <div className="flex justify-center"><button className="min-h-11 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:border-indigo-300 hover:text-indigo-700" onClick={() => setLastVisible((current) => revealNextWeekIndex(current, weeks.length))} type="button">Load Next Weeks</button></div> : null}
     </section>

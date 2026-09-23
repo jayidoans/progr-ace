@@ -1,16 +1,17 @@
 import Link from "next/link";
 
 import { formatComponent, formatTrainingWeekRange } from "@/src/features/training/format";
+import { DraftWeekPlanner, UnplannedWeekPlanner } from "@/src/features/training/planner/weekly-planner";
 import type { TrainingScheduleWeek } from "@/src/features/training/queries";
 import { deriveComplianceState } from "@/src/features/validation/engine/compliance";
 import { distanceCompletion, validationLabel } from "@/src/features/validation/format";
 
-const weekdays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-
 type WeeklyTrainingCalendarProps = {
   activeMode?: "ATHLETE" | "COACH" | "ADMIN" | null;
   canClaim?: boolean;
+  canPlan?: boolean;
   isCurrent?: boolean;
+  programId: string;
   week: TrainingScheduleWeek;
   weekContextLabel?: string;
 };
@@ -18,17 +19,21 @@ type WeeklyTrainingCalendarProps = {
 export function WeeklyTrainingCalendar({
   activeMode,
   canClaim = false,
+  canPlan = false,
   isCurrent = false,
+  programId,
   week,
   weekContextLabel,
 }: WeeklyTrainingCalendarProps) {
   const start = new Date(`${week.start_date}T00:00:00Z`);
-  const days = weekdays.map((label, index) => {
+  const end = new Date(`${week.end_date}T00:00:00Z`);
+  const dayCount = Math.round((end.valueOf() - start.valueOf()) / 86400000) + 1;
+  const days = Array.from({ length: dayCount }, (_, index) => {
     const date = new Date(start);
     date.setUTCDate(date.getUTCDate() + index);
     const isoDate = date.toISOString().slice(0, 10);
     return {
-      label,
+      label: date.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }).toUpperCase(),
       isoDate,
       day: date.getUTCDate(),
       prescriptions: week.prescriptions.filter((item) => item.scheduled_date === isoDate),
@@ -68,9 +73,11 @@ export function WeeklyTrainingCalendar({
         </div>
       </div>
       {week.planning_status === "UNPLANNED" ? (
-        <p className="mt-4 rounded-lg bg-gray-50 px-4 py-5 text-sm text-gray-600">
-          Training for this week has not been published yet.
-        </p>
+        canPlan ? <UnplannedWeekPlanner programId={programId} week={week} /> : (
+          <p className="mt-4 rounded-lg bg-gray-50 px-4 py-5 text-sm text-gray-600">
+            Training for this week has not been published yet.
+          </p>
+        )
       ) : <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
         {days.map((day) => (
           <div className="min-h-36 rounded-lg border border-gray-200 p-3" key={day.isoDate}>
@@ -154,6 +161,9 @@ export function WeeklyTrainingCalendar({
           </div>
         ))}
       </div>}
+      {canPlan && week.planning_status === "DRAFT" ? (
+        <DraftWeekPlanner programId={programId} week={week} />
+      ) : null}
     </section>
   );
 }

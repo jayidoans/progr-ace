@@ -16,9 +16,14 @@ import {
   addComponentSchema,
   addPrescriptionSchema,
   addWeekSchema,
+  createWeeklySessionSchema,
   createProgramSchema,
+  deleteWeeklySessionSchema,
   importUploadSchema,
+  publishWeeklyPlanSchema,
   programIdSchema,
+  startWeeklyPlanSchema,
+  updateWeeklySessionSchema,
 } from "@/src/features/training/schemas";
 import { createClient } from "@/src/lib/supabase/server";
 import type { Json } from "@/src/types/database";
@@ -56,6 +61,154 @@ function componentInput(formData: FormData) {
 
 function optionalNumber(value: number | null) {
   return value ?? undefined;
+}
+
+function plannerComponents(formData: FormData) {
+  const raw = formData.get("components");
+  if (typeof raw !== "string") return null;
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function trainingProgramPath(programId: string) {
+  return `/dashboard/training/${programId}`;
+}
+
+function plannerRpcComponents(components: Array<{
+  componentType: string;
+  targetDistanceM: number | null;
+  targetDurationSec: number | null;
+  repetitions: number | null;
+  distancePerRepM: number | null;
+  recoveryDurationSec: number | null;
+  targetPaceMinSecPerKm: number | null;
+  targetPaceMaxSecPerKm: number | null;
+  instruction: string | null;
+}>) {
+  return components.map((component) => ({
+    component_type: component.componentType,
+    target_distance_m: component.targetDistanceM,
+    target_duration_sec: component.targetDurationSec,
+    repetitions: component.repetitions,
+    distance_per_rep_m: component.distancePerRepM,
+    recovery_duration_sec: component.recoveryDurationSec,
+    target_pace_min_sec_per_km: component.targetPaceMinSecPerKm,
+    target_pace_max_sec_per_km: component.targetPaceMaxSecPerKm,
+    instruction: component.instruction,
+  }));
+}
+
+export async function startWeeklyTrainingPlan(formData: FormData) {
+  const parsed = startWeeklyPlanSchema.safeParse({
+    programId: formData.get("programId"),
+    weekDate: formData.get("weekDate"),
+  });
+  const programId = String(formData.get("programId") ?? "");
+  if (!parsed.success) redirect(pathWithFeedback(trainingProgramPath(programId), "error", "invalid-week"));
+
+  const { supabase } = await authenticatedContext();
+  const { error } = await supabase.rpc("start_training_week_plan", {
+    p_program_id: parsed.data.programId,
+    p_week_date: parsed.data.weekDate,
+    p_phase: "Weekly plan",
+  });
+  if (error) redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", "week-plan-failed"));
+  revalidatePath(trainingProgramPath(parsed.data.programId));
+  redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "message", "week-planning-started"));
+}
+
+export async function createWeeklyTrainingSession(formData: FormData) {
+  const parsed = createWeeklySessionSchema.safeParse({
+    programId: formData.get("programId"),
+    weekId: formData.get("weekId"),
+    trainingMenu: formData.get("trainingMenu"),
+    scheduledDate: formData.get("scheduledDate"),
+    title: formData.get("title"),
+    description: formData.get("description"),
+    components: plannerComponents(formData),
+  });
+  const programId = String(formData.get("programId") ?? "");
+  if (!parsed.success) redirect(pathWithFeedback(trainingProgramPath(programId), "error", "invalid-session"));
+
+  const { supabase } = await authenticatedContext();
+  const { error } = await supabase.rpc("create_draft_week_prescription", {
+    p_week_id: parsed.data.weekId,
+    p_training_menu: parsed.data.trainingMenu,
+    p_scheduled_date: parsed.data.scheduledDate,
+    p_title: parsed.data.title,
+    p_description: parsed.data.description ?? "",
+    p_components: plannerRpcComponents(parsed.data.components),
+  });
+  if (error) redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", "session-create-failed"));
+  revalidatePath(trainingProgramPath(parsed.data.programId));
+  redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "message", "session-created"));
+}
+
+export async function updateWeeklyTrainingSession(formData: FormData) {
+  const parsed = updateWeeklySessionSchema.safeParse({
+    programId: formData.get("programId"),
+    prescriptionId: formData.get("prescriptionId"),
+    trainingMenu: formData.get("trainingMenu"),
+    scheduledDate: formData.get("scheduledDate"),
+    title: formData.get("title"),
+    description: formData.get("description"),
+    components: plannerComponents(formData),
+  });
+  const programId = String(formData.get("programId") ?? "");
+  if (!parsed.success) redirect(pathWithFeedback(trainingProgramPath(programId), "error", "invalid-session"));
+
+  const { supabase } = await authenticatedContext();
+  const { error } = await supabase.rpc("update_draft_week_prescription", {
+    p_prescription_id: parsed.data.prescriptionId,
+    p_training_menu: parsed.data.trainingMenu,
+    p_scheduled_date: parsed.data.scheduledDate,
+    p_title: parsed.data.title,
+    p_description: parsed.data.description ?? "",
+    p_components: plannerRpcComponents(parsed.data.components),
+  });
+  if (error) redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", "session-update-failed"));
+  revalidatePath(trainingProgramPath(parsed.data.programId));
+  redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "message", "session-updated"));
+}
+
+export async function deleteWeeklyTrainingSession(formData: FormData) {
+  const parsed = deleteWeeklySessionSchema.safeParse({
+    programId: formData.get("programId"),
+    prescriptionId: formData.get("prescriptionId"),
+  });
+  const programId = String(formData.get("programId") ?? "");
+  if (!parsed.success) redirect(pathWithFeedback(trainingProgramPath(programId), "error", "invalid-session"));
+
+  const { supabase } = await authenticatedContext();
+  const { error } = await supabase.rpc("delete_draft_week_prescription", {
+    p_prescription_id: parsed.data.prescriptionId,
+  });
+  if (error) redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", "session-delete-failed"));
+  revalidatePath(trainingProgramPath(parsed.data.programId));
+  redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "message", "session-deleted"));
+}
+
+export async function publishWeeklyTrainingPlan(formData: FormData) {
+  const parsed = publishWeeklyPlanSchema.safeParse({
+    programId: formData.get("programId"),
+    weekId: formData.get("weekId"),
+  });
+  const programId = String(formData.get("programId") ?? "");
+  if (!parsed.success) redirect(pathWithFeedback(trainingProgramPath(programId), "error", "invalid-week"));
+
+  const { supabase } = await authenticatedContext();
+  const { error } = await supabase.rpc("publish_training_week", { p_week_id: parsed.data.weekId });
+  if (error) {
+    const code = error.message.includes("at least one training session")
+      ? "empty-week"
+      : "week-publish-failed";
+    redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", code));
+  }
+  revalidatePath(trainingProgramPath(parsed.data.programId));
+  redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "message", "week-published"));
 }
 
 export async function createTrainingProgram(formData: FormData) {
