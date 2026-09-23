@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import { WeeklyTrainingCalendar } from "@/src/features/training/calendar/weekly-training-calendar";
 import {
@@ -43,6 +44,7 @@ export function TrainingSchedule({ activeMode, canClaim, canPlan, programId, tod
 
   return (
     <section aria-label="Training calendar" className="space-y-4">
+      <div className="flex justify-end"><Link className="inline-flex min-h-11 items-center rounded-md border border-indigo-300 px-4 text-sm font-semibold text-indigo-700 hover:bg-indigo-50" href={`/dashboard/training/${programId}/progress`}>Training Progress</Link></div>
       {hasPreviousWeeks ? <div className="flex justify-center"><button className="min-h-11 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:border-indigo-300 hover:text-indigo-700" onClick={loadPreviousWeeks} type="button">Load Previous Weeks</button></div> : null}
       {visibleWeeks.map(({ index, week }) => {
         const isAnchorWeek = index === anchor.index;

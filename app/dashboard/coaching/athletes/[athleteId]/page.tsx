@@ -85,6 +85,7 @@ export default async function CoachAthleteDetailPage({
                   </p>
                 </div>
                 <Link className="inline-flex min-h-11 items-center rounded-md border border-blue-300 px-4 text-sm font-semibold text-blue-700 hover:bg-blue-50" href={`/dashboard/training/${goal.currentProgram.id}`}>Open Training Program</Link>
+                <Link className="inline-flex min-h-11 items-center rounded-md border border-blue-300 px-4 text-sm font-semibold text-blue-700 hover:bg-blue-50" href={`/dashboard/training/${goal.currentProgram.id}/progress`}>Training Progress</Link>
               </div>
               <div className="mt-5"><StatusSummary counts={goal.currentProgram.compliance} /></div>
             </section>
