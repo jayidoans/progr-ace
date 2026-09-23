@@ -6,6 +6,10 @@ alter table public.athlete_race_goals
 
 -- Existing completed goals remain historical. Their original actor is unknown,
 -- so only the completion time can be backfilled from the last lifecycle update.
+-- The existing history trigger intentionally rejects all updates to terminal
+-- goals. Remove it only for this transactional backfill, then recreate it
+-- with the stricter audit-aware implementation below.
+drop trigger if exists athlete_race_goals_protect_history on public.athlete_race_goals;
 update public.athlete_race_goals
 set completed_at = updated_at
 where status = 'COMPLETED';
@@ -54,6 +58,10 @@ begin
   return new;
 end;
 $$;
+
+create trigger athlete_race_goals_protect_history
+before update on public.athlete_race_goals
+for each row execute function public.protect_race_goal_history();
 
 drop policy if exists "race_goals_update_own_active" on public.athlete_race_goals;
 create policy "race_goals_update_own_active"
