@@ -23,9 +23,7 @@ export const createProgramSchema = z
     name: z.string().trim().min(2).max(160),
     description: optionalText(2000),
     startDate: date,
-    endDate: date,
-  })
-  .refine((value) => value.endDate >= value.startDate);
+  });
 
 export const addWeekSchema = z
   .object({

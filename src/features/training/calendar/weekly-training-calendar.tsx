@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { formatComponent, formatTrainingWeekRange } from "@/src/features/training/format";
-import { DraftWeekPlanner, UnplannedWeekPlanner } from "@/src/features/training/planner/weekly-planner";
+import { AddAnotherWeekPlanner, DraftWeekPlanner, ExtendProgramPlanner, UnplannedWeekPlanner } from "@/src/features/training/planner/weekly-planner";
 import type { TrainingScheduleWeek } from "@/src/features/training/queries";
 import { deriveComplianceState } from "@/src/features/validation/engine/compliance";
 import { distanceCompletion, validationLabel } from "@/src/features/validation/format";
@@ -14,6 +14,8 @@ type WeeklyTrainingCalendarProps = {
   programId: string;
   week: TrainingScheduleWeek;
   weekContextLabel?: string;
+  nextWeek?: TrainingScheduleWeek;
+  canExtendToRaceDate?: boolean;
 };
 
 export function WeeklyTrainingCalendar({
@@ -24,6 +26,8 @@ export function WeeklyTrainingCalendar({
   programId,
   week,
   weekContextLabel,
+  nextWeek,
+  canExtendToRaceDate = false,
 }: WeeklyTrainingCalendarProps) {
   const start = new Date(`${week.start_date}T00:00:00Z`);
   const end = new Date(`${week.end_date}T00:00:00Z`);
@@ -163,6 +167,12 @@ export function WeeklyTrainingCalendar({
       </div>}
       {canPlan && week.planning_status === "DRAFT" ? (
         <DraftWeekPlanner programId={programId} week={week} />
+      ) : null}
+      {canPlan && week.planning_status === "PUBLISHED" && nextWeek?.planning_status === "UNPLANNED" ? (
+        <AddAnotherWeekPlanner programId={programId} week={nextWeek} />
+      ) : null}
+      {canPlan && week.planning_status === "PUBLISHED" && !nextWeek && canExtendToRaceDate ? (
+        <ExtendProgramPlanner programId={programId} />
       ) : null}
     </section>
   );

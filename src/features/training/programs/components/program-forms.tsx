@@ -23,7 +23,7 @@ export function ProgramForm({ raceGoals, selectedRaceGoalId }: { raceGoals: Prog
           <option value="">Select a race goal</option>
           {raceGoals.map((goal) => (
             <option key={goal.id} value={goal.id}>
-              {goal.athlete.full_name ?? goal.athlete.email ?? "Athlete"} — {goal.race.name} ({goal.status})
+              {goal.athlete.full_name ?? goal.athlete.email ?? "Athlete"} — {goal.race.name} · Race day {goal.race.event_date}
             </option>
           ))}
         </select>
@@ -32,20 +32,17 @@ export function ProgramForm({ raceGoals, selectedRaceGoalId }: { raceGoals: Prog
         Program name
         <input className={input} maxLength={160} name="name" required />
       </label>
-      <label className="block text-sm font-medium text-gray-800">
+      <label className="block text-sm font-medium text-gray-800 sm:col-span-2">
         Start date
         <input className={input} name="startDate" required type="date" />
       </label>
-      <label className="block text-sm font-medium text-gray-800">
-        End date
-        <input className={input} name="endDate" required type="date" />
-      </label>
+      <p className="rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-800 sm:col-span-2">The program ends on the selected Race Goal&apos;s race day, so you can plan week by week until the event.</p>
       <label className="block text-sm font-medium text-gray-800 sm:col-span-2">
         Description
         <textarea className={input} maxLength={2000} name="description" rows={4} />
       </label>
       <button className="rounded-md bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-500 sm:col-span-2" type="submit">
-        Create draft program
+        Create draft program to race day
       </button>
     </form>
   );

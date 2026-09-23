@@ -107,6 +107,7 @@ export async function startWeeklyTrainingPlan(formData: FormData) {
     weekDate: formData.get("weekDate"),
   });
   const programId = String(formData.get("programId") ?? "");
+  const showNextWeek = formData.get("showNextWeek") === "true";
   if (!parsed.success) redirect(pathWithFeedback(trainingProgramPath(programId), "error", "invalid-week"));
 
   const { supabase } = await authenticatedContext();
@@ -117,7 +118,21 @@ export async function startWeeklyTrainingPlan(formData: FormData) {
   });
   if (error) redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", "week-plan-failed"));
   revalidatePath(trainingProgramPath(parsed.data.programId));
-  redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "message", "week-planning-started"));
+  redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "message", showNextWeek ? "next-week-started" : "week-planning-started"));
+}
+
+export async function extendTrainingProgramAndStartNextWeek(formData: FormData) {
+  const parsed = programIdSchema.safeParse({ programId: formData.get("programId") });
+  const programId = String(formData.get("programId") ?? "");
+  if (!parsed.success) redirect(pathWithFeedback(trainingProgramPath(programId), "error", "invalid-program"));
+
+  const { supabase } = await authenticatedContext();
+  const { error } = await supabase.rpc("extend_and_start_next_training_week", {
+    p_program_id: parsed.data.programId,
+  });
+  if (error) redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", "program-extension-failed"));
+  revalidatePath(trainingProgramPath(parsed.data.programId));
+  redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "message", "program-extended-next-week"));
 }
 
 export async function createWeeklyTrainingSession(formData: FormData) {
@@ -217,11 +232,19 @@ export async function createTrainingProgram(formData: FormData) {
     name: formData.get("name"),
     description: formData.get("description"),
     startDate: formData.get("startDate"),
-    endDate: formData.get("endDate"),
   });
   if (!parsed.success) redirect(pathWithFeedback("/dashboard/training/new", "error", "invalid-program"));
 
   const { supabase, user } = await authenticatedContext();
+  const { data: goal, error: goalError } = await supabase
+    .from("athlete_race_goals")
+    .select("id, status, race:races(event_date)")
+    .eq("id", parsed.data.raceGoalId)
+    .maybeSingle();
+  const raceDate = goal?.race?.event_date;
+  if (goalError || goal?.status !== "ACTIVE" || !raceDate || parsed.data.startDate > raceDate) {
+    redirect(pathWithFeedback("/dashboard/training/new", "error", "invalid-program"));
+  }
   const { data, error } = await supabase
     .from("training_programs")
     .insert({
@@ -229,7 +252,7 @@ export async function createTrainingProgram(formData: FormData) {
       name: parsed.data.name,
       description: parsed.data.description,
       start_date: parsed.data.startDate,
-      end_date: parsed.data.endDate,
+      end_date: raceDate,
       created_by: user.id,
       status: "DRAFT",
     })

@@ -20,12 +20,14 @@ type TrainingScheduleProps = {
   programId: string;
   today: string;
   weeks: TrainingScheduleWeek[];
+  canExtendToRaceDate?: boolean;
+  focusNextWeek?: boolean;
 };
 
-export function TrainingSchedule({ activeMode, canClaim, canPlan, programId, today, weeks }: TrainingScheduleProps) {
+export function TrainingSchedule({ activeMode, canClaim, canPlan, programId, today, weeks, canExtendToRaceDate = false, focusNextWeek = false }: TrainingScheduleProps) {
   const anchor = resolveTrainingScheduleAnchor(weeks, today);
   const [firstVisible, setFirstVisible] = useState(anchor.index);
-  const [lastVisible, setLastVisible] = useState(anchor.index);
+  const [lastVisible, setLastVisible] = useState(() => focusNextWeek ? Math.min(anchor.index + 1, weeks.length - 1) : anchor.index);
   const preserveScrollAnchor = usePrependScrollAnchor(firstVisible);
 
   const loadPreviousWeeks = () => {
@@ -48,7 +50,7 @@ export function TrainingSchedule({ activeMode, canClaim, canPlan, programId, tod
       {hasPreviousWeeks ? <div className="flex justify-center"><button className="min-h-11 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:border-indigo-300 hover:text-indigo-700" onClick={loadPreviousWeeks} type="button">Load Previous Weeks</button></div> : null}
       {visibleWeeks.map(({ index, week }) => {
         const isAnchorWeek = index === anchor.index;
-        return <div id={`training-week-${week.id}`} key={week.id}><WeeklyTrainingCalendar activeMode={activeMode} canClaim={canClaim} canPlan={canPlan} isCurrent={isAnchorWeek} programId={programId} week={week} weekContextLabel={isAnchorWeek ? contextLabel : undefined} /></div>;
+        return <div id={`training-week-${week.id}`} key={week.id}><WeeklyTrainingCalendar activeMode={activeMode} canClaim={canClaim} canPlan={canPlan} canExtendToRaceDate={isAnchorWeek && canExtendToRaceDate} isCurrent={isAnchorWeek} nextWeek={isAnchorWeek ? weeks[index + 1] : undefined} programId={programId} week={week} weekContextLabel={isAnchorWeek ? contextLabel : undefined} /></div>;
       })}
       {hasNextWeeks ? <div className="flex justify-center"><button className="min-h-11 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:border-indigo-300 hover:text-indigo-700" onClick={() => setLastVisible((current) => revealNextWeekIndex(current, weeks.length))} type="button">Load Next Weeks</button></div> : null}
     </section>

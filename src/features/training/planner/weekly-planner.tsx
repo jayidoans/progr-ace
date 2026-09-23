@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   createWeeklyTrainingSession,
   deleteWeeklyTrainingSession,
+  extendTrainingProgramAndStartNextWeek,
   publishWeeklyTrainingPlan,
   startWeeklyTrainingPlan,
   updateWeeklyTrainingSession,
@@ -184,6 +185,35 @@ export function UnplannedWeekPlanner({ programId, week }: { programId: string; w
         </button>
       </form>
     </div>
+  );
+}
+
+export function AddAnotherWeekPlanner({ programId, week }: { programId: string; week: TrainingScheduleWeek }) {
+  return (
+    <div className="mt-5 border-t border-gray-200 pt-5">
+      <p className="text-sm text-gray-600">Continue planning with Week {week.week_number}.</p>
+      <form action={startWeeklyTrainingPlan} className="mt-3">
+        <input name="programId" type="hidden" value={programId} />
+        <input name="weekDate" type="hidden" value={week.start_date} />
+        <input name="showNextWeek" type="hidden" value="true" />
+        <button className="min-h-11 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500" type="submit">
+          Add Another Week
+        </button>
+      </form>
+    </div>
+  );
+}
+
+export function ExtendProgramPlanner({ programId }: { programId: string }) {
+  return (
+    <details className="mt-5 border-t border-gray-200 pt-5">
+      <summary className="min-h-11 cursor-pointer py-2 font-semibold text-blue-700">Add Another Week</summary>
+      <p className="mt-2 text-sm text-gray-600">This extends the program through Race Day and creates the next week as a draft. Published training already in the schedule will not change.</p>
+      <form action={extendTrainingProgramAndStartNextWeek} className="mt-4">
+        <input name="programId" type="hidden" value={programId} />
+        <button className="min-h-11 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500" type="submit">Extend to Race Day and Add Week</button>
+      </form>
+    </details>
   );
 }
 

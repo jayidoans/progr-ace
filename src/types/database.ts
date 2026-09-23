@@ -1104,6 +1104,10 @@ export type Database = {
         Args: { p_program_id: string; p_week_date: string; p_phase?: string }
         Returns: string
       }
+      extend_and_start_next_training_week: {
+        Args: { p_program_id: string }
+        Returns: string
+      }
       create_draft_week_prescription: {
         Args: {
           p_week_id: string
