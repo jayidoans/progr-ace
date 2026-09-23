@@ -22,21 +22,12 @@ const resultSelection = `
   )
 `;
 
-export async function getRaceResultForGoal(goalId: string): Promise<RaceResultContext | null> {
-  const { supabase } = await requireAuthenticatedSession();
-  const { data, error } = await supabase
-    .from("race_results")
-    .select(resultSelection)
-    .eq("athlete_race_goal_id", goalId)
-    .maybeSingle();
-  if (error) throw new Error("Unable to load the race result.");
-  if (!data) return null;
-  const row = data as unknown as {
-    id: string; athlete_race_goal_id: string; status: RaceResultContext["status"];
-    finish_time_sec: number | null; result_source: "MANUAL"; notes: string | null;
-    recorded_by: string; created_at: string; updated_at: string;
-    race_goal: { athlete_id: string; status: string; target_finish_time_sec: number | null; race: { name: string; event_date: string; distance_m: number } };
-  };
+function mapRaceResult(row: {
+  id: string; athlete_race_goal_id: string; status: RaceResultContext["status"];
+  finish_time_sec: number | null; result_source: "MANUAL"; notes: string | null;
+  recorded_by: string; created_at: string; updated_at: string;
+  race_goal: { athlete_id: string; status: string; target_finish_time_sec: number | null; race: { name: string; event_date: string; distance_m: number } };
+}): RaceResultContext {
   return {
     id: row.id,
     athleteRaceGoalId: row.athlete_race_goal_id,
@@ -54,4 +45,20 @@ export async function getRaceResultForGoal(goalId: string): Promise<RaceResultCo
     targetFinishTimeSec: row.race_goal.target_finish_time_sec,
     athleteId: row.race_goal.athlete_id,
   };
+}
+
+export async function getRaceResultsForGoals(goalIds: string[]): Promise<RaceResultContext[]> {
+  if (goalIds.length === 0) return [];
+  const { supabase } = await requireAuthenticatedSession();
+  const { data, error } = await supabase
+    .from("race_results")
+    .select(resultSelection)
+    .in("athlete_race_goal_id", goalIds);
+  if (error) throw new Error("Unable to load the race result.");
+  return (data ?? []).map((row) => mapRaceResult(row as unknown as Parameters<typeof mapRaceResult>[0]));
+}
+
+export async function getRaceResultForGoal(goalId: string): Promise<RaceResultContext | null> {
+  const results = await getRaceResultsForGoals([goalId]);
+  return results[0] ?? null;
 }

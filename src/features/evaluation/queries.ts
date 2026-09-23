@@ -176,6 +176,7 @@ export type CoachRaceGoalProgress = {
   status: string;
   raceName: string;
   raceDate: string;
+  raceDistanceM: number;
   targetFinishTimeSec: number;
   completedAt: string | null;
   currentProgram: CoachProgramOverview;
@@ -301,6 +302,7 @@ function coachAthleteProgress(
       status: currentProgram.race_goal.status,
       raceName: currentProgram.race_goal.race.name,
       raceDate: currentProgram.race_goal.race.event_date,
+      raceDistanceM: currentProgram.race_goal.race.distance_m,
       targetFinishTimeSec: currentProgram.race_goal.target_finish_time_sec,
       completedAt: currentProgram.race_goal.completed_at,
       currentProgram: coachProgramOverview(currentProgram, today, claimStates),

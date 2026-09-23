@@ -7,6 +7,8 @@ import { completeCoachedRaceGoal } from "@/src/features/race-goals/actions";
 import { canOfferRaceGoalCompletion } from "@/src/features/race-goals/completion";
 import { formatDuration, formatRaceDate } from "@/src/features/race-goals/format";
 import { formatTrainingDate } from "@/src/features/training/format";
+import { getRaceResultsForGoals } from "@/src/features/race-results/queries";
+import { RaceResultCard } from "@/src/features/race-results/components/race-result-card";
 
 const messages: Record<string, string> = {
   "goal-completed": "The race goal is completed. Training history remains available.",
@@ -29,6 +31,8 @@ export default async function CoachAthleteDetailPage({
   const data = await getCoachAthletesProgress(athleteId);
   const athlete = data.athletes.find((item) => item.athleteId === athleteId);
   if (!athlete) notFound();
+  const raceResults = await getRaceResultsForGoals(athlete.goals.map((goal) => goal.goalId));
+  const resultByGoal = new Map(raceResults.map((result) => [result.athleteRaceGoalId, result]));
 
   return (
     <div className="space-y-8">
@@ -89,6 +93,19 @@ export default async function CoachAthleteDetailPage({
               </div>
               <div className="mt-5"><StatusSummary counts={goal.currentProgram.compliance} /></div>
             </section>
+
+            <RaceResultCard
+              canRecord={goal.status !== "CANCELLED" && data.today >= goal.raceDate}
+              goalId={goal.goalId}
+              programId={goal.currentProgram.id}
+              raceDate={goal.raceDate}
+              raceDistanceM={goal.raceDistanceM}
+              raceGoalStatus={goal.status}
+              raceName={goal.raceName}
+              result={resultByGoal.get(goal.goalId) ?? null}
+              showTrainingProgress
+              targetFinishTimeSec={goal.targetFinishTimeSec}
+            />
 
             <div className="mt-6 grid gap-5 border-t border-gray-200 pt-6 lg:grid-cols-2">
               <section>

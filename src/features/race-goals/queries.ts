@@ -1,6 +1,7 @@
 import "server-only";
 
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
+import { getRaceResultsForGoals } from "@/src/features/race-results/queries";
 import type { Tables } from "@/src/types/database";
 
 export type Race = Tables<"races">;
@@ -77,10 +78,15 @@ export async function getRaceGoalPageData() {
     throw new Error("Unable to load race goal information.");
   }
 
+  const goals = [activeResult.data, ...historyResult.data].filter(
+    (goal): goal is NonNullable<typeof goal> => goal !== null,
+  );
+  const raceResults = await getRaceResultsForGoals(goals.map((goal) => goal.id));
   return {
     races: racesResult.data,
     activeGoal: activeResult.data,
     history: historyResult.data,
+    raceResults,
     canManageRaces: Boolean(adminRoleResult.data || coachRoleResult.data),
   };
 }

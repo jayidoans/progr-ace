@@ -3,6 +3,8 @@ import { CreateRaceForm } from "@/src/features/race-goals/components/create-race
 import { RaceGoalForm } from "@/src/features/race-goals/components/race-goal-form";
 import { RaceGoalHistory } from "@/src/features/race-goals/components/race-goal-history";
 import { getRaceGoalPageData } from "@/src/features/race-goals/queries";
+import { RaceResultCard } from "@/src/features/race-results/components/race-result-card";
+import { utcDateString } from "@/src/features/validation/engine/compliance";
 
 const messages: Record<string, string> = {
   "race-created": "Race created. You can now set it as your target.",
@@ -37,6 +39,11 @@ export default async function RaceGoalsPage({ searchParams }: RaceGoalsPageProps
     : undefined;
   const message = params.message ? messages[params.message] : undefined;
   const error = params.error ? errors[params.error] : undefined;
+  const resultByGoal = new Map(data.raceResults.map((result) => [result.athleteRaceGoalId, result]));
+  const today = utcDateString();
+  const resultGoals = [data.activeGoal, ...data.history].filter(
+    (goal): goal is NonNullable<typeof goal> => goal !== null,
+  );
 
   return (
     <div className="space-y-8">
@@ -60,6 +67,7 @@ export default async function RaceGoalsPage({ searchParams }: RaceGoalsPageProps
       ) : null}
 
       <ActiveRaceGoalCard goal={data.activeGoal} />
+      {resultGoals.length > 0 ? <section className="space-y-5"><div><h2 className="text-xl font-bold text-gray-950">Race Day results</h2><p className="mt-1 text-sm text-gray-600">Record the factual outcome separately from your Race Goal and Training Progress.</p></div>{resultGoals.map((goal) => <RaceResultCard goalId={goal.id} key={goal.id} raceDate={goal.race.event_date} raceDistanceM={goal.race.distance_m} raceGoalStatus={goal.status} raceName={goal.race.name} targetFinishTimeSec={goal.target_finish_time_sec} result={resultByGoal.get(goal.id) ?? null} canRecord={goal.status !== "CANCELLED" && today >= goal.race.event_date} />)}</section> : null}
       <RaceGoalForm
         activeGoal={data.activeGoal}
         races={data.races}
