@@ -41,11 +41,11 @@ insert into public.training_programs (
 );
 
 insert into public.training_weeks (
-  id, training_program_id, week_number, phase, start_date, end_date
+  id, training_program_id, week_number, phase, start_date, end_date, planning_status
 ) values (
   '95000000-0000-4000-8000-000000000001',
   '94000000-0000-4000-8000-000000000001',
-  1, 'M9.1', '2027-02-01', '2027-02-07'
+  1, 'M9.1', '2027-02-01', '2027-02-07', 'PUBLISHED'
 );
 
 insert into public.training_prescriptions (

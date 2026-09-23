@@ -78,8 +78,8 @@ insert into public.athlete_race_goals (id, athlete_id, race_id, target_finish_ti
 values ('b3000000-0000-4000-8000-000000000001', 'b1000000-0000-4000-8000-000000000002', 'b2000000-0000-4000-8000-000000000001', 3600, 'ACTIVE');
 insert into public.training_programs (id, race_goal_id, name, start_date, end_date, status, created_by)
 values ('b4000000-0000-4000-8000-000000000001', 'b3000000-0000-4000-8000-000000000001', 'Phase 2 Program', '2027-09-06', '2027-09-12', 'PUBLISHED', 'b1000000-0000-4000-8000-000000000001');
-insert into public.training_weeks (id, training_program_id, week_number, phase, start_date, end_date)
-values ('b5000000-0000-4000-8000-000000000001', 'b4000000-0000-4000-8000-000000000001', 1, 'Build', '2027-09-06', '2027-09-12');
+insert into public.training_weeks (id, training_program_id, week_number, phase, start_date, end_date, planning_status)
+values ('b5000000-0000-4000-8000-000000000001', 'b4000000-0000-4000-8000-000000000001', 1, 'Build', '2027-09-06', '2027-09-12', 'PUBLISHED');
 insert into public.training_prescriptions (id, training_week_id, training_menu, scheduled_date, title)
 values ('b6000000-0000-4000-8000-000000000001', 'b5000000-0000-4000-8000-000000000001', 'EASY', '2027-09-07', 'Phase 2 Easy Run');
 insert into public.prescription_components (prescription_id, sequence_order, component_type, target_distance_m)
