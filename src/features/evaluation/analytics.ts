@@ -41,6 +41,9 @@ export type EvaluationProgram = Pick<
   "id" | "name" | "status" | "start_date" | "end_date" | "created_by"
 > & {
   race_goal: Pick<Tables<"athlete_race_goals">, "id" | "athlete_id" | "status"> & {
+    target_finish_time_sec: number;
+    completed_at: string | null;
+    completed_by: string | null;
     athlete: Pick<Tables<"profiles">, "id" | "full_name" | "email">;
     race: Pick<Tables<"races">, "id" | "name" | "event_date" | "distance_m">;
   };

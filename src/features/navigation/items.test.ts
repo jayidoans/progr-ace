@@ -42,6 +42,7 @@ test("coach and admin reviewers see Coaching without athlete-only Strava", () =>
     (item) => item.href,
   );
   assert.ok(paths.includes("/dashboard/validation"));
+  assert.ok(paths.includes("/dashboard/coaching/athletes"));
   assert.ok(paths.includes("/dashboard/training"));
   assert.ok(!paths.includes("/dashboard/integrations/strava"));
 });

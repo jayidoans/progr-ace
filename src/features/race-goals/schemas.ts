@@ -52,5 +52,10 @@ export const updateActiveRaceGoalSchema = z.object({
 
 export const closeRaceGoalSchema = z.object({
   goalId: uuidSchema,
-  status: z.enum(["COMPLETED", "CANCELLED"]),
+  status: z.literal("CANCELLED"),
+});
+
+export const completeCoachedRaceGoalSchema = z.object({
+  goalId: uuidSchema,
+  athleteId: uuidSchema,
 });

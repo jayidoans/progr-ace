@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
 
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
 import {
@@ -17,6 +18,7 @@ import {
   type EvaluationProgram,
   type EvaluationWeek,
 } from "@/src/features/evaluation/analytics";
+import { groupCoachProgramsByGoal } from "@/src/features/evaluation/coach-athlete-progress";
 import type { Profile } from "@/src/features/profiles/queries";
 import type { RaceGoalWithRace } from "@/src/features/race-goals/queries";
 import { utcDateString } from "@/src/features/validation/engine/compliance";
@@ -36,7 +38,10 @@ const evaluationProgramSelection = `
     id,
     athlete_id,
     status,
-    athlete:profiles (id, full_name, email),
+    target_finish_time_sec,
+    completed_at,
+    completed_by,
+    athlete:profiles!athlete_race_goals_athlete_id_fkey (id, full_name, email),
     race:races (id, name, event_date, distance_m)
   ),
   weeks:training_weeks (
@@ -72,6 +77,8 @@ const activeGoalSelection = `
   target_finish_time_sec,
   status,
   notes,
+  completed_at,
+  completed_by,
   created_at,
   updated_at,
   race:races (id, name, event_date, location, distance_m, created_by, created_at, updated_at)
@@ -164,6 +171,32 @@ export type ProgramEvaluationOverview = {
   missed: CoachMissedItem[];
 };
 
+export type CoachRaceGoalProgress = {
+  goalId: string;
+  status: string;
+  raceName: string;
+  raceDate: string;
+  targetFinishTimeSec: number;
+  completedAt: string | null;
+  currentProgram: CoachProgramOverview;
+  programCount: number;
+  needsReview: CoachReviewItem[];
+  missed: CoachMissedItem[];
+};
+
+export type CoachAthleteProgress = {
+  athleteId: string;
+  athleteName: string;
+  athleteEmail: string | null;
+  goals: CoachRaceGoalProgress[];
+};
+
+export type CoachAthletesProgress = {
+  isAdmin: boolean;
+  athletes: CoachAthleteProgress[];
+  today: string;
+};
+
 function normalizeProgram(program: EvaluationProgram): EvaluationProgram {
   program.weeks = publishedEvaluationWeeks(program.weeks);
   program.weeks.sort((left, right) => left.week_number - right.week_number);
@@ -219,14 +252,20 @@ async function getRoles(
 
 async function loadPrograms(
   supabase: Awaited<ReturnType<typeof requireAuthenticatedSession>>["supabase"],
-  options: { athleteId?: string; coachId?: string; isAdmin?: boolean; programId?: string },
+  options: {
+    athleteId?: string;
+    coachId?: string;
+    isAdmin?: boolean;
+    limit?: number;
+    programId?: string;
+  },
 ) {
   let query = supabase
     .from("training_programs")
     .select(evaluationProgramSelection as string)
     .eq("status", "PUBLISHED")
     .order("start_date", { ascending: false })
-    .limit(12);
+    .limit(options.limit ?? 12);
   if (options.athleteId) query = query.eq("race_goal.athlete_id", options.athleteId);
   if (options.coachId && !options.isAdmin) query = query.eq("created_by", options.coachId);
   if (options.programId) query = query.eq("id", options.programId);
@@ -235,16 +274,77 @@ async function loadPrograms(
   return (data as unknown as EvaluationProgram[]).map(normalizeProgram);
 }
 
+function coachAthleteProgress(
+  programs: EvaluationProgram[],
+  today: string,
+  claimStates: Map<string, string | null>,
+): CoachAthleteProgress[] {
+  const athleteMap = new Map<string, CoachAthleteProgress>();
+
+  programs.forEach((program) => {
+    const athlete = athleteMap.get(program.race_goal.athlete_id) ?? {
+      athleteId: program.race_goal.athlete_id,
+      athleteName: program.race_goal.athlete.full_name ?? "Athlete",
+      athleteEmail: program.race_goal.athlete.email,
+      goals: [],
+    };
+    athleteMap.set(athlete.athleteId, athlete);
+  });
+
+  groupCoachProgramsByGoal(programs).forEach((programsForGoal) => {
+    const currentProgram = programsForGoal[0];
+    const athlete = athleteMap.get(currentProgram.race_goal.athlete_id);
+    if (!athlete) return;
+    const operational = coachOperationalItems([currentProgram], today, claimStates);
+    athlete.goals.push({
+      goalId: currentProgram.race_goal.id,
+      status: currentProgram.race_goal.status,
+      raceName: currentProgram.race_goal.race.name,
+      raceDate: currentProgram.race_goal.race.event_date,
+      targetFinishTimeSec: currentProgram.race_goal.target_finish_time_sec,
+      completedAt: currentProgram.race_goal.completed_at,
+      currentProgram: coachProgramOverview(currentProgram, today, claimStates),
+      programCount: programsForGoal.length,
+      needsReview: operational.needsReview,
+      missed: operational.missed,
+    });
+  });
+
+  athleteMap.forEach((athlete) => {
+    athlete.goals.sort((left, right) =>
+      Number(right.status === "ACTIVE") - Number(left.status === "ACTIVE")
+      || right.raceDate.localeCompare(left.raceDate),
+    );
+  });
+
+  return [...athleteMap.values()].sort((left, right) => {
+    const leftGoal = left.goals[0];
+    const rightGoal = right.goals[0];
+    const leftAttention = (leftGoal?.needsReview.length ?? 0) + (leftGoal?.missed.length ?? 0);
+    const rightAttention = (rightGoal?.needsReview.length ?? 0) + (rightGoal?.missed.length ?? 0);
+    return rightAttention - leftAttention || left.athleteName.localeCompare(right.athleteName);
+  });
+}
+
 async function authorizedClaimStates(
   supabase: Awaited<ReturnType<typeof requireAuthenticatedSession>>["supabase"],
   programIds: string[],
 ) {
   if (programIds.length === 0) return new Map<string, string | null>();
-  const { data, error } = await supabase.rpc("get_authorized_program_claim_states", {
-    p_program_ids: programIds,
-  });
-  if (error) throw new Error("Unable to load authorized Claim states.");
-  return new Map(data.map((row) => [row.prescription_id, row.claim_status]));
+  const batches = Array.from(
+    { length: Math.ceil(programIds.length / 20) },
+    (_, index) => programIds.slice(index * 20, (index + 1) * 20),
+  );
+  const results = await Promise.all(batches.map((batch) =>
+    supabase.rpc("get_authorized_program_claim_states", { p_program_ids: batch }),
+  ));
+  if (results.some((result) => result.error)) {
+    throw new Error("Unable to load authorized Claim states.");
+  }
+  return new Map(results.flatMap((result) => result.data ?? []).map((row) => [
+    row.prescription_id,
+    row.claim_status,
+  ]));
 }
 
 function coachProgramOverview(
@@ -455,5 +555,33 @@ export async function getCoachProgramEvaluation(
     program: coachProgramOverview(program, today, claimStates),
     needsReview: operational.needsReview,
     missed: operational.missed,
+  };
+}
+
+export async function getCoachAthletesProgress(
+  athleteId?: string,
+): Promise<CoachAthletesProgress> {
+  if (athleteId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(athleteId)) {
+    notFound();
+  }
+  const nextPath = athleteId
+    ? `/dashboard/coaching/athletes/${athleteId}`
+    : "/dashboard/coaching/athletes";
+  const { supabase, user } = await requireAuthenticatedSession(nextPath);
+  const roles = await getRoles(supabase, user.id);
+  const isAdmin = roles.includes("ADMIN");
+  if (!isAdmin && !roles.includes("COACH")) notFound();
+  const programs = await loadPrograms(supabase, {
+    athleteId,
+    coachId: user.id,
+    isAdmin,
+    limit: 50,
+  });
+  const claimStates = await authorizedClaimStates(supabase, programs.map((program) => program.id));
+  const today = utcDateString();
+  return {
+    isAdmin,
+    athletes: coachAthleteProgress(programs, today, claimStates),
+    today,
   };
 }

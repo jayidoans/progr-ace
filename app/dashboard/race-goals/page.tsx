@@ -8,7 +8,6 @@ const messages: Record<string, string> = {
   "race-created": "Race created. You can now set it as your target.",
   "goal-set": "Your active race goal has been set.",
   "goal-updated": "Your race goal planning details were updated.",
-  "goal-completed": "The race goal was marked completed and preserved in history.",
   "goal-cancelled": "The race goal was cancelled and preserved in history.",
 };
 

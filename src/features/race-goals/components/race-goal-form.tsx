@@ -126,16 +126,6 @@ export function RaceGoalForm({ activeGoal, races, selectedRaceId }: RaceGoalForm
             <div className="mt-6 flex flex-wrap gap-3 border-t border-gray-200 pt-6">
               <form action={closeRaceGoal}>
                 <input name="goalId" type="hidden" value={activeGoal.id} />
-                <input name="status" type="hidden" value="COMPLETED" />
-                <button
-                  className="rounded-md border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
-                  type="submit"
-                >
-                  Mark completed
-                </button>
-              </form>
-              <form action={closeRaceGoal}>
-                <input name="goalId" type="hidden" value={activeGoal.id} />
                 <input name="status" type="hidden" value="CANCELLED" />
                 <button
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
@@ -145,6 +135,9 @@ export function RaceGoalForm({ activeGoal, races, selectedRaceId }: RaceGoalForm
                 </button>
               </form>
             </div>
+            <p className="mt-4 text-sm text-gray-600">
+              After race day, your Coach can review and close this goal. Your training history will remain available.
+            </p>
           </>
         ) : (
           <p className="mt-3 text-sm text-gray-600">

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import {
   closeRaceGoalSchema,
+  completeCoachedRaceGoalSchema,
   createRaceSchema,
   setActiveRaceGoalSchema,
   updateActiveRaceGoalSchema,
@@ -174,5 +175,32 @@ export async function closeRaceGoal(formData: FormData) {
   }
 
   revalidateRaceGoalViews();
-  redirect(raceGoalPath("message", parsed.data.status === "COMPLETED" ? "goal-completed" : "goal-cancelled"));
+  redirect(raceGoalPath("message", "goal-cancelled"));
+}
+
+export async function completeCoachedRaceGoal(formData: FormData) {
+  const parsed = completeCoachedRaceGoalSchema.safeParse({
+    goalId: formData.get("goalId"),
+    athleteId: formData.get("athleteId"),
+  });
+  const athleteId = String(formData.get("athleteId") ?? "");
+  const basePath = `/dashboard/coaching/athletes/${athleteId}`;
+  if (!parsed.success) redirect(`${basePath}?error=invalid-goal`);
+
+  const { supabase } = await authenticatedContext();
+  const { error } = await supabase.rpc("complete_coached_race_goal", {
+    p_race_goal_id: parsed.data.goalId,
+  });
+  if (error) {
+    const code = error.message.includes("before race day")
+      ? "race-not-finished"
+      : "completion-failed";
+    redirect(`${basePath}?error=${code}`);
+  }
+
+  revalidateRaceGoalViews();
+  revalidatePath("/dashboard/coaching/athletes");
+  revalidatePath(basePath);
+  revalidatePath("/dashboard/training");
+  redirect(`${basePath}?message=goal-completed`);
 }

@@ -14,6 +14,8 @@ const goalWithRaceSelection = `
   target_finish_time_sec,
   status,
   notes,
+  completed_at,
+  completed_by,
   created_at,
   updated_at,
   race:races (

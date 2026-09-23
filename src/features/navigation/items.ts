@@ -29,6 +29,7 @@ export function getDashboardNavigationGroups({
     groups.push({
       label: "Coaching",
       items: [
+        { href: "/dashboard/coaching/athletes", label: "Athletes" },
         { href: "/dashboard/training", label: "Training Schedule" },
         { href: "/dashboard/validation", label: "Validation" },
       ],

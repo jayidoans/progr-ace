@@ -63,7 +63,9 @@ const goalSelection = `
   athlete_id,
   target_finish_time_sec,
   status,
-  athlete:profiles (id, full_name, email),
+  completed_at,
+  completed_by,
+  athlete:profiles!athlete_race_goals_athlete_id_fkey (id, full_name, email),
   race:races (id, name, event_date, distance_m, location)
 `;
 
@@ -106,6 +108,7 @@ export async function getTrainingDashboardData() {
     ? supabase
         .from("athlete_race_goals")
         .select(goalSelection)
+        .eq("status", "ACTIVE")
         .order("created_at", { ascending: false })
     : Promise.resolve({ data: [], error: null });
   const [programsResult, goalsResult] = await Promise.all([programsQuery, raceGoalsQuery]);
@@ -165,7 +168,7 @@ export async function getTrainingProgram(programId: string) {
   if (error) throw new Error("Unable to load the training program.");
   if (!data) return { program: null, scheduleWeeks: [], user, roles, activeMode, isAuthor: false, canEdit: false, canPlan: false };
 
-  const program = data as TrainingProgramDetail;
+  const program = data as unknown as TrainingProgramDetail;
   program.weeks.sort((a, b) => a.week_number - b.week_number);
   program.weeks.forEach((week) => {
     week.prescriptions.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));

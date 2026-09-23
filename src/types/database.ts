@@ -105,6 +105,8 @@ export type Database = {
       athlete_race_goals: {
         Row: {
           athlete_id: string
+          completed_at: string | null
+          completed_by: string | null
           created_at: string
           id: string
           notes: string | null
@@ -115,6 +117,8 @@ export type Database = {
         }
         Insert: {
           athlete_id: string
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -125,6 +129,8 @@ export type Database = {
         }
         Update: {
           athlete_id?: string
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -137,6 +143,13 @@ export type Database = {
           {
             foreignKeyName: "athlete_race_goals_athlete_id_fkey"
             columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_race_goals_completed_by_fkey"
+            columns: ["completed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -854,6 +867,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_coached_race_goal: {
+        Args: { p_race_goal_id: string }
+        Returns: string
+      }
       admin_list_users: {
         Args: Record<PropertyKey, never>
         Returns: {
