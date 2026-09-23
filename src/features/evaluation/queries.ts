@@ -8,6 +8,7 @@ import {
   currentWeekFromPrescriptionDates,
   daysUntilDate,
   flattenPrescriptions,
+  publishedEvaluationWeeks,
   prescriptionComplianceState,
   weeklyDistanceSummary,
   type ComplianceCounts,
@@ -42,6 +43,7 @@ const evaluationProgramSelection = `
     id,
     week_number,
     phase,
+    planning_status,
     start_date,
     end_date,
     prescriptions:training_prescriptions (
@@ -163,6 +165,7 @@ export type ProgramEvaluationOverview = {
 };
 
 function normalizeProgram(program: EvaluationProgram): EvaluationProgram {
+  program.weeks = publishedEvaluationWeeks(program.weeks);
   program.weeks.sort((left, right) => left.week_number - right.week_number);
   program.weeks.forEach((week) => {
     week.prescriptions.sort((left, right) =>

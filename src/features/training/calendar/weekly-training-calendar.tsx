@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { formatComponent, formatTrainingWeekRange } from "@/src/features/training/format";
-import type { WeekWithPrescriptions } from "@/src/features/training/queries";
+import type { TrainingScheduleWeek } from "@/src/features/training/queries";
 import { deriveComplianceState } from "@/src/features/validation/engine/compliance";
 import { distanceCompletion, validationLabel } from "@/src/features/validation/format";
 
@@ -11,7 +11,7 @@ type WeeklyTrainingCalendarProps = {
   activeMode?: "ATHLETE" | "COACH" | "ADMIN" | null;
   canClaim?: boolean;
   isCurrent?: boolean;
-  week: WeekWithPrescriptions;
+  week: TrainingScheduleWeek;
   weekContextLabel?: string;
 };
 
@@ -56,9 +56,22 @@ export function WeeklyTrainingCalendar({
             Week {week.week_number} · {formatTrainingWeekRange(week.start_date, week.end_date)}
           </h2>
         </div>
-        {week.phase ? <p className="text-sm font-semibold text-indigo-700">{week.phase}</p> : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {week.phase ? <p className="text-sm font-semibold text-indigo-700">{week.phase}</p> : null}
+          <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+            week.planning_status === "PUBLISHED"
+              ? "bg-emerald-50 text-emerald-700"
+              : week.planning_status === "DRAFT"
+                ? "bg-amber-50 text-amber-700"
+                : "bg-gray-100 text-gray-600"
+          }`}>{week.planning_status === "UNPLANNED" ? "Not planned" : week.planning_status === "DRAFT" ? "Draft" : "Published"}</span>
+        </div>
       </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
+      {week.planning_status === "UNPLANNED" ? (
+        <p className="mt-4 rounded-lg bg-gray-50 px-4 py-5 text-sm text-gray-600">
+          Training for this week has not been published yet.
+        </p>
+      ) : <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
         {days.map((day) => (
           <div className="min-h-36 rounded-lg border border-gray-200 p-3" key={day.isoDate}>
             <div className="flex items-center justify-between">
@@ -66,7 +79,9 @@ export function WeeklyTrainingCalendar({
               <span className="text-xs text-gray-400">{day.day}</span>
             </div>
             {day.prescriptions.length === 0 ? (
-              <p className="mt-5 text-sm font-medium text-gray-400">Rest day</p>
+              <p className="mt-5 text-sm font-medium text-gray-400">
+                {week.planning_status === "PUBLISHED" ? "Rest day" : "No session yet"}
+              </p>
             ) : (
               <div className="mt-3 space-y-3">
                 {day.prescriptions.map((prescription) => (
@@ -80,7 +95,7 @@ export function WeeklyTrainingCalendar({
                         {formatComponent(component)}
                       </p>
                     ))}
-                    {canClaim ? (() => {
+                    {canClaim && week.planning_status === "PUBLISHED" ? (() => {
                       const compliance = deriveComplianceState(
                         prescription.scheduled_date,
                         prescription.claim,
@@ -138,7 +153,7 @@ export function WeeklyTrainingCalendar({
             )}
           </div>
         ))}
-      </div>
+      </div>}
     </section>
   );
 }

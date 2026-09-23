@@ -722,6 +722,7 @@ export type Database = {
           end_date: string
           id: string
           phase: string
+          planning_status: string
           start_date: string
           training_program_id: string
           updated_at: string
@@ -732,6 +733,7 @@ export type Database = {
           end_date: string
           id?: string
           phase: string
+          planning_status?: string
           start_date: string
           training_program_id: string
           updated_at?: string
@@ -742,6 +744,7 @@ export type Database = {
           end_date?: string
           id?: string
           phase?: string
+          planning_status?: string
           start_date?: string
           training_program_id?: string
           updated_at?: string

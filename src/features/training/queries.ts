@@ -7,6 +7,11 @@ import { getCurrentSession } from "@/src/features/auth/session";
 import { createClient } from "@/src/lib/supabase/server";
 import type { Json, Tables } from "@/src/types/database";
 import { ACTIVE_MODE_STORAGE_KEY, resolveActiveMode } from "@/src/features/navigation/active-mode";
+import {
+  materializeProgramCalendar,
+  type MaterializedScheduleWeek,
+  type WeekPlanningStatus,
+} from "@/src/features/training/weekly-planning";
 
 export type TrainingProgram = Tables<"training_programs">;
 export type TrainingWeek = Tables<"training_weeks">;
@@ -42,6 +47,7 @@ export type PrescriptionWithComponents = TrainingPrescription & {
 export type WeekWithPrescriptions = TrainingWeek & {
   prescriptions: PrescriptionWithComponents[];
 };
+export type TrainingScheduleWeek = MaterializedScheduleWeek<PrescriptionWithComponents>;
 export type TrainingProgramDetail = TrainingProgramWithGoal & { weeks: WeekWithPrescriptions[] };
 export type HomepageTrainingProgram = Pick<
   TrainingProgram,
@@ -157,7 +163,7 @@ export async function getTrainingProgram(programId: string) {
     .eq("id", programId)
     .maybeSingle();
   if (error) throw new Error("Unable to load the training program.");
-  if (!data) return { program: null, user, roles, activeMode, isAuthor: false, canEdit: false };
+  if (!data) return { program: null, scheduleWeeks: [], user, roles, activeMode, isAuthor: false, canEdit: false };
 
   const program = data as TrainingProgramDetail;
   program.weeks.sort((a, b) => a.week_number - b.week_number);
@@ -186,8 +192,18 @@ export async function getTrainingProgram(programId: string) {
     }),
   );
 
+  const scheduleWeeks = materializeProgramCalendar(
+    program.start_date,
+    program.end_date,
+    program.weeks.map((week) => ({
+      ...week,
+      planning_status: week.planning_status as WeekPlanningStatus,
+    })),
+  );
+
   return {
     program,
+    scheduleWeeks,
     user,
     roles,
     activeMode,

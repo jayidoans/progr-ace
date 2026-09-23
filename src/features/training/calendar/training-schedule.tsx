@@ -9,14 +9,14 @@ import {
   revealPreviousWeekIndex,
   visibleWeekIndexes,
 } from "@/src/features/training/calendar/training-schedule-utils";
-import type { WeekWithPrescriptions } from "@/src/features/training/queries";
+import type { TrainingScheduleWeek } from "@/src/features/training/queries";
 import { usePrependScrollAnchor } from "@/src/features/ui/use-prepend-scroll-anchor";
 
 type TrainingScheduleProps = {
   activeMode: "ATHLETE" | "COACH" | "ADMIN" | null;
   canClaim: boolean;
   today: string;
-  weeks: WeekWithPrescriptions[];
+  weeks: TrainingScheduleWeek[];
 };
 
 export function TrainingSchedule({ activeMode, canClaim, today, weeks }: TrainingScheduleProps) {

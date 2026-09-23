@@ -116,7 +116,7 @@ set name = excluded.name,
     description = excluded.description;
 
 insert into public.training_weeks (
-  id, training_program_id, week_number, phase, start_date, end_date
+  id, training_program_id, week_number, phase, start_date, end_date, planning_status
 )
 values (
   '65000000-0000-4000-8000-000000000001',
@@ -124,9 +124,10 @@ values (
   1,
   'Build',
   '2027-01-04',
-  '2027-01-10'
+  '2027-01-10',
+  'PUBLISHED'
 )
-on conflict (id) do update set phase = excluded.phase;
+on conflict (id) do update set phase = excluded.phase, planning_status = excluded.planning_status;
 
 insert into public.training_prescriptions (
   id, training_week_id, training_menu, scheduled_date, title, description
@@ -210,7 +211,7 @@ values (
 );
 
 insert into public.training_weeks (
-  id, training_program_id, week_number, phase, start_date, end_date
+  id, training_program_id, week_number, phase, start_date, end_date, planning_status
 )
 values (
   '65000000-0000-4000-8000-000000000002',
@@ -218,7 +219,8 @@ values (
   1,
   'Historical',
   '2026-01-05',
-  '2026-01-11'
+  '2026-01-11',
+  'PUBLISHED'
 );
 
 insert into public.training_prescriptions (

@@ -6,6 +6,7 @@ import {
   currentWeekFromPrescriptionDates,
   daysUntilDate,
   prescriptionComplianceState,
+  publishedEvaluationWeeks,
   type EvaluationActivity,
   type EvaluationClaim,
   type EvaluationPrescription,
@@ -77,10 +78,19 @@ function program(weeks: EvaluationProgram["weeks"]): EvaluationProgram {
 
 test("current week is selected from actual prescription calendar dates", () => {
   const data = program([
-    { id: "week-1", week_number: 1, phase: "Base", start_date: "2026-09-01", end_date: "2026-09-07", prescriptions: [prescription("old", "2026-09-03")] },
-    { id: "week-9", week_number: 9, phase: "Build", start_date: "2026-09-14", end_date: "2026-09-20", prescriptions: [prescription("current", "2026-09-17")] },
+    { id: "week-1", week_number: 1, phase: "Base", planning_status: "PUBLISHED", start_date: "2026-09-01", end_date: "2026-09-07", prescriptions: [prescription("old", "2026-09-03")] },
+    { id: "week-9", week_number: 9, phase: "Build", planning_status: "PUBLISHED", start_date: "2026-09-14", end_date: "2026-09-20", prescriptions: [prescription("current", "2026-09-17")] },
   ]);
   assert.equal(currentWeekFromPrescriptionDates(data, "2026-09-17")?.week_number, 9);
+});
+
+test("evaluation includes only published weekly prescriptions", () => {
+  const weeks: EvaluationProgram["weeks"] = [
+    { id: "published", week_number: 1, phase: "Base", planning_status: "PUBLISHED", start_date: "2026-09-14", end_date: "2026-09-20", prescriptions: [prescription("assigned", "2026-09-15")] },
+    { id: "draft", week_number: 2, phase: "Build", planning_status: "DRAFT", start_date: "2026-09-21", end_date: "2026-09-27", prescriptions: [prescription("not-assigned", "2026-09-22")] },
+  ];
+  assert.deepEqual(publishedEvaluationWeeks(weeks).map((week) => week.id), ["published"]);
+  assert.equal(complianceCounts(publishedEvaluationWeeks(weeks).flatMap((week) => week.prescriptions), "2026-09-23").MISSED, 1);
 });
 
 test("future, past unclaimed, and today's unclaimed states preserve M6 date semantics", () => {

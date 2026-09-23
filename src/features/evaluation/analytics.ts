@@ -33,7 +33,7 @@ export type EvaluationPrescription = Pick<
 
 export type EvaluationWeek = Pick<
   Tables<"training_weeks">,
-  "id" | "week_number" | "phase" | "start_date" | "end_date"
+  "id" | "week_number" | "phase" | "planning_status" | "start_date" | "end_date"
 > & { prescriptions: EvaluationPrescription[] };
 
 export type EvaluationProgram = Pick<
@@ -48,6 +48,10 @@ export type EvaluationProgram = Pick<
 };
 
 export type ComplianceCounts = Record<ComplianceState, number>;
+
+export function publishedEvaluationWeeks(weeks: EvaluationWeek[]) {
+  return weeks.filter((week) => week.planning_status === "PUBLISHED");
+}
 
 export function utcCalendarWeek(today: string) {
   const current = new Date(`${today}T00:00:00Z`);

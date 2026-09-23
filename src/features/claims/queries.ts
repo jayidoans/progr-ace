@@ -96,6 +96,7 @@ export async function getClaimBuilder(prescriptionId: string) {
   const prescription = prescriptionResult.data as ClaimPrescription;
   if (
     prescription.training_week.program.status !== "PUBLISHED" ||
+    prescription.training_week.planning_status !== "PUBLISHED" ||
     prescription.training_week.program.race_goal.athlete_id !== user.id
   ) {
     notFound();
