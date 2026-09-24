@@ -193,6 +193,21 @@ test("unsupported version, missing headers, invalid date, and unknown menu are e
   assert.equal((await parseRows([baseRow({ "Training Menu": "REST" })])).status, "ERROR");
 });
 
+test("HTML-looking workbook text remains plain import data and oversized text is rejected", async () => {
+  const literalText = await parseRows([
+    baseRow({
+      Title: "<script>alert(1)</script>",
+      Instruction: '<img src=x onerror=alert(1)>',
+    }),
+  ]);
+  assert.equal(literalText.status, "VALID");
+  assert.equal(literalText.plan?.weeks[0].prescriptions[0].title, "<script>alert(1)</script>");
+
+  const oversized = await parseRows([baseRow({ Title: "x".repeat(161) })]);
+  assert.equal(oversized.status, "ERROR");
+  assert.match(oversized.errors[0].message, /Title must contain at most 160 characters/);
+});
+
 test("negative/ambiguous values and formulas are rejected, never guessed or executed", async () => {
   assert.throws(() => parseDistanceMeters("-5 km"));
   assert.throws(() => parseDistanceMeters("5"));

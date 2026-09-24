@@ -9,6 +9,7 @@ import {
   formatRaceDate,
 } from "@/src/features/race-goals/format";
 import type { Race, RaceGoalWithRace } from "@/src/features/race-goals/queries";
+import { FieldHelp } from "@/src/features/ui/field-help";
 
 const inputClassName =
   "mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200";
@@ -20,7 +21,7 @@ function DurationFields({ totalSeconds = 0 }: { totalSeconds?: number }) {
 
   return (
     <div>
-      <span className="block text-sm font-medium text-gray-800">Target finish</span>
+      <span className="block text-sm font-medium text-gray-800">Target finish <FieldHelp label="Target finish">The finish time the athlete is aiming for on race day.</FieldHelp></span>
       <div className="mt-2 grid grid-cols-3 gap-3">
         <label className="text-xs font-medium text-gray-600">
           Hours
@@ -76,13 +77,14 @@ export function RaceGoalForm({ activeGoal, races, selectedRaceId }: RaceGoalForm
                 </option>
               ))}
             </select>
+            <span className="mt-1 block text-xs font-normal text-gray-500">Select the event this training plan will support.</span>
           </label>
 
           <DurationFields />
 
           <label className="block text-sm font-medium text-gray-800">
             Notes (optional)
-            <textarea className={inputClassName} maxLength={2000} name="notes" rows={4} />
+            <textarea className={inputClassName} maxLength={2000} name="notes" placeholder="Add optional context for your coach..." rows={4} />
           </label>
 
           <button
@@ -112,6 +114,7 @@ export function RaceGoalForm({ activeGoal, races, selectedRaceId }: RaceGoalForm
                   defaultValue={activeGoal.notes ?? ""}
                   maxLength={2000}
                   name="notes"
+                  placeholder="Add optional context for your coach..."
                   rows={4}
                 />
               </label>

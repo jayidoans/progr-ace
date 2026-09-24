@@ -12,6 +12,7 @@ import {
 } from "@/src/features/training/actions";
 import { TRAINING_MENUS, WORKOUT_TYPES } from "@/src/features/training-import/template";
 import type { PrescriptionWithComponents, TrainingScheduleWeek } from "@/src/features/training/queries";
+import { FieldHelp } from "@/src/features/ui/field-help";
 
 const input =
   "mt-1.5 min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
@@ -103,7 +104,7 @@ function SessionForm({
           <input className={input} defaultValue={prescription?.scheduled_date ?? week.start_date} max={week.end_date} min={week.start_date} name="scheduledDate" required type="date" />
         </label>
         <label className="text-sm font-medium text-gray-800">
-          Training menu
+          Training menu <FieldHelp label="Training menu">The main training category used to organize this session.</FieldHelp>
           <select className={input} defaultValue={prescription?.training_menu ?? "EASY"} name="trainingMenu" required>
             {TRAINING_MENUS.map((menu) => <option key={menu}>{menu}</option>)}
           </select>
@@ -114,7 +115,7 @@ function SessionForm({
         </label>
         <label className="text-sm font-medium text-gray-800 sm:col-span-2">
           Description
-          <textarea className={input} defaultValue={prescription?.description ?? ""} maxLength={2000} name="description" rows={3} />
+          <textarea className={input} defaultValue={prescription?.description ?? ""} maxLength={2000} name="description" placeholder="Add optional coaching notes for this session..." rows={3} />
         </label>
       </div>
 
@@ -135,28 +136,28 @@ function SessionForm({
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <label className="text-sm font-medium text-gray-800">
-                Workout type
+                Workout type <FieldHelp label="Workout type">The type of effort or activity for this part of the session.</FieldHelp>
                 <select className={input} onChange={(event) => updateComponent(index, "componentType", event.target.value)} value={component.componentType}>
                   {WORKOUT_TYPES.map((type) => <option key={type}>{type}</option>)}
                 </select>
               </label>
               {([
-                ["targetDistanceM", "Target distance (m)"],
-                ["targetDurationSec", "Target duration (sec)"],
-                ["repetitions", "Repetitions"],
-                ["distancePerRepM", "Distance per rep (m)"],
-                ["recoveryDurationSec", "Recovery (sec)"],
-                ["targetPaceMinSecPerKm", "Pace min (sec/km)"],
-                ["targetPaceMaxSecPerKm", "Pace max (sec/km)"],
-              ] as const).map(([field, label]) => (
+                ["targetDistanceM", "Target distance (m)", "The distance for this component, entered in metres."],
+                ["targetDurationSec", "Target duration (sec)", "The duration for this component, entered in seconds."],
+                ["repetitions", "Repetitions", "How many times the athlete repeats this workout component."],
+                ["distancePerRepM", "Distance per rep (m)", "The distance for each repetition, entered in metres."],
+                ["recoveryDurationSec", "Recovery (sec)", "The recovery time between repetitions, entered in seconds."],
+                ["targetPaceMinSecPerKm", "Pace min (sec/km)", "The slower end of the pace range, entered as seconds per kilometre."],
+                ["targetPaceMaxSecPerKm", "Pace max (sec/km)", "The faster end of the pace range, entered as seconds per kilometre."],
+              ] as const).map(([field, label, help]) => (
                 <label className="text-sm font-medium text-gray-800" key={field}>
-                  {label}
-                  <input className={input} min={1} onChange={(event) => updateComponent(index, field, event.target.value)} type="number" value={component[field]} />
+                  {label} {help ? <FieldHelp label={label}>{help}</FieldHelp> : null}
+                  <input className={input} min={1} onChange={(event) => updateComponent(index, field, event.target.value)} placeholder="Optional" type="number" value={component[field]} />
                 </label>
               ))}
               <label className="text-sm font-medium text-gray-800 sm:col-span-2 lg:col-span-3">
                 Instruction
-                <textarea className={input} maxLength={2000} onChange={(event) => updateComponent(index, "instruction", event.target.value)} rows={2} value={component.instruction} />
+                <textarea className={input} maxLength={2000} onChange={(event) => updateComponent(index, "instruction", event.target.value)} placeholder="Add optional instructions for the athlete..." rows={2} value={component.instruction} />
               </label>
             </div>
           </fieldset>

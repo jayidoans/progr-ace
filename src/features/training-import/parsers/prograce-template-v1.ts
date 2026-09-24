@@ -83,6 +83,14 @@ function textValue(value: CellValue) {
   return "";
 }
 
+function boundedText(value: CellValue, label: string, row: number, maxLength: number) {
+  const text = textValue(value);
+  if (text.length > maxLength) {
+    throw new Error(`${label} must contain at most ${maxLength} characters at row ${row}.`);
+  }
+  return text;
+}
+
 function parsePositiveInteger(value: CellValue, label: string, row: number, required = false) {
   const text = textValue(value);
   if (!text && !required) return null;
@@ -234,11 +242,11 @@ export async function parsePrograceTemplateV1(
     try {
       const weekNumber = parsePositiveInteger(values[0], "Week", rowNumber, true)!;
       const scheduledDate = parseDate(values[1], rowNumber);
-      const phase = textValue(values[2]);
-      const session = textValue(values[3]);
+      const phase = boundedText(values[2], "Phase", rowNumber, 80);
+      const session = boundedText(values[3], "Session", rowNumber, 160);
       const trainingMenu = textValue(values[4]).toUpperCase();
-      const title = textValue(values[5]);
-      const description = textValue(values[6]) || null;
+      const title = boundedText(values[5], "Title", rowNumber, 160);
+      const description = boundedText(values[6], "Description", rowNumber, 2000) || null;
       const sequenceOrder = parsePositiveInteger(values[7], "Component Order", rowNumber, true)!;
       const componentType = textValue(values[8]).toUpperCase();
 
@@ -260,7 +268,7 @@ export async function parsePrograceTemplateV1(
         recoveryDurationSec: parseDurationSeconds(values[13], "Recovery"),
         targetPaceMinSecPerKm: parsePaceSeconds(values[14], "Target Pace Min"),
         targetPaceMaxSecPerKm: parsePaceSeconds(values[15], "Target Pace Max"),
-        instruction: textValue(values[16]) || null,
+        instruction: boundedText(values[16], "Instruction", rowNumber, 2000) || null,
       };
 
       if (

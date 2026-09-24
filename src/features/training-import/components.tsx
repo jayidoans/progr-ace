@@ -7,10 +7,10 @@ const input = "mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-gray
 export function TrainingImportForm({ raceGoals }: { raceGoals: ProgramRaceGoal[] }) {
   return (
     <form action={uploadTrainingTemplate} className="grid gap-4 sm:grid-cols-2">
-      <label className="text-sm font-medium text-gray-800 sm:col-span-2">Athlete race goal<select className={input} name="raceGoalId" required><option value="">Select race goal</option>{raceGoals.map((goal) => <option key={goal.id} value={goal.id}>{goal.athlete.full_name ?? goal.athlete.email ?? "Athlete"} — {goal.race.name}</option>)}</select></label>
-      <label className="text-sm font-medium text-gray-800">Program name<input className={input} name="name" required /></label>
-      <label className="text-sm font-medium text-gray-800">Description<input className={input} name="description" /></label>
-      <label className="text-sm font-medium text-gray-800 sm:col-span-2">ProgrACE Excel file<input accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className={input} name="template" required type="file" /><span className="mt-1 block text-xs text-gray-500">Maximum 1 MB. Excel (.xlsx) files only.</span></label>
+      <label className="text-sm font-medium text-gray-800 sm:col-span-2">Athlete race goal<select className={input} name="raceGoalId" required><option value="">Select race goal</option>{raceGoals.map((goal) => <option key={goal.id} value={goal.id}>{goal.athlete.full_name ?? goal.athlete.email ?? "Athlete"} — {goal.race.name}</option>)}</select><span className="mt-1 block text-xs text-gray-500">The selected race day remains the program&apos;s final date.</span></label>
+      <label className="text-sm font-medium text-gray-800">Program name<input className={input} maxLength={160} name="name" placeholder="e.g. Marathon Preparation" required /></label>
+      <label className="text-sm font-medium text-gray-800">Description<input className={input} maxLength={2000} name="description" placeholder="Optional coaching context" /></label>
+      <label className="text-sm font-medium text-gray-800 sm:col-span-2">ProgrACE Excel file<input accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className={input} name="template" required type="file" /><span className="mt-1 block text-xs text-gray-500">Use the ProgrACE template. Excel (.xlsx) files only, up to 1 MB; formulas and unsupported menus are rejected.</span></label>
       <button className="rounded-md bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-500 sm:col-span-2" type="submit">Parse and preview</button>
     </form>
   );

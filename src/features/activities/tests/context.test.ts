@@ -59,3 +59,25 @@ test("manual Activity form continues accepting its existing RPE and Notes fields
     assert.equal(parsed.data.notes, "Manual context");
   }
 });
+
+test("manual Activity text keeps HTML-looking content as ordinary validated text", () => {
+  const parsed = activityFormSchema.safeParse({
+    name: "<script>alert(1)</script>",
+    sportType: "RUNNING",
+    startedAt: "2026-09-17T06:00",
+    timezoneOffsetMinutes: "-420",
+    distanceKm: "5",
+    duration: "30:00",
+    averageHrBpm: "",
+    maxHrBpm: "",
+    elevationGainM: "",
+    rpe: "",
+    notes: '<img src=x onerror=alert(1)>',
+  });
+
+  assert.equal(parsed.success, true);
+  if (parsed.success) {
+    assert.equal(parsed.data.name, "<script>alert(1)</script>");
+    assert.equal(parsed.data.notes, '<img src=x onerror=alert(1)>');
+  }
+});

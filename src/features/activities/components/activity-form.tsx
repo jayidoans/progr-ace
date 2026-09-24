@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { createActivity, updateActivity } from "@/src/features/activities/actions";
 import { ACTIVITY_SPORT_TYPES, formatSportType } from "@/src/features/activities/format";
 import type { Activity } from "@/src/features/activities/queries";
+import { FieldHelp } from "@/src/features/ui/field-help";
 
 function toLocalInputValue(date: Date) {
   const local = new Date(date.valueOf() - date.getTimezoneOffset() * 60_000);
@@ -57,7 +58,7 @@ export function ActivityForm({ activity }: { activity?: Activity }) {
           />
         </label>
         <label className="text-sm font-semibold text-gray-800">
-          Sport
+          Sport <FieldHelp label="Sport">Choose the activity type that best describes this session.</FieldHelp>
           <select
             className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 font-normal"
             defaultValue={activity?.sport_type ?? "RUNNING"}
@@ -95,17 +96,17 @@ export function ActivityForm({ activity }: { activity?: Activity }) {
             defaultValue={activity?.distance_m === null ? "" : activity ? activity.distance_m / 1000 : ""}
             inputMode="decimal"
             name="distanceKm"
-            placeholder="7.39"
+            placeholder="e.g. 7.39"
           />
         </label>
         <label className="text-sm font-semibold text-gray-800">
-          Duration (HH:MM:SS or MM:SS)
+          Duration (HH:MM:SS or MM:SS) <FieldHelp label="Duration">Enter the time spent on the activity, such as 56:42 or 1:05:30.</FieldHelp>
           <input
             className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 font-normal"
             defaultValue={activity ? durationInput(activity.duration_sec) : ""}
             inputMode="numeric"
             name="duration"
-            placeholder="56:42"
+            placeholder="e.g. 56:42"
           />
         </label>
         <label className="text-sm font-semibold text-gray-800">
@@ -144,7 +145,7 @@ export function ActivityForm({ activity }: { activity?: Activity }) {
           />
         </label>
         <label className="text-sm font-semibold text-gray-800">
-          RPE (1–10)
+          RPE (1–10) <FieldHelp label="RPE">Rate how hard the session felt on a scale from 1 to 10.</FieldHelp>
           <input
             className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 font-normal"
             defaultValue={activity?.rpe ?? ""}
@@ -164,7 +165,7 @@ export function ActivityForm({ activity }: { activity?: Activity }) {
           defaultValue={activity?.notes ?? ""}
           maxLength={4000}
           name="notes"
-          placeholder="How did the activity feel?"
+          placeholder="Add optional training notes..."
         />
         <span className="mt-1 block text-xs font-normal text-gray-500">
           Notes are visible only to you in this milestone.

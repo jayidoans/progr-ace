@@ -99,7 +99,7 @@ export async function register(formData: FormData) {
   });
 
   if (error) {
-    redirect(authPath("/register", "error", error.message));
+    redirect(authPath("/register", "error", "We couldn't create your account. Check your details and try again."));
   }
 
   revalidatePath("/", "layout");
