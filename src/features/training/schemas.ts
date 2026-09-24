@@ -144,6 +144,11 @@ export const publishWeeklyPlanSchema = z.object({
 
 export const programIdSchema = z.object({ programId: uuid });
 
+export const copyProgramSchema = z.object({
+  sourceProgramId: uuid,
+  destinationRaceGoalId: uuid,
+});
+
 export const importUploadSchema = z.object({
   raceGoalId: uuid,
   name: z.string().trim().min(2).max(160),

@@ -17,6 +17,7 @@ import {
   addPrescriptionSchema,
   addWeekSchema,
   createWeeklySessionSchema,
+  copyProgramSchema,
   createProgramSchema,
   deleteWeeklySessionSchema,
   importUploadSchema,
@@ -261,6 +262,33 @@ export async function createTrainingProgram(formData: FormData) {
   if (error || !data) redirect(pathWithFeedback("/dashboard/training/new", "error", "program-create-failed"));
   revalidatePath("/dashboard/training");
   redirect(`/dashboard/training/${data.id}?message=program-created`);
+}
+
+export async function copyTrainingProgram(formData: FormData) {
+  const parsed = copyProgramSchema.safeParse({
+    sourceProgramId: formData.get("sourceProgramId"),
+    destinationRaceGoalId: formData.get("destinationRaceGoalId"),
+  });
+  if (!parsed.success) redirect(pathWithFeedback("/dashboard/training/new", "error", "invalid-copy"));
+
+  const { supabase } = await authenticatedContext();
+  const { data, error } = await supabase.rpc("copy_training_program", {
+    p_source_program_id: parsed.data.sourceProgramId,
+    p_destination_race_goal_id: parsed.data.destinationRaceGoalId,
+  });
+  if (error || !data) {
+    const message = error?.message ?? "";
+    const code = message.includes("same race")
+      ? "copy-different-race"
+      : message.includes("active race goal")
+        ? "copy-inactive-goal"
+        : message.includes("not available") || message.includes("Only a Coach")
+          ? "copy-unauthorized"
+          : "copy-failed";
+    redirect(pathWithFeedback("/dashboard/training/new", "error", code));
+  }
+  revalidatePath("/dashboard/training");
+  redirect(`/dashboard/training/${data}?message=program-copied`);
 }
 
 export async function addTrainingWeek(formData: FormData) {

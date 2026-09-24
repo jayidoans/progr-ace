@@ -6,8 +6,10 @@ import {
   publishTrainingProgram,
 } from "@/src/features/training/actions";
 import { TRAINING_MENUS, WORKOUT_TYPES } from "@/src/features/training-import/template";
+import { CopyProgramForm } from "@/src/features/training/programs/components/copy-program-form";
 import { FieldHelp } from "@/src/features/ui/field-help";
 import type {
+  CopyableTrainingProgram,
   ProgramRaceGoal,
   TrainingProgramDetail,
 } from "@/src/features/training/queries";
@@ -47,6 +49,37 @@ export function ProgramForm({ raceGoals, selectedRaceGoalId }: { raceGoals: Prog
         Create draft program to race day
       </button>
     </form>
+  );
+}
+
+export function CopyProgramList({
+  programs,
+  destinationGoals,
+}: {
+  programs: CopyableTrainingProgram[];
+  destinationGoals: ProgramRaceGoal[];
+}) {
+  const eligible = programs
+    .map((program) => ({
+      program,
+      goals: destinationGoals.filter((goal) => goal.race.id === program.race_goal.race.id),
+    }))
+    .filter(({ goals }) => goals.length > 0);
+
+  return (
+    <section className="mt-8 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+      <div>
+        <h2 className="text-xl font-bold">Copy an existing program</h2>
+        <p className="mt-2 text-sm text-gray-600">Reuse a Coach-owned plan for another athlete in the same race. The copy starts as a fresh draft.</p>
+      </div>
+      {eligible.length === 0 ? (
+        <p className="mt-5 rounded-lg bg-gray-50 p-4 text-sm text-gray-600">No existing training programs are available to copy for these active race goals. You can still create a new program above.</p>
+      ) : (
+        <div className="mt-5 space-y-4">
+          {eligible.map(({ program, goals }) => <CopyProgramForm goals={goals} key={program.id} program={program} />)}
+        </div>
+      )}
+    </section>
   );
 }
 

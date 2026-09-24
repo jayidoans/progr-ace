@@ -3,19 +3,22 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(18);
+select plan(20);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
   ('e1430000-0000-4000-8000-000000000001', 'copy-coach@example.test', '{"full_name":"Copy Coach"}'),
   ('e1430000-0000-4000-8000-000000000002', 'copy-athlete@example.test', '{"full_name":"Copy Athlete"}'),
   ('e1430000-0000-4000-8000-000000000003', 'copy-other-coach@example.test', '{"full_name":"Other Coach"}'),
-  ('e1430000-0000-4000-8000-000000000004', 'copy-other-athlete@example.test', '{"full_name":"Other Athlete"}');
+  ('e1430000-0000-4000-8000-000000000004', 'copy-other-athlete@example.test', '{"full_name":"Other Athlete"}'),
+  ('e1430000-0000-4000-8000-000000000005', 'copy-admin@example.test', '{"full_name":"Copy Admin"}');
 
 insert into public.user_roles (user_id, role_id)
 select 'e1430000-0000-4000-8000-000000000001', id from public.roles where name = 'COACH';
 insert into public.user_roles (user_id, role_id)
 select 'e1430000-0000-4000-8000-000000000003', id from public.roles where name = 'COACH';
+insert into public.user_roles (user_id, role_id)
+select 'e1430000-0000-4000-8000-000000000005', id from public.roles where name = 'ADMIN';
 
 insert into public.races (id, name, event_date, distance_m, location)
 values
@@ -24,7 +27,8 @@ values
 insert into public.athlete_race_goals (id, athlete_id, race_id, target_finish_time_sec, status)
 values
   ('e1432000-0000-4000-8000-000000000001', 'e1430000-0000-4000-8000-000000000002', 'e1431000-0000-4000-8000-000000000001', 15000, 'ACTIVE'),
-  ('e1432000-0000-4000-8000-000000000002', 'e1430000-0000-4000-8000-000000000004', 'e1431000-0000-4000-8000-000000000002', 16000, 'ACTIVE');
+  ('e1432000-0000-4000-8000-000000000002', 'e1430000-0000-4000-8000-000000000004', 'e1431000-0000-4000-8000-000000000002', 16000, 'ACTIVE'),
+  ('e1432000-0000-4000-8000-000000000003', 'e1430000-0000-4000-8000-000000000004', 'e1431000-0000-4000-8000-000000000001', 16000, 'CANCELLED');
 
 insert into public.training_programs (id, race_goal_id, name, description, start_date, end_date, created_by, status)
 values ('e1433000-0000-4000-8000-000000000001', 'e1432000-0000-4000-8000-000000000001', 'Source Plan', 'Keep this', '2026-08-03', '2026-12-06', 'e1430000-0000-4000-8000-000000000001', 'PUBLISHED');
@@ -60,6 +64,9 @@ select is((select start_date from public.training_programs where id <> 'e1433000
 select is((select scheduled_date from public.training_prescriptions where training_week_id in (select id from public.training_weeks where training_program_id <> 'e1433000-0000-4000-8000-000000000001' and training_program_id in (select id from public.training_programs where race_goal_id = 'e1432000-0000-4000-8000-000000000001' and created_by = 'e1430000-0000-4000-8000-000000000001'))), '2026-08-09'::date, 'prescription dates are preserved');
 select is((select count(*) from public.training_claims where prescription_id in (select id from public.training_prescriptions where training_week_id in (select id from public.training_weeks where training_program_id <> 'e1433000-0000-4000-8000-000000000001' and training_program_id in (select id from public.training_programs where race_goal_id = 'e1432000-0000-4000-8000-000000000001' and created_by = 'e1430000-0000-4000-8000-000000000001')))), 0::bigint, 'Claims are not copied');
 select is((select count(*) from public.training_programs where race_goal_id = 'e1432000-0000-4000-8000-000000000002'), 0::bigint, 'different-race goal remains untouched');
+select throws_ok($$select public.copy_training_program('e1433000-0000-4000-8000-000000000001', 'e1432000-0000-4000-8000-000000000003')$$, '23514', null, 'inactive destination Race Goal is rejected');
+select set_config('request.jwt.claim.sub', 'e1430000-0000-4000-8000-000000000005', true);
+select ok(public.copy_training_program('e1433000-0000-4000-8000-000000000001', 'e1432000-0000-4000-8000-000000000001') is not null, 'Admin can copy within the accepted broader authority');
 
 reset role;
 select * from finish();

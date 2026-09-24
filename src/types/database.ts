@@ -921,6 +921,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      copy_training_program: {
+        Args: {
+          p_destination_race_goal_id: string
+          p_source_program_id: string
+        }
+        Returns: string
+      }
       complete_coached_race_goal: {
         Args: { p_race_goal_id: string }
         Returns: string

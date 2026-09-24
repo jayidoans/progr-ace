@@ -68,6 +68,23 @@ export type HomepageTrainingProgram = Pick<
   };
 };
 
+export type CopyableTrainingProgram = {
+  id: string;
+  name: string;
+  status: string;
+  created_by: string;
+  start_date: string;
+  end_date: string;
+  race_goal: {
+    id: string;
+    athlete_id: string;
+    status: string;
+    athlete: Pick<Tables<"profiles">, "id" | "full_name" | "email">;
+    race: Pick<Tables<"races">, "id" | "name" | "event_date" | "distance_m">;
+  };
+  weeks: Array<{ id: string; prescriptions: Array<{ id: string }> }>;
+};
+
 const goalSelection = `
   id,
   athlete_id,
@@ -163,6 +180,30 @@ export async function getTrainingDashboardData() {
     programs: programsResult.data as TrainingProgramWithGoal[],
     raceGoals: goalsResult.data as ProgramRaceGoal[],
   };
+}
+
+export async function getCopyableTrainingPrograms() {
+  const { supabase, userId, roles, isAuthor } = await context();
+  if (!isAuthor) return [] as CopyableTrainingProgram[];
+
+  const { data, error } = await supabase
+    .from("training_programs")
+    .select(`
+      id, name, status, created_by, start_date, end_date,
+      race_goal:athlete_race_goals (
+        id, athlete_id, status,
+        athlete:profiles!athlete_race_goals_athlete_id_fkey (id, full_name, email),
+        race:races (id, name, event_date, distance_m)
+      ),
+      weeks:training_weeks (id, prescriptions:training_prescriptions (id))
+    `)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error("Unable to load copyable training programs.");
+
+  const visible = roles.includes("ADMIN")
+    ? data
+    : data.filter((program) => program.created_by === userId);
+  return visible as unknown as CopyableTrainingProgram[];
 }
 
 export async function getHomepageTrainingPrograms(): Promise<HomepageTrainingProgram[]> {

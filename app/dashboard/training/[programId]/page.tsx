@@ -8,6 +8,7 @@ import { ComponentForm, PrescriptionForm, PublishProgramForm, WeekForm } from "@
 import { getTrainingProgram } from "@/src/features/training/queries";
 
 const messages: Record<string,string> = {
+  "program-copied":"Training program copied. Review the draft before publishing.",
   "program-created":"Draft program created.",
   "week-created":"Training week added.",
   "prescription-created":"Prescription and first component added.",
