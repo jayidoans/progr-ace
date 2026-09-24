@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { formatComponent, formatTrainingWeekRange } from "@/src/features/training/format";
 import { AddAnotherWeekPlanner, DraftWeekPlanner, ExtendProgramPlanner, UnplannedWeekPlanner } from "@/src/features/training/planner/weekly-planner";
+import { isAfterCancellationBoundary } from "@/src/features/training-cancellation/presentation";
 import type { TrainingScheduleWeek } from "@/src/features/training/queries";
 import { deriveComplianceState } from "@/src/features/validation/engine/compliance";
 import { distanceCompletion, validationLabel } from "@/src/features/validation/format";
@@ -16,6 +17,7 @@ type WeeklyTrainingCalendarProps = {
   weekContextLabel?: string;
   nextWeek?: TrainingScheduleWeek;
   canExtendToRaceDate?: boolean;
+  cancelledAt?: string | null;
 };
 
 export function WeeklyTrainingCalendar({
@@ -28,6 +30,7 @@ export function WeeklyTrainingCalendar({
   weekContextLabel,
   nextWeek,
   canExtendToRaceDate = false,
+  cancelledAt = null,
 }: WeeklyTrainingCalendarProps) {
   const start = new Date(`${week.start_date}T00:00:00Z`);
   const end = new Date(`${week.end_date}T00:00:00Z`);
@@ -40,6 +43,7 @@ export function WeeklyTrainingCalendar({
       label: date.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }).toUpperCase(),
       isoDate,
       day: date.getUTCDate(),
+      isAfterCancellation: isAfterCancellationBoundary(isoDate, cancelledAt),
       prescriptions: week.prescriptions.filter((item) => item.scheduled_date === isoDate),
     };
   });
@@ -84,12 +88,13 @@ export function WeeklyTrainingCalendar({
         )
       ) : <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
         {days.map((day) => (
-          <div className="min-h-36 rounded-lg border border-gray-200 p-3" key={day.isoDate}>
+          <div className={`min-h-36 rounded-lg border p-3 ${day.isAfterCancellation ? "border-gray-100 bg-gray-50 text-gray-500" : "border-gray-200"}`} key={day.isoDate}>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold tracking-wide text-gray-500">{day.label}</span>
               <span className="text-xs text-gray-400">{day.day}</span>
             </div>
             {day.prescriptions.length === 0 ? (
+              day.isAfterCancellation ? <p className="mt-5 text-sm font-medium text-gray-500">No active training after program ended</p> :
               <p className="mt-5 text-sm font-medium text-gray-400">
                 {week.planning_status === "PUBLISHED" ? "Rest day" : "No session yet"}
               </p>
@@ -97,6 +102,7 @@ export function WeeklyTrainingCalendar({
               <div className="mt-3 space-y-3">
                 {day.prescriptions.map((prescription) => (
                   <div key={prescription.id}>
+                    {isAfterCancellationBoundary(prescription.scheduled_date, cancelledAt) ? <p className="text-xs font-semibold text-gray-500">Planned before cancellation</p> : null}
                     <span className="rounded bg-indigo-50 px-2 py-1 text-xs font-bold text-indigo-700">
                       {prescription.training_menu}
                     </span>
@@ -106,7 +112,7 @@ export function WeeklyTrainingCalendar({
                         {formatComponent(component)}
                       </p>
                     ))}
-                    {canClaim && week.planning_status === "PUBLISHED" ? (() => {
+                    {prescription.claim ? (() => {
                       const compliance = deriveComplianceState(
                         prescription.scheduled_date,
                         prescription.claim,
@@ -120,14 +126,16 @@ export function WeeklyTrainingCalendar({
                               ? "bg-red-50 text-red-700"
                               : "bg-blue-50 text-blue-700";
 
-                      return prescription.claim ? (
-                        <Link
-                          className={`mt-3 inline-flex rounded-md px-2.5 py-1.5 text-xs font-bold ${stateStyle}`}
-                          href={`/dashboard/claims/${prescription.claim.id}`}
-                        >
-                          {compliance === "DRAFT" ? "Continue draft" : validationLabel(compliance)}
-                        </Link>
-                      ) : (
+                      return <Link
+                        className={`mt-3 inline-flex rounded-md px-2.5 py-1.5 text-xs font-bold ${stateStyle}`}
+                        href={`/dashboard/claims/${prescription.claim.id}`}
+                      >
+                        {compliance === "DRAFT" ? "Continue draft" : validationLabel(compliance)}
+                      </Link>;
+                    })() : canClaim && week.planning_status === "PUBLISHED" && !isAfterCancellationBoundary(prescription.scheduled_date, cancelledAt) ? (() => {
+                      const compliance = deriveComplianceState(prescription.scheduled_date, null);
+                      const stateStyle = compliance === "MISSED" ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700";
+                      return (
                         <div className="mt-3">
                           <span className={`inline-flex rounded-md px-2.5 py-1.5 text-xs font-bold ${stateStyle}`}>
                             {validationLabel(compliance)}

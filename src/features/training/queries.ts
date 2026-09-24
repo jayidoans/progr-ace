@@ -16,6 +16,7 @@ export type TrainingProgram = Tables<"training_programs">;
 export type TrainingWeek = Tables<"training_weeks">;
 export type TrainingPrescription = Tables<"training_prescriptions">;
 export type PrescriptionComponent = Tables<"prescription_components">;
+export type TrainingProgramCancellationRequest = Tables<"training_program_cancellation_requests">;
 
 export type ProgramRaceGoal = Pick<
   Tables<"athlete_race_goals">,
@@ -58,7 +59,10 @@ export type WeekWithPrescriptions = TrainingWeek & {
   prescriptions: PrescriptionWithEvaluationEvidence[];
 };
 export type TrainingScheduleWeek = MaterializedScheduleWeek<PrescriptionWithComponents>;
-export type TrainingProgramDetail = TrainingProgramWithGoal & { weeks: WeekWithPrescriptions[] };
+export type TrainingProgramDetail = TrainingProgramWithGoal & {
+  weeks: WeekWithPrescriptions[];
+  cancellation_requests: TrainingProgramCancellationRequest[];
+};
 export type HomepageTrainingProgram = Pick<
   TrainingProgram,
   "id" | "name" | "start_date" | "end_date" | "status"
@@ -109,6 +113,19 @@ const trainingProgramSelection = `
   cancelled_at,
   cancelled_by,
   cancellation_reason,
+  cancellation_requests:training_program_cancellation_requests (
+    id,
+    training_program_id,
+    requested_by,
+    requested_at,
+    request_reason,
+    status,
+    reviewed_by,
+    reviewed_at,
+    review_reason,
+    created_at,
+    updated_at
+  ),
   race_goal:athlete_race_goals (${goalSelection}),
   weeks:training_weeks (
     id,
@@ -243,6 +260,10 @@ export const getTrainingProgram = cache(async (programId: string) => {
   if (!data) return { program: null, scheduleWeeks: [], user, roles, activeMode, isAuthor: false, canEdit: false, canPlan: false };
 
   const program = data as unknown as TrainingProgramDetail;
+  program.cancellation_requests ??= [];
+  program.cancellation_requests.sort((left, right) =>
+    right.requested_at.localeCompare(left.requested_at) || right.id.localeCompare(left.id),
+  );
   program.weeks.sort((a, b) => a.week_number - b.week_number);
   program.weeks.forEach((week) => {
     week.prescriptions.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
@@ -295,6 +316,16 @@ export const getTrainingProgram = cache(async (programId: string) => {
     activeMode,
     isAuthor,
     canEdit: program.status === "DRAFT" && (roles.includes("ADMIN") || program.created_by === user.id),
+    canDeleteDraft:
+      program.status === "DRAFT"
+      && (roles.includes("ADMIN") || (roles.includes("COACH") && program.created_by === user.id)),
+    canManageCancellation:
+      (roles.includes("ADMIN") || (roles.includes("COACH") && program.created_by === user.id))
+      && program.status === "PUBLISHED",
+    canRequestCancellation:
+      roles.includes("ATHLETE")
+      && program.race_goal.athlete_id === user.id
+      && program.status === "PUBLISHED",
     canPlan:
       program.status === "PUBLISHED"
       && activeMode !== "ATHLETE"

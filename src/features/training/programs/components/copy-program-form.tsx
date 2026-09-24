@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 
 import { copyTrainingProgram } from "@/src/features/training/actions";
+import { trainingProgramStatusLabel } from "@/src/features/training-cancellation/presentation";
 import type { CopyableTrainingProgram, ProgramRaceGoal } from "@/src/features/training/queries";
 
 const input = "mt-2 min-h-11 w-full rounded-md border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200";
@@ -18,7 +19,7 @@ export function CopyProgramForm({ program, goals }: { program: CopyableTrainingP
       <input name="sourceProgramId" type="hidden" value={program.id} />
       <p className="font-bold">{program.race_goal.athlete.full_name ?? program.race_goal.athlete.email ?? "Athlete"}</p>
       <p className="mt-1 text-sm text-gray-700">{program.race_goal.race.name} · {program.name}</p>
-      <p className="mt-1 text-xs text-gray-500">{program.status} · {program.weeks.length} weeks · {sessions} sessions</p>
+      <p className="mt-1 text-xs text-gray-500">{trainingProgramStatusLabel(program.status)} · {program.weeks.length} weeks · {sessions} sessions</p>
       <label className="mt-4 block text-sm font-medium text-gray-800">
         Copy to athlete race goal
         <select className={input} name="destinationRaceGoalId" onChange={(event) => setDestinationId(event.target.value)} required value={destinationId}>
