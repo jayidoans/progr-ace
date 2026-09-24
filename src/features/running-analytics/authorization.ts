@@ -15,8 +15,10 @@ export function canReadProgramRunningAnalytics({
   programCreatedBy,
   athleteId,
 }: ProgramAnalyticsAuthorization) {
-  if (!["PUBLISHED", "ARCHIVED"].includes(programStatus)) return false;
+  if (!["PUBLISHED", "CANCELLED", "ARCHIVED"].includes(programStatus)) return false;
   if (roles.includes("ADMIN")) return true;
   if (roles.includes("COACH") && programCreatedBy === userId) return true;
-  return roles.includes("ATHLETE") && programStatus === "PUBLISHED" && athleteId === userId;
+  return roles.includes("ATHLETE")
+    && ["PUBLISHED", "CANCELLED"].includes(programStatus)
+    && athleteId === userId;
 }

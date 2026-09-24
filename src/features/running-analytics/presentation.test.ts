@@ -5,7 +5,7 @@ import { filterRunningSessions, formatPaceSecondsPerKm, summarizeRunningAnalytic
 import type { ProgramRunningAnalytics } from "@/src/features/running-analytics/domain";
 
 const base: ProgramRunningAnalytics = {
-  context: { programId: "p", programName: "Plan", programStatus: "PUBLISHED", programStartDate: "2026-01-01", programEndDate: "2026-03-01", athleteId: "a", athleteName: "Athlete", athleteEmail: null, raceGoalId: "g", raceGoalStatus: "ACTIVE", raceName: "Race", raceDate: "2026-03-01", currentWeekNumber: 2 },
+  context: { programId: "p", programName: "Plan", programStatus: "PUBLISHED", programStartDate: "2026-01-01", programEndDate: "2026-03-01", programCancelledAt: null, athleteId: "a", athleteName: "Athlete", athleteEmail: null, raceGoalId: "g", raceGoalStatus: "ACTIVE", raceName: "Race", raceDate: "2026-03-01", currentWeekNumber: 2 },
   weeks: [
     { weekId: "w1", weekNumber: 1, startDate: "2026-01-01", endDate: "2026-01-07", phase: null, isCurrentWeek: false, prescribedRunningDistanceM: 10000, actualClaimedRunningDistanceM: 9000, durationOnlyRunningPrescriptionCount: 1, durationOnlyRunningComponentCount: 1, runningActivityCount: 1, outcomes: { DRAFT: 0, SUBMITTED: 0, VERIFIED: 1, PARTIAL: 0, NEEDS_REVIEW: 0, REJECTED: 0, MISSED: 0, NOT_CLAIMED: 0, UPCOMING: 0 } },
     { weekId: "w2", weekNumber: 2, startDate: "2026-01-08", endDate: "2026-01-14", phase: "Build", isCurrentWeek: true, prescribedRunningDistanceM: null, actualClaimedRunningDistanceM: null, durationOnlyRunningPrescriptionCount: 0, durationOnlyRunningComponentCount: 0, runningActivityCount: 0, outcomes: { DRAFT: 0, SUBMITTED: 0, VERIFIED: 0, PARTIAL: 0, NEEDS_REVIEW: 0, REJECTED: 0, MISSED: 1, NOT_CLAIMED: 0, UPCOMING: 0 } },

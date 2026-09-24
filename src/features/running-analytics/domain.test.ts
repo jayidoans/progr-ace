@@ -272,3 +272,31 @@ test("SPEED data remains whole-session observation and completed Race Goals reta
   assert.equal(result.sessions[0].validationResult, "NEEDS_REVIEW");
   assert.equal(result.sessions[0].wholeSessionPaceSecPerKm, 3_386 / 10.2);
 });
+
+test("cancelled Programs stop expected volume while retaining submitted historical evidence", () => {
+  const retainedActivity = activity("retained", { distance_m: 7_000, duration_sec: 2_800 });
+  const source = {
+    ...program([week("week", 1, "PUBLISHED", [
+      prescription("before", "2026-09-16"),
+      prescription("cancel-date-evidence", "2026-09-17", {
+        claims: [claim("retained-claim", "SUBMITTED", [retainedActivity], "VERIFIED")],
+      }),
+      prescription("cancel-date-unclaimed", "2026-09-17"),
+      prescription("after-unclaimed", "2026-09-18"),
+    ])]),
+    status: "CANCELLED",
+    cancelled_at: "2026-09-17T08:00:00Z",
+  };
+
+  const result = buildProgramRunningAnalytics(source, "2026-09-23");
+  assert.equal(result.context.programStatus, "CANCELLED");
+  assert.equal(result.context.programCancelledAt, "2026-09-17T08:00:00Z");
+  assert.equal(result.weeks[0].prescribedRunningDistanceM, 5_000);
+  assert.equal(result.weeks[0].actualClaimedRunningDistanceM, 7_000);
+  assert.equal(result.weeks[0].outcomes.MISSED, 1);
+  assert.deepEqual(
+    result.sessions.map((session) => session.prescriptionId),
+    ["before", "cancel-date-evidence"],
+  );
+  assert.equal(result.sessions[1].validationResult, "VERIFIED");
+});

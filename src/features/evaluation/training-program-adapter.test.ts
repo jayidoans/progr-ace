@@ -13,6 +13,9 @@ const sourceProgram = {
   start_date: "2026-08-01",
   end_date: "2026-10-31",
   tracking_start_date: "2026-09-20",
+  cancelled_at: null,
+  cancelled_by: null,
+  cancellation_reason: null,
   created_by: "coach-1",
   race_goal: {
     id: "goal-1",

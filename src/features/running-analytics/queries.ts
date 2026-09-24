@@ -25,6 +25,7 @@ const programAnalyticsSelection = `
   start_date,
   end_date,
   tracking_start_date,
+  cancelled_at,
   created_by,
   race_goal:athlete_race_goals!inner (
     id,

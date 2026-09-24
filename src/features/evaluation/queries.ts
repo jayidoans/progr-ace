@@ -10,6 +10,7 @@ import {
   currentWeekFromPrescriptionDates,
   daysUntilDate,
   flattenPrescriptions,
+  isExpectedPrescription,
   publishedEvaluationWeeks,
   prescriptionComplianceState,
   weeklyDistanceSummary,
@@ -36,6 +37,7 @@ const evaluationProgramSelection = `
   start_date,
   end_date,
   tracking_start_date,
+  cancelled_at,
   created_by,
   race_goal:athlete_race_goals!inner (
     id,
@@ -345,7 +347,9 @@ function coachProgramOverview(
   today: string,
   claimStates: Map<string, string | null>,
 ): CoachProgramOverview {
-  const prescriptions = flattenPrescriptions(program);
+  const prescriptions = flattenPrescriptions(program).filter((prescription) =>
+    isExpectedPrescription(prescription, program.cancelled_at),
+  );
   return {
     id: program.id,
     name: program.name,
@@ -354,7 +358,13 @@ function coachProgramOverview(
     raceName: program.race_goal.race.name,
     currentWeekNumber: currentWeekFromPrescriptionDates(program, today)?.week_number ?? null,
     prescribedSessions: prescriptions.length,
-    compliance: complianceCounts(prescriptions, today, claimStates, program.tracking_start_date),
+    compliance: complianceCounts(
+      prescriptions,
+      today,
+      claimStates,
+      program.tracking_start_date,
+      program.cancelled_at,
+    ),
   };
 }
 
@@ -367,6 +377,7 @@ function coachOperationalItems(
   const missed: CoachMissedItem[] = [];
   programs.forEach((program) => {
     flattenPrescriptions(program).forEach((prescription) => {
+      if (!isExpectedPrescription(prescription, program.cancelled_at)) return;
       const state = prescriptionComplianceState(
         prescription,
         today,
@@ -424,8 +435,16 @@ async function athleteDashboard(
     null;
   const currentWeek = currentProgram ? currentWeekFromPrescriptionDates(currentProgram, today) : null;
   const weeklyPrescriptions = currentWeek?.prescriptions ?? [];
-  const compliance = currentWeek ? complianceCounts(weeklyPrescriptions, today, new Map(), currentProgram?.tracking_start_date) : null;
-  const weeklyDistance = currentWeek ? weeklyDistanceSummary(weeklyPrescriptions) : null;
+  const compliance = currentWeek ? complianceCounts(
+    weeklyPrescriptions,
+    today,
+    new Map(),
+    currentProgram?.tracking_start_date,
+    currentProgram?.cancelled_at,
+  ) : null;
+  const weeklyDistance = currentWeek
+    ? weeklyDistanceSummary(weeklyPrescriptions, currentProgram?.cancelled_at)
+    : null;
 
   const submitted = programs
     .flatMap((program) => flattenPrescriptions(program))
@@ -452,6 +471,7 @@ async function athleteDashboard(
     };
   });
   const attention = weeklyPrescriptions
+    .filter((prescription) => isExpectedPrescription(prescription, currentProgram?.cancelled_at))
     .map((prescription) => {
       const state = prescriptionComplianceState(prescription, today, undefined, currentProgram?.tracking_start_date);
       return {
@@ -542,7 +562,7 @@ export async function getCoachProgramEvaluation(
   const trainingProgram = await getTrainingProgram(programId);
   if (
     !trainingProgram.program
-    || trainingProgram.program.status !== "PUBLISHED"
+    || !["PUBLISHED", "CANCELLED"].includes(trainingProgram.program.status)
     || (!isAdmin && trainingProgram.program.created_by !== user.id)
   ) return null;
   const program = evaluationProgramFromTrainingProgram(trainingProgram.program);

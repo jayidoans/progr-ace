@@ -113,6 +113,24 @@ test("pre-adoption unclaimed prescriptions are not treated as missed", () => {
   );
 });
 
+test("cancellation date is an exclusive upper boundary for expected training", () => {
+  const items = [
+    prescription("before", "2026-09-16"),
+    prescription("on-cancellation", "2026-09-17"),
+    prescription("after", "2026-09-18"),
+  ];
+  const cancelledAt = "2026-09-17T08:00:00Z";
+
+  const counts = complianceCounts(items, "2026-09-23", new Map(), "2026-09-01", cancelledAt);
+  assert.equal(counts.MISSED, 1);
+  assert.equal(Object.values(counts).reduce((sum, value) => sum + value, 0), 1);
+  assert.deepEqual(weeklyDistanceSummary(items, cancelledAt), {
+    prescribedDistanceM: 5000,
+    claimedRunningDistanceM: 0,
+    measurablePrescriptionCount: 1,
+  });
+});
+
 test("session distribution retains authoritative validation results", () => {
   const items = [
     prescription("verified", "2026-09-14", [claim("c1", "SUBMITTED", "VERIFIED")]),

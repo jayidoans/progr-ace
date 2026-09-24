@@ -48,9 +48,15 @@ The foundation returns published weeks from Program start through the current UT
 
 Race Goal completion does not remove analytics history. A PUBLISHED historical Program remains analyzable when its Race Goal is `COMPLETED`.
 
+For a cancelled Program, the UTC calendar date of `cancelled_at` is the
+exclusive upper boundary for expected training. Planned distance and outcomes
+on or after that date are excluded, while already-submitted Claim-linked
+Activity evidence remains factual historical evidence. A cancelled Program
+remains analyzable by its authorized Athlete, owning Coach, or Admin.
+
 ## Authorization and query strategy
 
-Authorization uses the authenticated identity and actual database roles. An Athlete may read their own PUBLISHED Program, a Coach may read a Program they created, and an Admin retains broader access. Active Mode is never authorization. The loader first performs a bounded identity/ownership check, then retrieves the selected Program graph in one RLS-protected relational query. Coach/Admin requests also reuse the existing M10 claim-state RPC once for the selected Program so a hidden DRAFT Claim is not misclassified as MISSED; the RPC exposes no evidence or notes. The loader does not perform per-week, per-Claim, or per-Activity queries.
+Authorization uses the authenticated identity and actual database roles. An Athlete may read their own `PUBLISHED` or historically retained `CANCELLED` Program, a Coach may read a Program they created, and an Admin retains broader access. Active Mode is never authorization. The loader first performs a bounded identity/ownership check, then retrieves the selected Program graph in one RLS-protected relational query. Coach/Admin requests also reuse the existing M10 claim-state RPC once for the selected Program so a hidden DRAFT Claim is not misclassified as MISSED; the RPC exposes no evidence or notes. The loader does not perform per-week, per-Claim, or per-Activity queries.
 
 No migration, analytics table, materialized view, service-role client, or new privileged RPC is introduced. The response excludes raw Strava payloads, tokens, and provider credentials.
 

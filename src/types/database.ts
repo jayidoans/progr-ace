@@ -624,6 +624,70 @@ export type Database = {
           },
         ]
       }
+      training_program_cancellation_requests: {
+        Row: {
+          created_at: string
+          id: string
+          request_reason: string
+          requested_at: string
+          requested_by: string
+          review_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          training_program_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          request_reason: string
+          requested_at?: string
+          requested_by: string
+          review_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          training_program_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          request_reason?: string
+          requested_at?: string
+          requested_by?: string
+          review_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          training_program_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_program_cancellation_requests_training_program_id_fkey"
+            columns: ["training_program_id"]
+            isOneToOne: false
+            referencedRelation: "training_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_program_cancellation_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_program_cancellation_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_import_previews: {
         Row: {
           created_at: string
@@ -728,6 +792,9 @@ export type Database = {
       }
       training_programs: {
         Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -741,6 +808,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -754,6 +824,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -767,6 +840,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "training_programs_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "training_programs_created_by_fkey"
             columns: ["created_by"]
@@ -921,6 +1001,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_training_program: {
+        Args: { p_cancellation_reason: string; p_program_id: string }
+        Returns: string
+      }
+      delete_draft_training_program: {
+        Args: { p_program_id: string }
+        Returns: string
+      }
+      request_training_program_cancellation: {
+        Args: { p_program_id: string; p_request_reason: string }
+        Returns: string
+      }
+      review_training_program_cancellation: {
+        Args: { p_decision: string; p_request_id: string; p_review_reason?: string | null }
+        Returns: string
+      }
       copy_training_program: {
         Args: {
           p_destination_race_goal_id: string

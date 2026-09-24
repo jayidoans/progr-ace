@@ -15,6 +15,7 @@ test("Athlete can read only their own published Program analytics", () => {
   assert.equal(canReadProgramRunningAnalytics(access), true);
   assert.equal(canReadProgramRunningAnalytics({ ...access, athleteId: "athlete-2" }), false);
   assert.equal(canReadProgramRunningAnalytics({ ...access, programStatus: "ARCHIVED" }), false);
+  assert.equal(canReadProgramRunningAnalytics({ ...access, programStatus: "CANCELLED" }), true);
 });
 
 test("Coach access follows Training Program ownership", () => {

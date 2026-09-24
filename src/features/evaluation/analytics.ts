@@ -41,6 +41,7 @@ export type EvaluationProgram = Pick<
   "id" | "name" | "status" | "start_date" | "end_date" | "created_by"
 > & {
   tracking_start_date?: string | null;
+  cancelled_at?: string | null;
   race_goal: Pick<Tables<"athlete_race_goals">, "id" | "athlete_id" | "status"> & {
     target_finish_time_sec: number;
     completed_at: string | null;
@@ -115,14 +116,28 @@ export function prescriptionComplianceState(
   );
 }
 
+export function cancellationEffectiveDate(cancelledAt?: string | null) {
+  return cancelledAt ? cancelledAt.slice(0, 10) : null;
+}
+
+export function isExpectedPrescription(
+  prescription: Pick<EvaluationPrescription, "scheduled_date">,
+  cancelledAt?: string | null,
+) {
+  const effectiveDate = cancellationEffectiveDate(cancelledAt);
+  return effectiveDate === null || prescription.scheduled_date < effectiveDate;
+}
+
 export function complianceCounts(
   prescriptions: EvaluationPrescription[],
   today: string,
   claimStates = new Map<string, string | null>(),
   trackingStartDate?: string | null,
+  cancelledAt?: string | null,
 ): ComplianceCounts {
   const counts = Object.fromEntries(COMPLIANCE_STATES.map((state) => [state, 0])) as ComplianceCounts;
   prescriptions.forEach((prescription) => {
+    if (!isExpectedPrescription(prescription, cancelledAt)) return;
     const state = prescriptionComplianceState(
       prescription,
       today,
@@ -134,13 +149,17 @@ export function complianceCounts(
   return counts;
 }
 
-export function weeklyDistanceSummary(prescriptions: EvaluationPrescription[]) {
+export function weeklyDistanceSummary(
+  prescriptions: EvaluationPrescription[],
+  cancelledAt?: string | null,
+) {
   let prescribedDistanceM = 0;
   let measurablePrescriptionCount = 0;
   const countedActivities = new Set<string>();
   let claimedRunningDistanceM = 0;
 
   prescriptions.forEach((prescription) => {
+    if (!isExpectedPrescription(prescription, cancelledAt)) return;
     const targetDistance = prescriptionTargetDistanceM(prescription);
     if (targetDistance !== null) {
       prescribedDistanceM += targetDistance;

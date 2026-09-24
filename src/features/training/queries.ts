@@ -106,6 +106,9 @@ const trainingProgramSelection = `
   status,
   created_by,
   tracking_start_date,
+  cancelled_at,
+  cancelled_by,
+  cancellation_reason,
   race_goal:athlete_race_goals (${goalSelection}),
   weeks:training_weeks (
     id,

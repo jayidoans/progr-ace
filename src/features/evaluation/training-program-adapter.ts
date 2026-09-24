@@ -13,6 +13,7 @@ export function evaluationProgramFromTrainingProgram(program: TrainingProgramDet
     start_date: program.start_date,
     end_date: program.end_date,
     tracking_start_date: program.tracking_start_date,
+    cancelled_at: program.cancelled_at,
     created_by: program.created_by,
     race_goal: {
       id: program.race_goal.id,

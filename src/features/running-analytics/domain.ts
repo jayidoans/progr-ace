@@ -1,7 +1,9 @@
 import type { Tables } from "@/src/types/database";
 import { componentTargetDistanceM } from "@/src/features/dashboard/weekly-stats";
 import {
+  cancellationEffectiveDate,
   complianceCounts,
+  isExpectedPrescription,
   prescriptionComplianceState,
   type ComplianceCounts,
 } from "@/src/features/evaluation/analytics";
@@ -63,6 +65,7 @@ export type RunningAnalyticsProgramSource = Pick<
   "id" | "name" | "status" | "start_date" | "end_date" | "created_by"
 > & {
   tracking_start_date?: string | null;
+  cancelled_at?: string | null;
   race_goal: Pick<Tables<"athlete_race_goals">, "id" | "athlete_id" | "status"> & {
     athlete: Pick<Tables<"profiles">, "id" | "full_name" | "email">;
     race: Pick<Tables<"races">, "id" | "name" | "event_date">;
@@ -117,6 +120,7 @@ export type ProgramRunningAnalytics = {
     programStatus: string;
     programStartDate: string;
     programEndDate: string;
+    programCancelledAt: string | null;
     athleteId: string;
     athleteName: string;
     athleteEmail: string | null;
@@ -159,6 +163,10 @@ function submittedRunningActivities(prescription: RunningAnalyticsPrescription) 
       (left, right) => left.started_at.localeCompare(right.started_at) || left.id.localeCompare(right.id),
     ),
   };
+}
+
+function hasSubmittedClaim(prescription: RunningAnalyticsPrescription) {
+  return prescription.claims.some((claim) => claim.status === "SUBMITTED");
 }
 
 function sessionTrend(
@@ -218,8 +226,13 @@ function weeklyAnalytics(
   today: string,
   claimStates: Map<string, string | null>,
   trackingStartDate?: string | null,
+  cancelledAt?: string | null,
 ): WeeklyRunningAnalytics {
-  const runningPrescriptions = week.prescriptions.filter((item) => isRunningMenu(item.training_menu));
+  const cancellationDate = cancellationEffectiveDate(cancelledAt);
+  const expectedPrescriptions = week.prescriptions.filter((prescription) =>
+    isExpectedPrescription(prescription, cancelledAt),
+  );
+  const runningPrescriptions = expectedPrescriptions.filter((item) => isRunningMenu(item.training_menu));
   const prescribedDistances = runningPrescriptions.flatMap((prescription) =>
     prescription.components.map(componentTargetDistanceM),
   );
@@ -247,7 +260,8 @@ function weeklyAnalytics(
     startDate: week.start_date,
     endDate: week.end_date,
     phase: week.phase || null,
-    isCurrentWeek: week.start_date <= today && today <= week.end_date,
+    isCurrentWeek: week.start_date <= today && today <= week.end_date
+      && (cancellationDate === null || today < cancellationDate),
     prescribedRunningDistanceM: sumKnown(prescribedDistances),
     actualClaimedRunningDistanceM: sumKnown(
       [...uniqueActivities.values()].map((activity) => activity.distance_m),
@@ -255,7 +269,13 @@ function weeklyAnalytics(
     durationOnlyRunningPrescriptionCount,
     durationOnlyRunningComponentCount,
     runningActivityCount: uniqueActivities.size,
-    outcomes: complianceCounts(week.prescriptions, today, claimStates, trackingStartDate),
+    outcomes: complianceCounts(
+      expectedPrescriptions,
+      today,
+      claimStates,
+      trackingStartDate,
+      cancelledAt,
+    ),
   };
 }
 
@@ -264,17 +284,36 @@ export function buildProgramRunningAnalytics(
   today: string,
   claimStates = new Map<string, string | null>(),
 ): ProgramRunningAnalytics {
+  const cancellationDate = cancellationEffectiveDate(source.cancelled_at);
   const weeks = source.weeks
-    .filter((week) => week.planning_status === "PUBLISHED" && week.start_date <= today)
+    .filter((week) =>
+      week.planning_status === "PUBLISHED"
+      && week.start_date <= today
+      && (
+        cancellationDate === null
+        || week.start_date < cancellationDate
+        || week.prescriptions.some(hasSubmittedClaim)
+      ),
+    )
     .sort((left, right) => left.start_date.localeCompare(right.start_date) || left.week_number - right.week_number);
   const sessions = weeks.flatMap((week) => {
     const trends = week.prescriptions
+      .filter((prescription) =>
+        isExpectedPrescription(prescription, source.cancelled_at)
+        || hasSubmittedClaim(prescription),
+      )
       .map((prescription) => sessionTrend(week, prescription, today, claimStates, source.tracking_start_date))
       .filter((trend): trend is RunningSessionTrend => trend !== null)
       .sort((left, right) => left.scheduledDate.localeCompare(right.scheduledDate) || left.prescriptionId.localeCompare(right.prescriptionId));
     return trends;
   });
-  const weekly = weeks.map((week) => weeklyAnalytics(week, today, claimStates, source.tracking_start_date));
+  const weekly = weeks.map((week) => weeklyAnalytics(
+    week,
+    today,
+    claimStates,
+    source.tracking_start_date,
+    source.cancelled_at,
+  ));
   const currentWeek = weekly.find((week) => week.isCurrentWeek) ?? null;
 
   return {
@@ -284,6 +323,7 @@ export function buildProgramRunningAnalytics(
       programStatus: source.status,
       programStartDate: source.start_date,
       programEndDate: source.end_date,
+      programCancelledAt: source.cancelled_at ?? null,
       athleteId: source.race_goal.athlete_id,
       athleteName: source.race_goal.athlete.full_name ?? "Athlete",
       athleteEmail: source.race_goal.athlete.email,
