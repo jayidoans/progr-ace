@@ -17,7 +17,13 @@
 | Authorization | Database roles, ownership checks, Row Level Security, database constraints, and narrow RPC operations |
 | External user-facing integration | Strava OAuth and Activity synchronization, subject to Admin permission |
 | Deployment model | OpenNext-built application configured for Cloudflare Workers and Cloudflare assets |
-| Candidate documentation baseline | Milestone 15 at commit `7b08de3` |
+| Copyright documentation baseline | `v1.0.0-copyright` at commit `962eb0fcab5ce793dfce1e26ed1d31c0f5052688` |
+| Application implementation baseline | Milestone 15 implementation at commit `7b08de311f043b51551ec71e54ffba1028a54dc2` |
+| Copyright year | 2026 |
+| Creator | Jay Idoan Sihotang |
+| Copyright holder | Jay Idoan Sihotang |
+| Institution | Fakultas Teknologi Informasi Universitas Advent Indonesia |
+| Official website | https://progr-ace.idoans.app |
 
 ## Product Description
 
@@ -35,14 +41,17 @@ Active Mode changes presentation/navigation for multi-role users but is not an a
 
 | Required copyright information | Value |
 |---|---|
-| Official copyright holder | **TO BE PROVIDED BY COPYRIGHT OWNER** |
-| Creator/developer names | **TO BE PROVIDED BY COPYRIGHT OWNER** |
-| Legal institution/organization | **TO BE PROVIDED BY COPYRIGHT OWNER** |
-| Official version number | **TO BE PROVIDED BY COPYRIGHT OWNER** |
+| Official copyright holder | Jay Idoan Sihotang |
+| Creator/developer names | Jay Idoan Sihotang |
+| Legal institution/organization | Fakultas Teknologi Informasi Universitas Advent Indonesia |
+| Official version number | 1.0 |
+| Copyright baseline tag | `v1.0.0-copyright` |
+| Copyright baseline commit | `962eb0fcab5ce793dfce1e26ed1d31c0f5052688` |
+| Copyright year | 2026 |
 | First publication date | **TO BE PROVIDED BY COPYRIGHT OWNER** |
 | First publication place | **TO BE PROVIDED BY COPYRIGHT OWNER** |
 | Copyright registration identity | **TO BE PROVIDED BY COPYRIGHT OWNER** |
-| Official product website | **TO BE PROVIDED BY COPYRIGHT OWNER** |
+| Official product website | https://progr-ace.idoans.app |
 
 ## Classification Notes
 
