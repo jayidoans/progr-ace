@@ -1,5 +1,9 @@
-import Link from "next/link";
+"use client";
 
+import Link from "next/link";
+import { useMemo, useState } from "react";
+
+import { ACTIVITY_SPORT_TYPES, formatSportType } from "@/src/features/activities/format";
 import { createClaimDraft } from "@/src/features/claims/actions";
 import {
   groupClaimCandidates,
@@ -17,6 +21,22 @@ type ClaimBuilderProps = {
 
 export function ClaimBuilder({ candidates, prescription, programId }: ClaimBuilderProps) {
   const candidateGroups = groupClaimCandidates(candidates);
+  const [otherSportType, setOtherSportType] = useState("ALL");
+  const [otherVisibleCount, setOtherVisibleCount] = useState(2);
+  const [selectedActivityIds, setSelectedActivityIds] = useState<Set<string>>(() => new Set());
+  const filteredOtherCandidates = useMemo(() => candidateGroups.other.filter((candidate) =>
+    otherSportType === "ALL" || candidate.sport_type === otherSportType,
+  ), [candidateGroups.other, otherSportType]);
+  const visibleOtherCandidates = filteredOtherCandidates.slice(0, otherVisibleCount);
+
+  const toggleActivity = (activityId: string, selected: boolean) => {
+    setSelectedActivityIds((current) => {
+      const next = new Set(current);
+      if (selected) next.add(activityId);
+      else next.delete(activityId);
+      return next;
+    });
+  };
 
   const renderCandidate = (activity: ClaimCandidate) => (
     <ActivityEvidenceCard
@@ -25,9 +45,9 @@ export function ClaimBuilder({ candidates, prescription, programId }: ClaimBuild
         <input
           aria-label={`Select ${activity.name}`}
           className="mt-1 h-5 w-5 shrink-0 rounded border-gray-300 text-indigo-600"
-          name="activityIds"
+          checked={selectedActivityIds.has(activity.id)}
+          onChange={(event) => toggleActivity(activity.id, event.target.checked)}
           type="checkbox"
-          value={activity.id}
         />
       }
       key={activity.id}
@@ -57,6 +77,7 @@ export function ClaimBuilder({ candidates, prescription, programId }: ClaimBuild
       <form action={createClaimDraft} className="space-y-6">
         <input name="prescriptionId" type="hidden" value={prescription.id} />
         <input name="programId" type="hidden" value={programId} />
+        {[...selectedActivityIds].map((activityId) => <input key={activityId} name="activityIds" type="hidden" value={activityId} />)}
 
         <section className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
           <h2 className="text-xl font-bold">Choose activities</h2>
@@ -88,13 +109,26 @@ export function ClaimBuilder({ candidates, prescription, programId }: ClaimBuild
               ) : null}
               {candidateGroups.other.length > 0 ? (
                 <section aria-labelledby="other-available-activities">
-                  <h3
-                    className="text-xs font-bold uppercase tracking-wider text-gray-600"
-                    id="other-available-activities"
-                  >
-                    Other available activities
-                  </h3>
-                  <div className="mt-3 space-y-3">{candidateGroups.other.map(renderCandidate)}</div>
+                  <div className="flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                      <h3
+                        className="text-xs font-bold uppercase tracking-wider text-gray-600"
+                        id="other-available-activities"
+                      >
+                        Other available activities
+                      </h3>
+                      <p className="mt-1 text-xs text-gray-500">Showing {visibleOtherCandidates.length} of {filteredOtherCandidates.length} activities.</p>
+                    </div>
+                    <label className="text-sm font-semibold text-gray-700" htmlFor="other-activity-category">
+                      Activity category
+                      <select className="mt-1 min-h-11 rounded-md border border-gray-300 bg-white px-3 text-sm font-normal text-gray-950 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" id="other-activity-category" onChange={(event) => { setOtherSportType(event.target.value); setOtherVisibleCount(2); }} value={otherSportType}>
+                        <option value="ALL">All categories</option>
+                        {ACTIVITY_SPORT_TYPES.map((sportType) => <option key={sportType} value={sportType}>{formatSportType(sportType)}</option>)}
+                      </select>
+                    </label>
+                  </div>
+                  {visibleOtherCandidates.length === 0 ? <p className="mt-3 rounded-lg bg-gray-50 p-4 text-sm text-gray-600">No activities match this category.</p> : <div className="mt-3 space-y-3">{visibleOtherCandidates.map(renderCandidate)}</div>}
+                  {otherVisibleCount < filteredOtherCandidates.length ? <button className="mt-4 min-h-11 w-full rounded-md border border-indigo-300 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 sm:w-auto" onClick={() => setOtherVisibleCount((count) => count + 2)} type="button">Load more activities</button> : null}
                 </section>
               ) : null}
             </div>
@@ -120,7 +154,7 @@ export function ClaimBuilder({ candidates, prescription, programId }: ClaimBuild
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <button
             className="min-h-11 w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300 sm:w-auto"
-            disabled={candidates.length === 0}
+            disabled={selectedActivityIds.size === 0}
             type="submit"
           >
             Save and review

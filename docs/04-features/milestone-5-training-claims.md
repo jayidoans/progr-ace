@@ -10,6 +10,9 @@ whether the workout was completed, partial, verified, rejected, or missed.
 No Claim is created automatically and no Activity is automatically matched to a Prescription.
 Activity date, sport, distance, duration, pace, heart rate, and RPE differences are not eligibility
 rules in this milestone. Candidate Activities are merely ordered by proximity to the scheduled date.
+Activity timestamps remain stored in UTC, but Claim evidence is displayed and its calendar-day
+proximity is calculated in the product timezone, `Asia/Jakarta` (WIB), so early-morning local
+activities are associated with their local calendar date.
 
 ## Schema and lifecycle
 

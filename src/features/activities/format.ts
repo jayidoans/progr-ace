@@ -9,6 +9,10 @@ export const ACTIVITY_SPORT_TYPES = [
 
 export type ActivitySportType = (typeof ACTIVITY_SPORT_TYPES)[number];
 
+// Activity timestamps are stored in UTC. ProgrACE currently presents athlete
+// activity evidence in its operating timezone so server rendering is stable.
+export const ACTIVITY_TIME_ZONE = "Asia/Jakarta";
+
 export function kilometersToMeters(value: string): number | null {
   const normalized = value.trim();
   if (normalized === "") return null;
@@ -76,11 +80,24 @@ export function formatSportType(sportType: string): string {
     .join(" ");
 }
 
+export function activityCalendarDate(value: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: ACTIVITY_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(value));
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value;
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
 export function formatActivityDate(value: string): string {
-  return new Intl.DateTimeFormat("en", {
+  const formatted = new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: ACTIVITY_TIME_ZONE,
   }).format(new Date(value));
+  return `${formatted} WIB`;
 }
 
 export function localDateTimeToIso(value: string, timezoneOffsetMinutes: number): string | null {
@@ -98,4 +115,3 @@ export function localDateTimeToIso(value: string, timezoneOffsetMinutes: number)
   }
   return date.toISOString();
 }
-

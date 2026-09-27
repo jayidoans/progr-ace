@@ -1,4 +1,5 @@
 import type { Tables } from "@/src/types/database";
+import { activityCalendarDate } from "@/src/features/activities/format";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const NEARBY_DAY_RANGE = 3;
@@ -16,7 +17,7 @@ function dateOnlyToEpochDay(value: string) {
 }
 
 export function activityCalendarDayOffset(scheduledDate: string, startedAt: string) {
-  const activityDate = new Date(startedAt).toISOString().slice(0, 10);
+  const activityDate = activityCalendarDate(startedAt);
   return dateOnlyToEpochDay(activityDate) - dateOnlyToEpochDay(scheduledDate);
 }
 

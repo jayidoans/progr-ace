@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import {
   derivePaceSecPerKm,
+  formatActivityDate,
   formatDuration,
   formatPace,
   kilometersToMeters,
@@ -39,5 +40,9 @@ describe("activity canonical units", () => {
   it("normalizes a browser-local timestamp with its selected-date offset", () => {
     assert.equal(localDateTimeToIso("2026-09-15T06:30", -420), "2026-09-14T23:30:00.000Z");
     assert.equal(localDateTimeToIso("2026-02-30T06:30", -420), null);
+  });
+
+  it("renders UTC activity evidence in the configured Jakarta local time", () => {
+    assert.equal(formatActivityDate("2026-09-26T21:52:00.000Z"), "Sep 27, 2026, 4:52 AM WIB");
   });
 });

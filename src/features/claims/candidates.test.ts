@@ -35,9 +35,9 @@ function activity(
   };
 }
 
-test("calendar-day offsets use UTC dates rather than elapsed-hour distance", () => {
-  assert.equal(activityCalendarDayOffset("2026-09-17", "2026-09-17T23:59:59.000Z"), 0);
-  assert.equal(activityCalendarDayOffset("2026-09-17", "2026-09-16T23:59:59.000Z"), -1);
+test("calendar-day offsets use Jakarta dates rather than elapsed-hour distance", () => {
+  assert.equal(activityCalendarDayOffset("2026-09-18", "2026-09-17T23:59:59.000Z"), 0);
+  assert.equal(activityCalendarDayOffset("2026-09-17", "2026-09-16T23:59:59.000Z"), 0);
   assert.equal(activityCalendarDayOffset("2026-09-17", "2026-09-18T00:00:00.000Z"), 1);
 });
 
