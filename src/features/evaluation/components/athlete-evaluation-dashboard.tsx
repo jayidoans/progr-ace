@@ -17,6 +17,34 @@ function countdownLabel(days: number | null) {
   return `Race was ${Math.abs(days)} days ago`;
 }
 
+function WeeklySessionStatus({ data }: { data: AthleteEvaluationDashboard }) {
+  if (!data.compliance || !data.weeklyDistance) return null;
+  return (
+    <section className="space-y-5 rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6">
+      <div>
+        <h2 className="text-xl font-bold text-gray-950">This week&apos;s session status</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          Session counts show how each workout is progressing. They are not a performance score.
+        </p>
+      </div>
+      <StatusSummary counts={data.compliance} />
+      <div className="grid gap-3 border-t border-gray-200 pt-5 sm:grid-cols-2">
+        <div className="rounded-lg bg-gray-50 p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Prescribed running distance</p>
+          <p className="mt-2 text-2xl font-bold text-gray-950">
+            {data.weeklyDistance.prescribedDistanceM === null ? "Not specified" : formatDistance(data.weeklyDistance.prescribedDistanceM)}
+          </p>
+        </div>
+        <div className="rounded-lg bg-gray-50 p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Claimed running distance</p>
+          <p className="mt-2 text-2xl font-bold text-gray-950">{formatDistance(data.weeklyDistance.claimedRunningDistanceM)}</p>
+          <p className="mt-1 text-xs text-gray-500">Submitted Claim evidence only</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function AthleteEvaluationDashboard({ data }: { data: AthleteEvaluationDashboard }) {
   const countdown = countdownLabel(data.daysUntilRace);
   return (
@@ -39,6 +67,8 @@ export function AthleteEvaluationDashboard({ data }: { data: AthleteEvaluationDa
           </p>
         ) : null}
       </div>
+
+      <WeeklySessionStatus data={data} />
 
       <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -90,31 +120,6 @@ export function AthleteEvaluationDashboard({ data }: { data: AthleteEvaluationDa
           </p>
         )}
       </section>
-
-      {data.compliance && data.weeklyDistance ? (
-        <section className="space-y-5 rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6">
-          <div>
-            <h2 className="text-xl font-bold text-gray-950">This week&apos;s session status</h2>
-            <p className="mt-1 text-sm text-gray-600">
-              Session counts show how each workout is progressing. They are not a performance score.
-            </p>
-          </div>
-          <StatusSummary counts={data.compliance} />
-          <div className="grid gap-3 border-t border-gray-200 pt-5 sm:grid-cols-2">
-            <div className="rounded-lg bg-gray-50 p-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Prescribed running distance</p>
-              <p className="mt-2 text-2xl font-bold text-gray-950">
-                {data.weeklyDistance.prescribedDistanceM === null ? "Not specified" : formatDistance(data.weeklyDistance.prescribedDistanceM)}
-              </p>
-            </div>
-            <div className="rounded-lg bg-gray-50 p-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Claimed running distance</p>
-              <p className="mt-2 text-2xl font-bold text-gray-950">{formatDistance(data.weeklyDistance.claimedRunningDistanceM)}</p>
-              <p className="mt-1 text-xs text-gray-500">Submitted Claim evidence only</p>
-            </div>
-          </div>
-        </section>
-      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6">
