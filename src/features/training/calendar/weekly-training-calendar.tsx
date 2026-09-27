@@ -3,6 +3,7 @@ import Link from "next/link";
 import { formatComponent, formatTrainingWeekRange } from "@/src/features/training/format";
 import { AddAnotherWeekPlanner, DraftWeekPlanner, ExtendProgramPlanner, UnplannedWeekPlanner } from "@/src/features/training/planner/weekly-planner";
 import { isAfterCancellationBoundary } from "@/src/features/training-cancellation/presentation";
+import { CoachCurrentWeekReview } from "@/src/features/training-review/components/coach-current-week-review";
 import type { TrainingScheduleWeek } from "@/src/features/training/queries";
 import { deriveComplianceState } from "@/src/features/validation/engine/compliance";
 import { distanceCompletion, validationLabel } from "@/src/features/validation/format";
@@ -11,6 +12,7 @@ type WeeklyTrainingCalendarProps = {
   activeMode?: "ATHLETE" | "COACH" | "ADMIN" | null;
   canClaim?: boolean;
   canPlan?: boolean;
+  canReviewCurrentWeek?: boolean;
   isCurrent?: boolean;
   programId: string;
   week: TrainingScheduleWeek;
@@ -24,6 +26,7 @@ export function WeeklyTrainingCalendar({
   activeMode,
   canClaim = false,
   canPlan = false,
+  canReviewCurrentWeek = false,
   isCurrent = false,
   programId,
   week,
@@ -173,6 +176,9 @@ export function WeeklyTrainingCalendar({
           </div>
         ))}
       </div>}
+      {canReviewCurrentWeek && isCurrent && weekContextLabel === "Current week" && week.planning_status === "PUBLISHED" ? (
+        <CoachCurrentWeekReview programId={programId} week={week} />
+      ) : null}
       {canPlan && week.planning_status === "DRAFT" ? (
         <DraftWeekPlanner programId={programId} week={week} />
       ) : null}

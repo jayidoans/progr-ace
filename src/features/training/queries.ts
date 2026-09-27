@@ -17,6 +17,8 @@ export type TrainingWeek = Tables<"training_weeks">;
 export type TrainingPrescription = Tables<"training_prescriptions">;
 export type PrescriptionComponent = Tables<"prescription_components">;
 export type TrainingProgramCancellationRequest = Tables<"training_program_cancellation_requests">;
+export type TrainingWeekReview = Tables<"training_week_reviews">;
+export type TrainingActivityComment = Tables<"training_activity_comments">;
 
 export type ProgramRaceGoal = Pick<
   Tables<"athlete_race_goals">,
@@ -42,23 +44,24 @@ export type PrescriptionWithComponents = TrainingPrescription & {
         "check_type" | "target_value" | "actual_value" | "result" | "message"
       >[];
     } | null;
+    evidence: EvaluationEvidence[];
   } | null;
 };
-type EvaluationEvidence = {
+export type EvaluationEvidence = {
+  id: string;
   activity: Pick<
     Tables<"activities">,
-    "id" | "distance_m" | "duration_sec" | "rpe" | "source" | "sport_type" | "started_at"
+    "id" | "average_hr_bpm" | "distance_m" | "duration_sec" | "name" | "notes" | "rpe" | "source" | "sport_type" | "started_at"
   >;
-};
-type PrescriptionWithEvaluationEvidence = Omit<PrescriptionWithComponents, "claim"> & {
-  claim: (NonNullable<PrescriptionWithComponents["claim"]> & {
-    evidence: EvaluationEvidence[];
-  }) | null;
+  comment: Pick<TrainingActivityComment, "id" | "coach_comment" | "reviewed_by" | "updated_at"> | null;
 };
 export type WeekWithPrescriptions = TrainingWeek & {
-  prescriptions: PrescriptionWithEvaluationEvidence[];
+  prescriptions: PrescriptionWithComponents[];
+  review: Pick<TrainingWeekReview, "id" | "coach_comment" | "fulfillment_rating" | "reviewed_by" | "updated_at"> | null;
 };
-export type TrainingScheduleWeek = MaterializedScheduleWeek<PrescriptionWithComponents>;
+export type TrainingScheduleWeek = MaterializedScheduleWeek<PrescriptionWithComponents> & {
+  review: WeekWithPrescriptions["review"];
+};
 export type TrainingProgramDetail = TrainingProgramWithGoal & {
   weeks: WeekWithPrescriptions[];
   cancellation_requests: TrainingProgramCancellationRequest[];
@@ -135,6 +138,13 @@ const trainingProgramSelection = `
     planning_status,
     start_date,
     end_date,
+    review:training_week_reviews (
+      id,
+      coach_comment,
+      fulfillment_rating,
+      reviewed_by,
+      updated_at
+    ),
     prescriptions:training_prescriptions (
       id,
       training_week_id,
@@ -275,11 +285,11 @@ export const getTrainingProgram = cache(async (programId: string) => {
   const prescriptionIds = program.weeks.flatMap((week) =>
     week.prescriptions.map((prescription) => prescription.id),
   );
-  const claimByPrescription = new Map<string, PrescriptionWithEvaluationEvidence["claim"]>();
+  const claimByPrescription = new Map<string, PrescriptionWithComponents["claim"]>();
   if (prescriptionIds.length > 0) {
     const { data: claims, error: claimError } = await supabase
       .from("training_claims")
-      .select("id, prescription_id, status, submitted_at, validation:claim_validations(result, automatic_result, evaluation_source, checks:validation_checks(check_type, target_value, actual_value, result, message)), evidence:claim_activities(activity:activities(id, distance_m, duration_sec, rpe, source, sport_type, started_at))")
+      .select("id, prescription_id, status, submitted_at, validation:claim_validations(result, automatic_result, evaluation_source, checks:validation_checks(check_type, target_value, actual_value, result, message)), evidence:claim_activities(id, comment:training_activity_comments(id, coach_comment, reviewed_by, updated_at), activity:activities(id, average_hr_bpm, distance_m, duration_sec, name, notes, rpe, source, sport_type, started_at))")
       .in("prescription_id", prescriptionIds);
     if (claimError) throw new Error("Unable to load training claim states.");
     claims.forEach((claim) => claimByPrescription.set(claim.prescription_id, claim));
@@ -290,6 +300,7 @@ export const getTrainingProgram = cache(async (programId: string) => {
     }),
   );
 
+  const reviewByStart = new Map(program.weeks.map((week) => [week.start_date, week.review]));
   const scheduleWeeks = materializeProgramCalendar<PrescriptionWithComponents>(
     program.start_date,
     program.end_date,
@@ -298,15 +309,10 @@ export const getTrainingProgram = cache(async (programId: string) => {
       planning_status: week.planning_status as WeekPlanningStatus,
       prescriptions: week.prescriptions.map((prescription) => ({
         ...prescription,
-        claim: prescription.claim ? {
-          id: prescription.claim.id,
-          status: prescription.claim.status,
-          submitted_at: prescription.claim.submitted_at,
-          validation: prescription.claim.validation,
-        } : null,
+        claim: prescription.claim,
       })),
     })),
-  );
+  ).map((week) => ({ ...week, review: reviewByStart.get(week.start_date) ?? null }));
 
   return {
     program,
@@ -329,6 +335,9 @@ export const getTrainingProgram = cache(async (programId: string) => {
     canPlan:
       program.status === "PUBLISHED"
       && activeMode !== "ATHLETE"
+      && (roles.includes("ADMIN") || (roles.includes("COACH") && program.created_by === user.id)),
+    canReviewCurrentWeek:
+      program.status === "PUBLISHED"
       && (roles.includes("ADMIN") || (roles.includes("COACH") && program.created_by === user.id)),
     canClaim: program.status === "PUBLISHED" && program.race_goal.athlete_id === user.id,
   };

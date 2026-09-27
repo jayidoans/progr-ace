@@ -250,6 +250,48 @@ export type Database = {
           },
         ]
       }
+      training_activity_comments: {
+        Row: {
+          claim_activity_id: string
+          coach_comment: string
+          created_at: string
+          id: string
+          reviewed_by: string
+          updated_at: string
+        }
+        Insert: {
+          claim_activity_id: string
+          coach_comment: string
+          created_at?: string
+          id?: string
+          reviewed_by: string
+          updated_at?: string
+        }
+        Update: {
+          claim_activity_id?: string
+          coach_comment?: string
+          created_at?: string
+          id?: string
+          reviewed_by?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_activity_comments_claim_activity_id_fkey"
+            columns: ["claim_activity_id"]
+            isOneToOne: true
+            referencedRelation: "claim_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_activity_comments_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claim_validations: {
         Row: {
           automatic_result: string
@@ -907,6 +949,51 @@ export type Database = {
           },
         ]
       }
+      training_week_reviews: {
+        Row: {
+          coach_comment: string | null
+          created_at: string
+          fulfillment_rating: number
+          id: string
+          reviewed_by: string
+          training_week_id: string
+          updated_at: string
+        }
+        Insert: {
+          coach_comment?: string | null
+          created_at?: string
+          fulfillment_rating: number
+          id?: string
+          reviewed_by: string
+          training_week_id: string
+          updated_at?: string
+        }
+        Update: {
+          coach_comment?: string | null
+          created_at?: string
+          fulfillment_rating?: number
+          id?: string
+          reviewed_by?: string
+          training_week_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_week_reviews_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_week_reviews_training_week_id_fkey"
+            columns: ["training_week_id"]
+            isOneToOne: true
+            referencedRelation: "training_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1094,6 +1181,26 @@ export type Database = {
       can_review_training_claim: {
         Args: { p_claim_id: string }
         Returns: boolean
+      }
+      can_review_training_week: {
+        Args: { p_training_week_id: string }
+        Returns: boolean
+      }
+      can_read_training_week_review: {
+        Args: { p_training_week_id: string }
+        Returns: boolean
+      }
+      save_training_activity_comment: {
+        Args: { p_claim_activity_id: string; p_coach_comment: string }
+        Returns: string
+      }
+      save_training_week_review: {
+        Args: {
+          p_coach_comment?: string | null
+          p_fulfillment_rating: number
+          p_training_week_id: string
+        }
+        Returns: string
       }
       claim_strava_activity_sync: {
         Args: {
