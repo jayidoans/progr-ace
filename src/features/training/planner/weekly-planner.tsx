@@ -316,6 +316,12 @@ export function DraftWeekPlanner({ programId, week }: { programId: string; week:
         >
           Import from XLSX
         </button>
+        <Link
+          className="inline-flex min-h-11 items-center justify-center rounded-md border border-emerald-600 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+          href="/dashboard/training/template"
+        >
+          Download XLSX Template
+        </Link>
       </div>
 
       {entryMode === "MANUAL" ? (
@@ -343,14 +349,9 @@ export function DraftWeekPlanner({ programId, week }: { programId: string; week:
             />
             <span className="mt-1 block text-xs text-gray-500">Excel (.xlsx) only, up to 1 MB. The workbook must contain exactly this week.</span>
           </label>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <button className="min-h-11 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500" type="submit">
-              Import This Week
-            </button>
-            <Link className="inline-flex min-h-11 items-center text-sm font-semibold text-emerald-700 hover:underline" href="/dashboard/training/template">
-              Download XLSX Template
-            </Link>
-          </div>
+          <button className="min-h-11 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500" type="submit">
+            Import This Week
+          </button>
         </form>
       )}
 
