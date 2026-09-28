@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { formatComponent, formatTrainingWeekRange } from "@/src/features/training/format";
-import { AddAnotherWeekPlanner, DraftWeekPlanner, ExtendProgramPlanner, UnplannedWeekPlanner } from "@/src/features/training/planner/weekly-planner";
+import { AddAnotherWeekPlanner, DraftWeekPlanner, ExtendProgramPlanner, PublishedWeekEditor, UnplannedWeekPlanner } from "@/src/features/training/planner/weekly-planner";
 import { isAfterCancellationBoundary } from "@/src/features/training-cancellation/presentation";
 import { CoachCurrentWeekReview } from "@/src/features/training-review/components/coach-current-week-review";
 import type { TrainingScheduleWeek } from "@/src/features/training/queries";
@@ -15,6 +15,7 @@ type WeeklyTrainingCalendarProps = {
   canReviewCurrentWeek?: boolean;
   isCurrent?: boolean;
   programId: string;
+  today: string;
   week: TrainingScheduleWeek;
   weekContextLabel?: string;
   nextWeek?: TrainingScheduleWeek;
@@ -29,6 +30,7 @@ export function WeeklyTrainingCalendar({
   canReviewCurrentWeek = false,
   isCurrent = false,
   programId,
+  today,
   week,
   weekContextLabel,
   nextWeek,
@@ -181,6 +183,9 @@ export function WeeklyTrainingCalendar({
       ) : null}
       {canPlan && week.planning_status === "DRAFT" ? (
         <DraftWeekPlanner programId={programId} week={week} />
+      ) : null}
+      {canPlan && week.planning_status === "PUBLISHED" && week.end_date >= today ? (
+        <PublishedWeekEditor programId={programId} today={today} week={week} />
       ) : null}
       {canPlan && week.planning_status === "PUBLISHED" && nextWeek?.planning_status === "UNPLANNED" ? (
         <AddAnotherWeekPlanner programId={programId} week={nextWeek} />

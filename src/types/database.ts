@@ -1186,6 +1186,32 @@ export type Database = {
         Args: { p_training_week_id: string }
         Returns: boolean
       }
+      can_revise_published_training_week: {
+        Args: { p_week_id: string }
+        Returns: boolean
+      }
+      create_published_week_prescription: {
+        Args: {
+          p_components: Json
+          p_description: string
+          p_scheduled_date: string
+          p_title: string
+          p_training_menu: string
+          p_week_id: string
+        }
+        Returns: string
+      }
+      update_published_week_prescription: {
+        Args: {
+          p_components: Json
+          p_description: string
+          p_prescription_id: string
+          p_scheduled_date: string
+          p_title: string
+          p_training_menu: string
+        }
+        Returns: string
+      }
       can_read_training_week_review: {
         Args: { p_training_week_id: string }
         Returns: boolean

@@ -190,6 +190,60 @@ export async function updateWeeklyTrainingSession(formData: FormData) {
   redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "message", "session-updated"));
 }
 
+export async function createPublishedTrainingSession(formData: FormData) {
+  const parsed = createWeeklySessionSchema.safeParse({
+    programId: formData.get("programId"),
+    weekId: formData.get("weekId"),
+    trainingMenu: formData.get("trainingMenu"),
+    scheduledDate: formData.get("scheduledDate"),
+    title: formData.get("title"),
+    description: formData.get("description"),
+    components: plannerComponents(formData),
+  });
+  const programId = String(formData.get("programId") ?? "");
+  if (!parsed.success) redirect(pathWithFeedback(trainingProgramPath(programId), "error", "invalid-session"));
+
+  const { supabase } = await authenticatedContext();
+  const { error } = await supabase.rpc("create_published_week_prescription", {
+    p_week_id: parsed.data.weekId,
+    p_training_menu: parsed.data.trainingMenu,
+    p_scheduled_date: parsed.data.scheduledDate,
+    p_title: parsed.data.title,
+    p_description: parsed.data.description ?? "",
+    p_components: plannerRpcComponents(parsed.data.components),
+  });
+  if (error) redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", "published-session-create-failed"));
+  revalidatePath(trainingProgramPath(parsed.data.programId));
+  redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "message", "published-session-created"));
+}
+
+export async function updatePublishedTrainingSession(formData: FormData) {
+  const parsed = updateWeeklySessionSchema.safeParse({
+    programId: formData.get("programId"),
+    prescriptionId: formData.get("prescriptionId"),
+    trainingMenu: formData.get("trainingMenu"),
+    scheduledDate: formData.get("scheduledDate"),
+    title: formData.get("title"),
+    description: formData.get("description"),
+    components: plannerComponents(formData),
+  });
+  const programId = String(formData.get("programId") ?? "");
+  if (!parsed.success) redirect(pathWithFeedback(trainingProgramPath(programId), "error", "invalid-session"));
+
+  const { supabase } = await authenticatedContext();
+  const { error } = await supabase.rpc("update_published_week_prescription", {
+    p_prescription_id: parsed.data.prescriptionId,
+    p_training_menu: parsed.data.trainingMenu,
+    p_scheduled_date: parsed.data.scheduledDate,
+    p_title: parsed.data.title,
+    p_description: parsed.data.description ?? "",
+    p_components: plannerRpcComponents(parsed.data.components),
+  });
+  if (error) redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", "published-session-update-failed"));
+  revalidatePath(trainingProgramPath(parsed.data.programId));
+  redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "message", "published-session-updated"));
+}
+
 export async function deleteWeeklyTrainingSession(formData: FormData) {
   const parsed = deleteWeeklySessionSchema.safeParse({
     programId: formData.get("programId"),

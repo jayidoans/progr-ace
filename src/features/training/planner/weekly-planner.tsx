@@ -3,12 +3,14 @@
 import { useState } from "react";
 
 import {
+  createPublishedTrainingSession,
   createWeeklyTrainingSession,
   deleteWeeklyTrainingSession,
   extendTrainingProgramAndStartNextWeek,
   publishWeeklyTrainingPlan,
   startWeeklyTrainingPlan,
   updateWeeklyTrainingSession,
+  updatePublishedTrainingSession,
 } from "@/src/features/training/actions";
 import { TRAINING_MENUS, WORKOUT_TYPES } from "@/src/features/training-import/template";
 import type { PrescriptionWithComponents, TrainingScheduleWeek } from "@/src/features/training/queries";
@@ -75,13 +77,20 @@ function SessionForm({
   programId,
   week,
   prescription,
+  published = false,
+  today,
 }: {
   programId: string;
   week: TrainingScheduleWeek;
   prescription?: PrescriptionWithComponents;
+  published?: boolean;
+  today?: string;
 }) {
   const [components, setComponents] = useState(() => componentDrafts(prescription));
-  const action = prescription ? updateWeeklyTrainingSession : createWeeklyTrainingSession;
+  const action = published
+    ? prescription ? updatePublishedTrainingSession : createPublishedTrainingSession
+    : prescription ? updateWeeklyTrainingSession : createWeeklyTrainingSession;
+  const minimumDate = published && today && today > week.start_date ? today : week.start_date;
   const updateComponent = (index: number, field: keyof ComponentDraft, value: string) => {
     setComponents((current) => current.map((component, itemIndex) =>
       itemIndex === index ? { ...component, [field]: value } : component,
@@ -101,7 +110,7 @@ function SessionForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-medium text-gray-800">
           Date
-          <input className={input} defaultValue={prescription?.scheduled_date ?? week.start_date} max={week.end_date} min={week.start_date} name="scheduledDate" required type="date" />
+          <input className={input} defaultValue={prescription?.scheduled_date ?? minimumDate} max={week.end_date} min={minimumDate} name="scheduledDate" required type="date" />
         </label>
         <label className="text-sm font-medium text-gray-800">
           Training menu <FieldHelp label="Training menu">The main training category used to organize this session.</FieldHelp>
@@ -171,6 +180,43 @@ function SessionForm({
         {prescription ? "Save Training Session" : "Add Training Session"}
       </button>
     </form>
+  );
+}
+
+export function PublishedWeekEditor({ programId, today, week }: { programId: string; today: string; week: TrainingScheduleWeek }) {
+  const editablePrescriptions = week.prescriptions.filter(
+    (prescription) => prescription.scheduled_date >= today && !prescription.claim,
+  );
+  const lockedCount = week.prescriptions.length - editablePrescriptions.length;
+
+  return (
+    <div className="mt-5 space-y-4 border-t border-gray-200 pt-5">
+      <div>
+        <h3 className="font-bold text-gray-950">Edit published schedule</h3>
+        <p className="mt-1 text-sm text-gray-600">
+          Add or update sessions from today onward for this Athlete&apos;s selected program. Past or claimed sessions remain locked.
+        </p>
+        {lockedCount > 0 ? <p className="mt-1 text-xs text-gray-500">{lockedCount} session{lockedCount === 1 ? " is" : "s are"} locked.</p> : null}
+      </div>
+
+      {editablePrescriptions.map((prescription) => (
+        <details className="rounded-lg border border-gray-200 bg-white" key={prescription.id}>
+          <summary className="min-h-11 cursor-pointer px-4 py-3 font-semibold text-gray-950">
+            Edit {prescription.scheduled_date} · {prescription.title}
+          </summary>
+          <div className="border-t border-gray-200 p-4">
+            <SessionForm published prescription={prescription} programId={programId} today={today} week={week} />
+          </div>
+        </details>
+      ))}
+
+      <details className="rounded-lg border border-blue-200 bg-white">
+        <summary className="min-h-11 cursor-pointer px-4 py-3 font-semibold text-blue-700">+ Add Training Session</summary>
+        <div className="border-t border-blue-100 p-4">
+          <SessionForm published programId={programId} today={today} week={week} />
+        </div>
+      </details>
+    </div>
   );
 }
 
