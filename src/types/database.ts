@@ -1201,6 +1201,10 @@ export type Database = {
         }
         Returns: string
       }
+      import_draft_training_week: {
+        Args: { p_week: Json; p_week_id: string }
+        Returns: number
+      }
       update_published_week_prescription: {
         Args: {
           p_components: Json

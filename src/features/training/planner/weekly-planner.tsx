@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import {
   createPublishedTrainingSession,
   createWeeklyTrainingSession,
   deleteWeeklyTrainingSession,
   extendTrainingProgramAndStartNextWeek,
+  importDraftTrainingWeek,
   publishWeeklyTrainingPlan,
   startWeeklyTrainingPlan,
   updateWeeklyTrainingSession,
@@ -265,6 +267,9 @@ export function ExtendProgramPlanner({ programId }: { programId: string }) {
 }
 
 export function DraftWeekPlanner({ programId, week }: { programId: string; week: TrainingScheduleWeek }) {
+  const [entryMode, setEntryMode] = useState<"MANUAL" | "XLSX">("MANUAL");
+  const canImport = week.prescriptions.length === 0;
+
   return (
     <div className="mt-5 space-y-5 border-t border-gray-200 pt-5">
       <div>
@@ -292,10 +297,62 @@ export function DraftWeekPlanner({ programId, week }: { programId: string; week:
         </details>
       ))}
 
-      <details className="rounded-lg border border-blue-200 bg-white" open={week.prescriptions.length === 0}>
-        <summary className="min-h-11 cursor-pointer px-4 py-3 font-semibold text-blue-700">+ Add Training Session</summary>
-        <div className="border-t border-blue-100 p-4"><SessionForm programId={programId} week={week} /></div>
-      </details>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <button
+          aria-pressed={entryMode === "MANUAL"}
+          className={`min-h-11 rounded-md px-4 py-2 text-sm font-semibold ${entryMode === "MANUAL" ? "bg-blue-600 text-white" : "border border-blue-600 bg-white text-blue-700 hover:bg-blue-50"}`}
+          onClick={() => setEntryMode("MANUAL")}
+          type="button"
+        >
+          + Add Training Session
+        </button>
+        <button
+          aria-pressed={entryMode === "XLSX"}
+          className={`min-h-11 rounded-md px-4 py-2 text-sm font-semibold ${entryMode === "XLSX" ? "bg-emerald-600 text-white" : "border border-emerald-600 bg-white text-emerald-700 hover:bg-emerald-50"} disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-500`}
+          disabled={!canImport}
+          onClick={() => setEntryMode("XLSX")}
+          title={canImport ? undefined : "XLSX import is available only before sessions are added to this draft week."}
+          type="button"
+        >
+          Import from XLSX
+        </button>
+      </div>
+
+      {entryMode === "MANUAL" ? (
+        <div className="rounded-lg border border-blue-200 bg-white p-4">
+          <SessionForm programId={programId} week={week} />
+        </div>
+      ) : (
+        <form action={importDraftTrainingWeek} className="space-y-4 rounded-lg border border-emerald-200 bg-emerald-50/40 p-4">
+          <input name="programId" type="hidden" value={programId} />
+          <input name="weekId" type="hidden" value={week.id} />
+          <div>
+            <h4 className="font-bold text-gray-950">Import Week {week.week_number}</h4>
+            <p className="mt-1 text-sm text-gray-600">
+              Use one ProgrACE XLSX week for {week.start_date} through {week.end_date}. Import is available only while this draft week is empty.
+            </p>
+          </div>
+          <label className="block text-sm font-medium text-gray-800">
+            ProgrACE Excel file
+            <input
+              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              className={input}
+              name="template"
+              required
+              type="file"
+            />
+            <span className="mt-1 block text-xs text-gray-500">Excel (.xlsx) only, up to 1 MB. The workbook must contain exactly this week.</span>
+          </label>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <button className="min-h-11 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500" type="submit">
+              Import This Week
+            </button>
+            <Link className="inline-flex min-h-11 items-center text-sm font-semibold text-emerald-700 hover:underline" href="/dashboard/training/template">
+              Download XLSX Template
+            </Link>
+          </div>
+        </form>
+      )}
 
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         {week.prescriptions.length === 0 ? (

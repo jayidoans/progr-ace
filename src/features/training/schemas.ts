@@ -154,3 +154,8 @@ export const importUploadSchema = z.object({
   name: z.string().trim().min(2).max(160),
   description: optionalText(2000),
 });
+
+export const weeklyImportUploadSchema = z.object({
+  programId: uuid,
+  weekId: uuid,
+});

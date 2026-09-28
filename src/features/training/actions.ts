@@ -12,6 +12,8 @@ import {
   validateXlsxUpload,
 } from "@/src/features/training-import/security";
 import { PROGRACE_TEMPLATE_VERSION } from "@/src/features/training-import/template";
+import type { NormalizedWeek } from "@/src/features/training-import/types";
+import { selectWeeklyImport } from "@/src/features/training-import/weekly";
 import {
   addComponentSchema,
   addPrescriptionSchema,
@@ -25,6 +27,7 @@ import {
   programIdSchema,
   startWeeklyPlanSchema,
   updateWeeklySessionSchema,
+  weeklyImportUploadSchema,
 } from "@/src/features/training/schemas";
 import { createClient } from "@/src/lib/supabase/server";
 import type { Json } from "@/src/types/database";
@@ -100,6 +103,22 @@ function plannerRpcComponents(components: Array<{
     target_pace_max_sec_per_km: component.targetPaceMaxSecPerKm,
     instruction: component.instruction,
   }));
+}
+
+function weeklyImportRpcPayload(week: NormalizedWeek) {
+  return {
+    week_number: week.weekNumber,
+    phase: week.phase,
+    start_date: week.startDate,
+    end_date: week.endDate,
+    prescriptions: week.prescriptions.map((prescription) => ({
+      training_menu: prescription.trainingMenu,
+      scheduled_date: prescription.scheduledDate,
+      title: prescription.title,
+      description: prescription.description,
+      components: plannerRpcComponents(prescription.components),
+    })),
+  };
 }
 
 export async function startWeeklyTrainingPlan(formData: FormData) {
@@ -505,6 +524,70 @@ export async function uploadTrainingTemplate(formData: FormData) {
     redirect(pathWithFeedback("/dashboard/training", "error", "preview-create-failed"));
   }
   redirect(`/dashboard/training/import/${insertResult.data.id}`);
+}
+
+export async function importDraftTrainingWeek(formData: FormData) {
+  const parsed = weeklyImportUploadSchema.safeParse({
+    programId: formData.get("programId"),
+    weekId: formData.get("weekId"),
+  });
+  const programId = String(formData.get("programId") ?? "");
+  const file = formData.get("template");
+  if (!parsed.success || !(file instanceof File)) {
+    redirect(pathWithFeedback(trainingProgramPath(programId), "error", "invalid-week-import"));
+  }
+
+  const { supabase } = await authenticatedContext();
+  const { data: week } = await supabase
+    .from("training_weeks")
+    .select("id, training_program_id, week_number, start_date, end_date, planning_status")
+    .eq("id", parsed.data.weekId)
+    .eq("training_program_id", parsed.data.programId)
+    .maybeSingle();
+  if (!week || week.planning_status !== "DRAFT") {
+    redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", "week-import-unavailable"));
+  }
+
+  let buffer: Buffer;
+  try {
+    validateXlsxUpload(file);
+    buffer = Buffer.from(await file.arrayBuffer());
+    validateXlsxEnvelope(buffer);
+  } catch (error) {
+    const detail = error instanceof UnsafeWorkbookError ? error.message : undefined;
+    redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", "unsafe-week-workbook", detail));
+  }
+
+  const result = await parsePrograceTemplateV1(buffer!, { name: "Weekly import", description: null });
+  if (!result.plan) {
+    redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", "week-import-parse-failed", result.errors[0]?.message));
+  }
+
+  const selection = selectWeeklyImport(result.plan, {
+    weekNumber: week.week_number,
+    startDate: week.start_date,
+    endDate: week.end_date,
+  });
+  if (!selection.ok) {
+    redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", "week-import-mismatch", selection.message));
+  }
+
+  const { error } = await supabase.rpc("import_draft_training_week", {
+    p_week_id: week.id,
+    p_week: weeklyImportRpcPayload(selection.week),
+  });
+  if (error) {
+    const code = error.message.includes("already contains") ? "week-import-not-empty" : "week-import-failed";
+    redirect(pathWithFeedback(trainingProgramPath(parsed.data.programId), "error", code));
+  }
+
+  revalidatePath(trainingProgramPath(parsed.data.programId));
+  redirect(pathWithFeedback(
+    trainingProgramPath(parsed.data.programId),
+    "message",
+    "week-imported",
+    result.warnings[0]?.message,
+  ));
 }
 
 export async function confirmTrainingImport(formData: FormData) {
