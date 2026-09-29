@@ -9,11 +9,12 @@ import { formatTrainingDate } from "@/src/features/training/format";
 import type { TrainingScheduleWeek } from "@/src/features/training/queries";
 
 type CoachCurrentWeekReviewProps = {
+  isCurrentWeek: boolean;
   programId: string;
   week: TrainingScheduleWeek;
 };
 
-export function CoachCurrentWeekReview({ programId, week }: CoachCurrentWeekReviewProps) {
+export function CoachCurrentWeekReview({ isCurrentWeek, programId, week }: CoachCurrentWeekReviewProps) {
   const claimedSessions = week.prescriptions.filter(
     (prescription) => prescription.claim?.status === "SUBMITTED" && prescription.claim.evidence.length > 0,
   );
@@ -23,7 +24,7 @@ export function CoachCurrentWeekReview({ programId, week }: CoachCurrentWeekRevi
       <div>
         <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">Coach review</p>
         <h3 className="mt-1 text-lg font-bold text-gray-950" id={`week-review-${week.id}`}>
-          Current week feedback
+          {isCurrentWeek ? "Current week feedback" : "Week feedback"}
         </h3>
         <p className="mt-1 text-sm text-gray-600">
           Open a claimed session to review its Activities, then record an overall weekly rating.
@@ -117,7 +118,7 @@ export function CoachCurrentWeekReview({ programId, week }: CoachCurrentWeekRevi
             </select>
           </div>
           <div>
-            <label className="text-sm font-semibold text-gray-800" htmlFor={`week-comment-${week.id}`}>Current week comment</label>
+            <label className="text-sm font-semibold text-gray-800" htmlFor={`week-comment-${week.id}`}>Week comment</label>
             <textarea
               className="mt-2 min-h-24 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
               defaultValue={week.review?.coach_comment ?? ""}

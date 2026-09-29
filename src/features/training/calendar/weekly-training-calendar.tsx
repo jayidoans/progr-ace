@@ -53,6 +53,10 @@ export function WeeklyTrainingCalendar({
       prescriptions: week.prescriptions.filter((item) => item.scheduled_date === isoDate),
     };
   });
+  const isCurrentCalendarWeek = week.start_date <= today && today <= week.end_date;
+  const canReviewWeek = canReviewCurrentWeek
+    && week.planning_status === "PUBLISHED"
+    && week.start_date <= today;
 
   return (
     <section
@@ -179,8 +183,8 @@ export function WeeklyTrainingCalendar({
           </div>
         ))}
       </div>}
-      {canReviewCurrentWeek && isCurrent && weekContextLabel === "Current week" && week.planning_status === "PUBLISHED" ? (
-        <CoachCurrentWeekReview programId={programId} week={week} />
+      {canReviewWeek ? (
+        <CoachCurrentWeekReview isCurrentWeek={isCurrentCalendarWeek} programId={programId} week={week} />
       ) : null}
       {activeMode === "ATHLETE" && canClaim && week.planning_status === "PUBLISHED" && week.review ? (
         <AthleteWeekReview review={week.review} weekId={week.id} />
