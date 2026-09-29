@@ -44,6 +44,47 @@ export function summarizeRunningAnalytics(data: ProgramRunningAnalytics) {
   };
 }
 
+export function summarizeCoachProgramProgress(data: ProgramRunningAnalytics) {
+  const weeklyFulfillment = data.weeks
+    .filter((week) => week.prescribedRunningDistanceM !== null && week.prescribedRunningDistanceM > 0)
+    .map((week) => ({
+      weekId: week.weekId,
+      weekNumber: week.weekNumber,
+      phase: week.phase,
+      isCurrentWeek: week.isCurrentWeek,
+      prescribedDistanceM: week.prescribedRunningDistanceM as number,
+      actualDistanceM: week.actualClaimedRunningDistanceM,
+      actualPercent: week.actualClaimedRunningDistanceM === null
+        ? null
+        : (week.actualClaimedRunningDistanceM / (week.prescribedRunningDistanceM as number)) * 100,
+    }));
+  const completedWeekPercentages = weeklyFulfillment
+    .filter((week) => !week.isCurrentWeek && week.actualPercent !== null)
+    .map((week) => week.actualPercent as number);
+  const activities = new Map(
+    data.sessions.flatMap((session) => session.runningActivities).map((activity) => [activity.id, activity]),
+  );
+  const knownDistances = [...activities.values()]
+    .map((activity) => activity.distance_m)
+    .filter((value): value is number => value !== null);
+  const knownDurations = [...activities.values()]
+    .map((activity) => activity.duration_sec)
+    .filter((value): value is number => value !== null);
+
+  return {
+    weeklyFulfillment,
+    averageWeeklyFulfillmentPercent: completedWeekPercentages.length === 0
+      ? null
+      : completedWeekPercentages.reduce((sum, value) => sum + value, 0) / completedWeekPercentages.length,
+    totalClaimedRunningDistanceM: knownDistances.length === 0
+      ? null
+      : knownDistances.reduce((sum, value) => sum + value, 0),
+    totalClaimedRunningDurationSec: knownDurations.length === 0
+      ? null
+      : knownDurations.reduce((sum, value) => sum + value, 0),
+  };
+}
+
 export function filterLabel(filter: RunningMenuFilter) {
   return filter === "ALL" ? "All Running" : `${filter[0]}${filter.slice(1).toLowerCase()}`;
 }

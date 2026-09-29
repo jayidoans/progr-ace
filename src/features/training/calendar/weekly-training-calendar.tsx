@@ -4,6 +4,7 @@ import { formatComponent, formatTrainingWeekRange } from "@/src/features/trainin
 import { AddAnotherWeekPlanner, DraftWeekPlanner, ExtendProgramPlanner, PublishedWeekEditor, UnplannedWeekPlanner } from "@/src/features/training/planner/weekly-planner";
 import { isAfterCancellationBoundary } from "@/src/features/training-cancellation/presentation";
 import { CoachCurrentWeekReview } from "@/src/features/training-review/components/coach-current-week-review";
+import { AthleteWeekReview } from "@/src/features/training-review/components/athlete-week-review";
 import type { TrainingScheduleWeek } from "@/src/features/training/queries";
 import { deriveComplianceState } from "@/src/features/validation/engine/compliance";
 import { distanceCompletion, validationLabel } from "@/src/features/validation/format";
@@ -180,6 +181,9 @@ export function WeeklyTrainingCalendar({
       </div>}
       {canReviewCurrentWeek && isCurrent && weekContextLabel === "Current week" && week.planning_status === "PUBLISHED" ? (
         <CoachCurrentWeekReview programId={programId} week={week} />
+      ) : null}
+      {activeMode === "ATHLETE" && canClaim && week.planning_status === "PUBLISHED" && week.review ? (
+        <AthleteWeekReview review={week.review} weekId={week.id} />
       ) : null}
       {canPlan && week.planning_status === "DRAFT" ? (
         <DraftWeekPlanner programId={programId} week={week} />

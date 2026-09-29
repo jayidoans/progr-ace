@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { filterRunningSessions, formatPaceSecondsPerKm, summarizeRunningAnalytics } from "@/src/features/running-analytics/presentation";
+import {
+  filterRunningSessions,
+  formatPaceSecondsPerKm,
+  summarizeCoachProgramProgress,
+  summarizeRunningAnalytics,
+} from "@/src/features/running-analytics/presentation";
 import type { ProgramRunningAnalytics } from "@/src/features/running-analytics/domain";
 
 const base: ProgramRunningAnalytics = {
@@ -24,4 +29,43 @@ test("presentation preserves missing values and filters menu", () => {
 
 test("summary aggregates factual known values without turning missing data into zero", () => {
   assert.deepEqual(summarizeRunningAnalytics(base), { plannedDistanceM: 10000, completedDistanceM: 9000, publishedSessions: 2, missedSessions: 1 });
+});
+
+test("coach progress summary keeps missing evidence absent and excludes the current week from its average", () => {
+  const summary = summarizeCoachProgramProgress({
+    ...base,
+    weeks: [
+      base.weeks[0],
+      { ...base.weeks[1], prescribedRunningDistanceM: 12000, actualClaimedRunningDistanceM: 6000 },
+    ],
+    sessions: [
+      {
+        ...base.sessions[0],
+        runningActivities: [
+          { id: "a1", name: "Morning Run", source: "STRAVA", sport_type: "RUNNING", started_at: "2026-01-02T05:00:00Z", distance_m: 9000, duration_sec: 3000, average_hr_bpm: 145, rpe: 6 },
+          { id: "a1", name: "Morning Run", source: "STRAVA", sport_type: "RUNNING", started_at: "2026-01-02T05:00:00Z", distance_m: 9000, duration_sec: 3000, average_hr_bpm: 145, rpe: 6 },
+        ],
+      },
+    ],
+  });
+
+  assert.equal(summary.weeklyFulfillment.length, 2);
+  assert.equal(summary.weeklyFulfillment[0].actualPercent, 90);
+  assert.equal(summary.weeklyFulfillment[1].actualPercent, 50);
+  assert.equal(summary.averageWeeklyFulfillmentPercent, 90);
+  assert.equal(summary.totalClaimedRunningDistanceM, 9000);
+  assert.equal(summary.totalClaimedRunningDurationSec, 3000);
+});
+
+test("coach progress summary does not fabricate a percentage or total when data is missing", () => {
+  const summary = summarizeCoachProgramProgress({
+    ...base,
+    weeks: [{ ...base.weeks[0], actualClaimedRunningDistanceM: null }],
+    sessions: [],
+  });
+
+  assert.equal(summary.weeklyFulfillment[0].actualPercent, null);
+  assert.equal(summary.averageWeeklyFulfillmentPercent, null);
+  assert.equal(summary.totalClaimedRunningDistanceM, null);
+  assert.equal(summary.totalClaimedRunningDurationSec, null);
 });

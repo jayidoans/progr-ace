@@ -87,58 +87,92 @@ function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
-export async function getProgramRunningAnalytics(
-  programId: string,
+type ProgramIdentity = {
+  id: string;
+  status: string;
+  created_by: string;
+  race_goal: { athlete_id: string };
+};
+
+async function loadProgramsRunningAnalytics(
+  programIds: string[],
+  nextPath: string,
   today = utcDateString(),
-): Promise<ProgramRunningAnalytics> {
-  if (!isUuid(programId)) notFound();
-  const { supabase, user } = await requireAuthenticatedSession(
-    `/dashboard/training/${programId}`,
-  );
+): Promise<ProgramRunningAnalytics[]> {
+  const uniqueProgramIds = [...new Set(programIds)];
+  if (uniqueProgramIds.length === 0) return [];
+  if (uniqueProgramIds.length > 50 || uniqueProgramIds.some((programId) => !isUuid(programId))) {
+    notFound();
+  }
+
+  const { supabase, user } = await requireAuthenticatedSession(nextPath);
   const [rolesResult, identityResult] = await Promise.all([
     supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
     supabase
       .from("training_programs")
       .select(programIdentitySelection)
-      .eq("id", programId)
-      .maybeSingle(),
+      .in("id", uniqueProgramIds),
   ]);
   if (rolesResult.error || identityResult.error || !identityResult.data) notFound();
-  const identity = identityResult.data as unknown as {
-    id: string;
-    status: string;
-    created_by: string;
-    race_goal: { athlete_id: string };
-  };
+
+  const identities = identityResult.data as unknown as ProgramIdentity[];
+  if (identities.length !== uniqueProgramIds.length) notFound();
   const roles = rolesResult.data.map((row) => row.role.name);
-  if (!canReadProgramRunningAnalytics({
-    userId: user.id,
-    roles,
-    programStatus: identity.status,
-    programCreatedBy: identity.created_by,
-    athleteId: identity.race_goal.athlete_id,
-  })) notFound();
+  if (identities.some((identity) => !canReadProgramRunningAnalytics({
+      userId: user.id,
+      roles,
+      programStatus: identity.status,
+      programCreatedBy: identity.created_by,
+      athleteId: identity.race_goal.athlete_id,
+    }))) notFound();
 
   const { data, error } = await supabase
     .from("training_programs")
     .select(programAnalyticsSelection as string)
-    .eq("id", programId)
-    .maybeSingle();
-  if (error || !data) notFound();
+    .in("id", uniqueProgramIds);
+  if (error || !data || data.length !== uniqueProgramIds.length) notFound();
 
   const claimStates = new Map<string, string | null>();
-  if (roles.includes("ADMIN") || (roles.includes("COACH") && identity.created_by === user.id)) {
+  const canReadOperationalStates = roles.includes("ADMIN")
+    || (roles.includes("COACH") && identities.every((identity) => identity.created_by === user.id));
+  if (canReadOperationalStates) {
     const { data: states, error: statesError } = await supabase.rpc(
       "get_authorized_program_claim_states",
-      { p_program_ids: [programId] },
+      { p_program_ids: uniqueProgramIds },
     );
     if (statesError) throw new Error("Unable to load authorized Claim states for analytics.");
     states.forEach((row) => claimStates.set(row.prescription_id, row.claim_status));
   }
 
-  return buildProgramRunningAnalytics(
-    data as unknown as RunningAnalyticsProgramSource,
+  const sourceById = new Map(
+    (data as unknown as RunningAnalyticsProgramSource[]).map((source) => [source.id, source]),
+  );
+  return uniqueProgramIds.map((programId) => {
+    const source = sourceById.get(programId);
+    if (!source) notFound();
+    return buildProgramRunningAnalytics(source, today, claimStates);
+  });
+}
+
+export async function getProgramRunningAnalytics(
+  programId: string,
+  today = utcDateString(),
+): Promise<ProgramRunningAnalytics> {
+  const [analytics] = await loadProgramsRunningAnalytics(
+    [programId],
+    `/dashboard/training/${programId}`,
     today,
-    claimStates,
+  );
+  return analytics;
+}
+
+export async function getCoachProgramsRunningAnalytics(
+  programIds: string[],
+  today = utcDateString(),
+) {
+  return loadProgramsRunningAnalytics(
+    programIds,
+    "/dashboard/coaching/athletes",
+    today,
   );
 }

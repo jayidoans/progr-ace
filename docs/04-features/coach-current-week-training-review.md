@@ -27,6 +27,8 @@ Active Mode is not authorization. Athlete and unrelated Coach writes are rejecte
 
 The review controls appear only on the actual Current Week card. Claimed sessions use expandable rows so Activity details and comment forms do not make the seven-day calendar excessively tall on mobile. The overall weekly review appears below the Activity list.
 
+When an owning Athlete views the published Training Schedule, a saved overall weekly review appears directly below that week's calendar. The Athlete sees the Coach comment and the factual 0–10 fulfillment rating; no missing review is presented as a zero rating.
+
 Simply viewing or expanding a session does not create review data.
 
 ## Boundaries

@@ -58,6 +58,8 @@ remains analyzable by its authorized Athlete, owning Coach, or Admin.
 
 Authorization uses the authenticated identity and actual database roles. An Athlete may read their own `PUBLISHED` or historically retained `CANCELLED` Program, a Coach may read a Program they created, and an Admin retains broader access. Active Mode is never authorization. The loader first performs a bounded identity/ownership check, then retrieves the selected Program graph in one RLS-protected relational query. Coach/Admin requests also reuse the existing M10 claim-state RPC once for the selected Program so a hidden DRAFT Claim is not misclassified as MISSED; the RPC exposes no evidence or notes. The loader does not perform per-week, per-Claim, or per-Activity queries.
 
+The Coach Athlete detail can load up to 50 explicitly selected Programs through the same authorization and aggregation path in one bounded relational query and one claim-state call. Its weekly fulfillment chart treats each explicit weekly distance target as 100%. Actual distance is displayed as a factual percentage of that target, with the current in-progress week excluded from the overall weekly average. Total running distance and duration use unique submitted RUNNING Activities only; missing values remain unavailable.
+
 No migration, analytics table, materialized view, service-role client, or new privileged RPC is introduced. The response excludes raw Strava payloads, tokens, and provider credentials.
 
 ## Known limitations and out of scope

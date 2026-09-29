@@ -9,6 +9,8 @@ import { formatDuration, formatRaceDate } from "@/src/features/race-goals/format
 import { formatTrainingDate } from "@/src/features/training/format";
 import { getRaceResultsForGoals } from "@/src/features/race-results/queries";
 import { RaceResultCard } from "@/src/features/race-results/components/race-result-card";
+import { CoachProgramStatistics } from "@/src/features/running-analytics/components/coach-program-statistics";
+import { getCoachProgramsRunningAnalytics } from "@/src/features/running-analytics/queries";
 
 const messages: Record<string, string> = {
   "goal-completed": "The race goal is completed. Training history remains available.",
@@ -31,8 +33,15 @@ export default async function CoachAthleteDetailPage({
   const data = await getCoachAthletesProgress(athleteId);
   const athlete = data.athletes.find((item) => item.athleteId === athleteId);
   if (!athlete) notFound();
-  const raceResults = await getRaceResultsForGoals(athlete.goals.map((goal) => goal.goalId));
+  const [raceResults, programAnalytics] = await Promise.all([
+    getRaceResultsForGoals(athlete.goals.map((goal) => goal.goalId)),
+    getCoachProgramsRunningAnalytics(
+      athlete.goals.map((goal) => goal.currentProgram.id),
+      data.today,
+    ),
+  ]);
   const resultByGoal = new Map(raceResults.map((result) => [result.athleteRaceGoalId, result]));
+  const analyticsByProgram = new Map(programAnalytics.map((analytics) => [analytics.context.programId, analytics]));
 
   return (
     <div className="space-y-8">
@@ -92,6 +101,9 @@ export default async function CoachAthleteDetailPage({
                 <Link className="inline-flex min-h-11 items-center rounded-md border border-blue-300 px-4 text-sm font-semibold text-blue-700 hover:bg-blue-50" href={`/dashboard/training/${goal.currentProgram.id}/progress`}>Training Progress</Link>
               </div>
               <div className="mt-5"><StatusSummary counts={goal.currentProgram.compliance} /></div>
+              {analyticsByProgram.get(goal.currentProgram.id) ? (
+                <CoachProgramStatistics data={analyticsByProgram.get(goal.currentProgram.id)!} />
+              ) : null}
             </section>
 
             <RaceResultCard
