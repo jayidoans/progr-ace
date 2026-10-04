@@ -1,14 +1,13 @@
 import Link from "next/link";
 
 import {
-  addClaimActivity,
   deleteClaimDraft,
   removeClaimActivity,
-  updateClaimNote,
 } from "@/src/features/claims/actions";
 import { formatDistance, formatDuration } from "@/src/features/activities/format";
 import { ActivityEvidenceCard } from "@/src/features/claims/components/activity-evidence-card";
-import { SubmitClaimForm } from "@/src/features/claims/components/submit-claim-form";
+import { AvailableClaimActivities } from "@/src/features/claims/components/available-claim-activities";
+import { ClaimDraftSubmission } from "@/src/features/claims/components/claim-draft-submission";
 import { getAvailableActivitiesForClaim, getClaim } from "@/src/features/claims/queries";
 import { formatComponent, formatTrainingDate } from "@/src/features/training/format";
 import { ValidationSummary } from "@/src/features/validation/components/validation-summary";
@@ -161,71 +160,35 @@ export default async function TrainingClaimPage({
         )}
       </section>
 
-      {isDraft && availableActivities.length > 0 ? (
+      {isDraft ? (
+        <>
+          <ClaimDraftSubmission
+            athleteNote={claim.athlete_note}
+            canSubmit={claim.evidence.length > 0}
+            claimId={claim.id}
+          />
+          {availableActivities.length > 0 ? (
+            <AvailableClaimActivities activities={availableActivities} claimId={claim.id} />
+          ) : null}
+          <section className="border-t border-gray-200 pt-6">
+            <form action={deleteClaimDraft}>
+              <input name="claimId" type="hidden" value={claim.id} />
+              <button className="text-sm font-semibold text-red-700" type="submit">
+                Delete draft
+              </button>
+            </form>
+          </section>
+        </>
+      ) : (
         <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
-          <h2 className="text-xl font-bold">Add evidence</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Available activities are ordered by proximity to the scheduled date.
-          </p>
-          <div className="mt-5 space-y-3">
-            {availableActivities.map((activity) => (
-              <div key={activity.id}>
-                <ActivityEvidenceCard
-                  activity={activity}
-                  proximityLabel={activity.proximityLabel}
-                />
-                <form action={addClaimActivity} className="mt-2 text-right">
-                  <input name="claimId" type="hidden" value={claim.id} />
-                  <input name="activityId" type="hidden" value={activity.id} />
-                  <button className="text-sm font-semibold text-indigo-700" type="submit">
-                    Add to claim
-                  </button>
-                </form>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
-        <h2 className="text-xl font-bold">Training note</h2>
-        {isDraft ? (
-          <form action={updateClaimNote} className="mt-4">
-            <input name="claimId" type="hidden" value={claim.id} />
-            <textarea
-              className="min-h-28 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-              defaultValue={claim.athlete_note ?? ""}
-              maxLength={4000}
-              name="athleteNote"
-            />
-            <button
-              className="mt-3 rounded-md border border-indigo-600 px-4 py-2 text-sm font-semibold text-indigo-700"
-              type="submit"
-            >
-              Save note
-            </button>
-          </form>
-        ) : (
+          <h2 className="text-xl font-bold">Training note</h2>
           <p className="mt-3 whitespace-pre-wrap text-sm text-gray-700">
             {claim.athlete_note ?? "No training note added."}
           </p>
-        )}
-      </section>
-
-      {isDraft ? (
-        <section className="space-y-4 border-t border-gray-200 pt-6">
-          <SubmitClaimForm claimId={claim.id} />
-          <form action={deleteClaimDraft}>
-            <input name="claimId" type="hidden" value={claim.id} />
-            <button className="text-sm font-semibold text-red-700" type="submit">
-              Delete draft
-            </button>
-          </form>
+          <p className="mt-5 rounded-lg bg-gray-100 px-4 py-3 text-sm text-gray-700">
+            This submitted training session and its activities are read-only.
+          </p>
         </section>
-      ) : (
-        <p className="rounded-lg bg-gray-100 px-4 py-3 text-sm text-gray-700">
-          This submitted training session and its activities are read-only.
-        </p>
       )}
     </div>
   );

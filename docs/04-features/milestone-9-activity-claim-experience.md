@@ -22,6 +22,11 @@ Calendar proximity compares the Prescription's date with the UTC calendar date o
 Labels such as `Same day`, `1 day before`, and `2 days after` describe navigation context only. They
 are not match scores or recommendations, and the athlete decides which evidence belongs to the workout.
 
+On an existing draft Claim, the available-evidence section initially renders three Activities. The
+athlete can filter it by normalized activity category and load further candidates in groups of three.
+This is a presentation bound only; it does not change the candidate query, eligibility, ordering, or
+ability to attach multiple Activities.
+
 ## Preserved lifecycle
 
 Milestone 9 makes no schema, RLS, Claim RPC, submission, immutability, or Validation changes. Drafts

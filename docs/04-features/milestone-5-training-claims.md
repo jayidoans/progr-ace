@@ -77,9 +77,13 @@ after submission.
 
 An athlete opens a published Training Program and sees each Prescription as `Claim activity`,
 `Continue draft`, or `Submitted`. The Claim builder supports one or more available Activities and an
-optional Claim Note. The review page shows the Prescription, components, selected Activity metrics,
-Activity Notes, source, and descriptive distance/duration totals. Submission requires explicit
-confirmation that the Claim and evidence become read-only.
+optional Claim Note. On the draft review page, selected evidence comes first, followed immediately
+by the Claim Note and submit controls. Other available Activities appear below in a bounded list,
+initially showing three and allowing the athlete to load more or filter by category.
+
+Submitting opens a confirmation dialog asking whether every needed Activity has been claimed.
+Choosing to keep reviewing closes the dialog without changing the draft. Confirming submission saves
+the current Claim Note and then submits the Claim; the Claim and evidence become read-only.
 
 Activity History and Activity Detail show `Available`, `Used in draft claim`, or `Submitted as
 evidence`. Draft evidence remains editable, but deletion requires first deleting/removing the draft

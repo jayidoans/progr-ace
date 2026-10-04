@@ -32,6 +32,22 @@ function evidenceError(error: { code?: string } | null) {
   return error?.code === "23505" ? "evidence-already-used" : "evidence-add-failed";
 }
 
+async function saveDraftClaimNote(
+  claimId: string,
+  athleteNote: string | null,
+) {
+  const { supabase, user } = await claimContext();
+  const { data, error } = await supabase
+    .from("training_claims")
+    .update({ athlete_note: athleteNote })
+    .eq("id", claimId)
+    .eq("athlete_id", user.id)
+    .eq("status", "DRAFT")
+    .select("id")
+    .maybeSingle();
+  return { data, error };
+}
+
 export async function createClaimDraft(formData: FormData) {
   const parsed = createClaimSchema.safeParse({
     prescriptionId: formData.get("prescriptionId"),
@@ -61,18 +77,32 @@ export async function updateClaimNote(formData: FormData) {
     athleteNote: formData.get("athleteNote"),
   });
   if (!parsed.success) redirect("/dashboard/training?error=invalid-claim");
-  const { supabase, user } = await claimContext();
-  const { data, error } = await supabase
-    .from("training_claims")
-    .update({ athlete_note: parsed.data.athleteNote })
-    .eq("id", parsed.data.claimId)
-    .eq("athlete_id", user.id)
-    .eq("status", "DRAFT")
-    .select("id")
-    .maybeSingle();
+  const { data, error } = await saveDraftClaimNote(
+    parsed.data.claimId,
+    parsed.data.athleteNote,
+  );
   if (error || !data) redirect(`/dashboard/claims/${parsed.data.claimId}?error=claim-update-failed`);
   refreshClaimViews(undefined, parsed.data.claimId);
   redirect(`/dashboard/claims/${parsed.data.claimId}?message=note-updated`);
+}
+
+export async function submitClaimWithNote(formData: FormData) {
+  const parsed = updateClaimNoteSchema.safeParse({
+    claimId: formData.get("claimId"),
+    athleteNote: formData.get("athleteNote"),
+  });
+  if (!parsed.success) redirect("/dashboard/training?error=invalid-claim");
+
+  const noteResult = await saveDraftClaimNote(parsed.data.claimId, parsed.data.athleteNote);
+  if (noteResult.error || !noteResult.data) {
+    redirect(`/dashboard/claims/${parsed.data.claimId}?error=claim-update-failed`);
+  }
+
+  const { supabase } = await claimContext();
+  const { error } = await supabase.rpc("submit_training_claim", { p_claim_id: parsed.data.claimId });
+  if (error) redirect(`/dashboard/claims/${parsed.data.claimId}?error=claim-submit-failed`);
+  refreshClaimViews(undefined, parsed.data.claimId);
+  redirect(`/dashboard/claims/${parsed.data.claimId}?message=submitted`);
 }
 
 export async function addClaimActivity(formData: FormData) {
