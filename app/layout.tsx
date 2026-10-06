@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { THEME_STORAGE_KEY } from "@/src/features/theme/preferences";
+import { ServiceWorkerRegistration } from "@/src/features/pwa/service-worker-registration";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,13 +16,34 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  applicationName: "ProgrACE",
   title: "ProgrACE",
-  description: "Train today. Go further.",
+  description: "ProgrACE helps athletes and coaches plan, track, and review structured training online.",
+  manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/prograce-icon.png",
-    shortcut: "/prograce-icon.png",
-    apple: "/prograce-icon.png",
+    icon: [
+      { url: "/icons/prograce-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/prograce-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: "/icons/prograce-192.png",
+    apple: [{ url: "/icons/prograce-apple-touch-180.png", sizes: "180x180", type: "image/png" }],
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ProgrACE",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#080d1b" },
+  ],
 };
 
 export default function RootLayout({
@@ -46,6 +68,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );

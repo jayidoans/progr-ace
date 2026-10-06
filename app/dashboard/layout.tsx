@@ -21,8 +21,8 @@ export default async function DashboardLayout({
   ) as ActiveMode | null;
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-950">
-      <header className="border-b border-gray-200 bg-white">
+    <div className="min-h-[100dvh] bg-gray-50 text-gray-950">
+      <header className="border-b border-gray-200 bg-white pt-[env(safe-area-inset-top)]">
         <div className="relative mx-auto flex min-h-20 max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Link className={`text-lg font-bold ${activeMode === "ATHLETE" ? "text-emerald-600" : "text-blue-700"}`} href="/dashboard">
             ProgrACE
@@ -35,7 +35,9 @@ export default async function DashboardLayout({
           />
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 sm:px-6 sm:pt-8">
+        {children}
+      </main>
     </div>
   );
 }
