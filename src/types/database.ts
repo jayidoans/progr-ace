@@ -163,6 +163,50 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          id: string
+          recipient_user_id: string
+          type: "CLAIM_SUBMITTED" | "CLAIM_REVIEWED" | "PROGRAM_CANCELLATION_REQUESTED" | "PROGRAM_CANCELLATION_DECIDED"
+          event_key: string
+          title: string
+          body: string
+          target_path: string | null
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          recipient_user_id: string
+          type: "CLAIM_SUBMITTED" | "CLAIM_REVIEWED" | "PROGRAM_CANCELLATION_REQUESTED" | "PROGRAM_CANCELLATION_DECIDED"
+          event_key: string
+          title: string
+          body: string
+          target_path?: string | null
+          read_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          recipient_user_id?: string
+          type?: "CLAIM_SUBMITTED" | "CLAIM_REVIEWED" | "PROGRAM_CANCELLATION_REQUESTED" | "PROGRAM_CANCELLATION_DECIDED"
+          event_key?: string
+          title?: string
+          body?: string
+          target_path?: string | null
+          read_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       race_results: {
         Row: {
           athlete_race_goal_id: string
@@ -1088,6 +1132,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      mark_notification_read: {
+        Args: { p_notification_id: string }
+        Returns: boolean
+      }
+      mark_all_notifications_read: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cancel_training_program: {
         Args: { p_cancellation_reason: string; p_program_id: string }
         Returns: string

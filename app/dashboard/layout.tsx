@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { getCurrentUserRoles, requireAuthenticatedSession } from "@/src/features/auth/session";
 import { DashboardNavigation } from "@/src/features/navigation/dashboard-navigation";
+import { NotificationCenter } from "@/src/features/notifications/notification-center";
 import {
   ACTIVE_MODE_STORAGE_KEY,
   resolveActiveMode,
@@ -12,9 +13,14 @@ import {
 export default async function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { user } = await requireAuthenticatedSession();
+  const { user, supabase } = await requireAuthenticatedSession();
 
-  const roles = await getCurrentUserRoles();
+  const [roles, unreadResult] = await Promise.all([
+    getCurrentUserRoles(),
+    supabase.from("notifications").select("id", { count: "exact", head: true })
+      .eq("recipient_user_id", user.id).is("read_at", null),
+  ]);
+  if (unreadResult.error) throw new Error("Unable to load notification status.");
   const activeMode = resolveActiveMode(
     roles,
     (await cookies()).get(ACTIVE_MODE_STORAGE_KEY)?.value,
@@ -33,6 +39,7 @@ export default async function DashboardLayout({
             email={user.email}
             roles={roles}
           />
+          <NotificationCenter initialUnreadCount={unreadResult.count ?? 0} />
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 sm:px-6 sm:pt-8">
