@@ -12,6 +12,7 @@
       .brand { color: #6ee7b7; font-size: 14px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
       h1 { font-size: clamp(2rem, 8vw, 3rem); margin: 16px 0; }
       p { color: #cbd5e1; font-size: 1rem; line-height: 1.6; margin: 0; }
+      .retry-status { color: #94a3b8; font-size: .875rem; margin-top: 12px; }
       a { background: #34d399; border-radius: 8px; color: #052e26; display: inline-block; font-weight: 700; margin-top: 28px; padding: 12px 18px; text-decoration: none; }
     </style>
   </head>
@@ -20,7 +21,9 @@
       <div class="brand">ProgrACE</div>
       <h1>You're offline</h1>
       <p>ProgrACE needs an internet connection to access your latest training data. Check your connection and try again.</p>
+      <p class="retry-status" role="status">We&apos;ll try again automatically in 10 seconds.</p>
       <a href="/dashboard">Try Again</a>
     </main>
+    <script defer src="/offline.js"></script>
   </body>
 </html>

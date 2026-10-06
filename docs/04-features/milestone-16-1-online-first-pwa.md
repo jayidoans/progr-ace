@@ -27,7 +27,7 @@ This avoids exposing one user’s cached training data after logout and login by
 
 ## Offline fallback
 
-`public/offline.html` is a small branded document with no athlete, coach, training, or authentication data. It tells the user that an internet connection is required and provides a **Try Again** link to the regular dashboard entry point.
+`public/offline.html` is a small branded document with no athlete, coach, training, or authentication data. It tells the user that an internet connection is required and provides a **Try Again** link to the regular dashboard entry point. Its small, explicitly cached retry script attempts that same online entry point every 10 seconds; if the connection is still unavailable, the service worker returns the same safe fallback again.
 
 ## Updates and Cloudflare
 

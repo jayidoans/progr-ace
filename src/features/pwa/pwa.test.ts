@@ -32,6 +32,7 @@ test("service worker precaches only the explicit offline shell and PWA icons", (
 
   assert.match(source, /const SAFE_CACHE_PATHS = new Set/);
   assert.match(source, /"\/offline\.html"/);
+  assert.match(source, /"\/offline\.js"/);
   assert.match(source, /"\/icons\/prograce-192\.png"/);
   assert.doesNotMatch(source, /cache\.put\(/);
   assert.doesNotMatch(source, /request\.method === "GET"\)\s*\{\s*event\.respondWith\(caches\.match/);
@@ -43,4 +44,12 @@ test("service worker keeps application navigation network-dependent and falls ba
   assert.match(source, /request\.mode === "navigate"/);
   assert.match(source, /fetch\(request\)\.catch\(\(\) => getOfflineResponse\(\)\)/);
   assert.doesNotMatch(source, /\/dashboard.*caches\.match/);
+});
+
+test("offline page retries the normal online entry point after ten seconds", () => {
+  const source = readFileSync(join(process.cwd(), "public/offline.js"), "utf8");
+
+  assert.match(source, /window\.setTimeout/);
+  assert.match(source, /10_000/);
+  assert.match(source, /window\.location\.assign\("\/dashboard"\)/);
 });

@@ -9,3 +9,6 @@
 
 /offline.html
   Cache-Control: no-store
+
+/offline.js
+  Cache-Control: no-store

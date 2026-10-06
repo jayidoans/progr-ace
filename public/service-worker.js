@@ -7,6 +7,7 @@ const CACHE_NAME = "prograce-online-shell-v1";
 const OFFLINE_URL = "/offline.html";
 const SAFE_CACHE_PATHS = new Set([
   OFFLINE_URL,
+  "/offline.js",
   "/icons/prograce-192.png",
   "/icons/prograce-512.png",
   "/icons/prograce-maskable-512.png",
