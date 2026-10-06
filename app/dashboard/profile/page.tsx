@@ -5,6 +5,7 @@ import { getCurrentProfile } from "@/src/features/profiles/queries";
 import { ChangePasswordForm } from "@/src/features/auth/change-password-form";
 import { resolveTheme, THEME_STORAGE_KEY } from "@/src/features/theme/preferences";
 import { ThemeToggle } from "@/src/features/theme/theme-toggle";
+import { InstallPrograceControl } from "@/src/features/pwa/install-prograce-control";
 
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const profile = await getCurrentProfile();
@@ -62,6 +63,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
           <ThemeToggle initialTheme={theme} />
         </div>
       </section>
+      <InstallPrograceControl />
     </section>
   );
 }

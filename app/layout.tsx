@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { THEME_STORAGE_KEY } from "@/src/features/theme/preferences";
-import { ServiceWorkerRegistration } from "@/src/features/pwa/service-worker-registration";
+import { PwaExperienceProvider } from "@/src/features/pwa/pwa-experience";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -67,8 +67,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <ServiceWorkerRegistration />
+        <PwaExperienceProvider>{children}</PwaExperienceProvider>
       </body>
     </html>
   );

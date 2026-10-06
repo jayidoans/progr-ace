@@ -3,7 +3,7 @@
  * document and PWA icons. It never caches dashboard, auth, API, or mutation
  * responses, so user-specific training data cannot survive a logout.
  */
-const CACHE_NAME = "prograce-online-shell-v1";
+const CACHE_NAME = "prograce-online-shell-v2";
 const OFFLINE_URL = "/offline.html";
 const SAFE_CACHE_PATHS = new Set([
   OFFLINE_URL,
@@ -15,8 +15,12 @@ const SAFE_CACHE_PATHS = new Set([
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll([...SAFE_CACHE_PATHS])).then(() => self.skipWaiting()),
+    caches.open(CACHE_NAME).then((cache) => cache.addAll([...SAFE_CACHE_PATHS])),
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
