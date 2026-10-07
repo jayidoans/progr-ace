@@ -13,6 +13,16 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Keep native form controls readable even when the browser or OS prefers a
+ * dark color scheme. Individual forms can still refine these with utilities. */
+input,
+textarea,
+select {
+  color: #111827;
+  background-color: #ffffff;
+  color-scheme: light;
+}
+
 /* Theme preference is intentionally presentation-only. These overrides keep
  * the existing Tailwind utility palette coherent without changing domain UI. */
 html.dark {
@@ -55,3 +65,6 @@ html.dark .hover\:bg-blue-50:hover { background-color: #1e2d65 !important; }
 html.dark input,
 html.dark textarea,
 html.dark select { background-color: #0d1529; color: #e7edf9; }
+html.dark input,
+html.dark textarea,
+html.dark select { color-scheme: dark; }
