@@ -17,7 +17,7 @@ export async function getPushPublicKey() {
 
 export async function isCurrentPushSubscriptionActive(endpoint: string) {
   if (endpoint.length > 2048) return false;
-  const { supabase } = await requireAuthenticatedSession("/dashboard/profile");
+  const { supabase } = await requireAuthenticatedSession("/dashboard/profile", { allowForcedPasswordChange: true });
   const { data, error } = await supabase.rpc("push_subscription_is_active", { p_endpoint: endpoint });
   if (error) throw new Error("Unable to check push notifications on this device.");
   return data;

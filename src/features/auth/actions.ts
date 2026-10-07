@@ -8,6 +8,7 @@ import { z } from "zod";
 import { getSiteUrl } from "@/src/lib/supabase/env";
 import { createClient } from "@/src/lib/supabase/server";
 import { ACTIVE_MODE_STORAGE_KEY } from "@/src/features/navigation/active-mode";
+import { performDeviceScopedLogout } from "@/src/features/push/logout-operation";
 
 const credentialsSchema = z.object({
   email: z.string().trim().email("Enter a valid email address."),
@@ -111,14 +112,26 @@ export async function register(formData: FormData) {
   redirect(authPath("/login", "message", "Check your email to confirm your account."));
 }
 
-export async function signOut() {
+export type SignOutState = { error: string | null };
+
+export async function signOut(_state: SignOutState, formData: FormData): Promise<SignOutState> {
   const supabase = await createClient();
-  // Revoking all active endpoints guarantees that a shared browser cannot
-  // continue receiving this account's pushes after sign-out, even when the
-  // browser cannot unsubscribe its local PushSubscription.
-  const { error: revokeError } = await supabase.rpc("revoke_all_push_subscriptions");
-  if (revokeError) throw new Error("Unable to safely sign out. Please try again.");
-  await supabase.auth.signOut();
+  const outcome = await performDeviceScopedLogout(
+    formData.get("pushState"),
+    formData.get("pushEndpoint"),
+    async (endpoint) => {
+      // The endpoint selects a device; the RPC independently checks auth.uid().
+      const { error } = await supabase.rpc("revoke_push_subscription", { p_endpoint: endpoint });
+      return !error;
+    },
+    async () => {
+      const { error } = await supabase.auth.signOut({ scope: "local" });
+      return !error;
+    },
+  );
+  if (outcome === "UNVERIFIED") return { error: "Could not identify this device's push subscription. Please retry sign out." };
+  if (outcome === "REVOKE_FAILED") return { error: "Could not safely disable push on this device. Please retry sign out." };
+  if (outcome === "SIGNOUT_FAILED") return { error: "Could not sign out. Please try again." };
   (await cookies()).delete(ACTIVE_MODE_STORAGE_KEY);
   revalidatePath("/", "layout");
   redirect("/login");

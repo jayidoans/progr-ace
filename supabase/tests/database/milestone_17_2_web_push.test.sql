@@ -54,16 +54,16 @@ reset role;
 select * from pg_temp.rejects($$update public.training_programs set status = 'PUBLISHED', end_date = current_date + 91
   where id = 'f1723000-0000-4000-8000-000000000001'$$,
   'invalid publication attempt does not write notifications');
-select is((select count(*) from public.notifications),0::bigint,'no notification before successful publication');
+select is((select count(*) from public.notifications where recipient_user_id = 'f1720000-0000-4000-8000-000000000001'),0::bigint,'no fixture notification before successful publication');
 
 update public.training_programs set status = 'PUBLISHED' where id = 'f1723000-0000-4000-8000-000000000001';
-select is((select count(*) from public.notifications where type = 'PROGRAM_PUBLISHED'),1::bigint,'first Program publication notifies Athlete once');
-select is((select count(*) from public.notifications where type = 'WEEKLY_PLAN_PUBLISHED'),0::bigint,'initial week does not double notify');
+select is((select count(*) from public.notifications where type = 'PROGRAM_PUBLISHED' and recipient_user_id = 'f1720000-0000-4000-8000-000000000001'),1::bigint,'first Program publication notifies Athlete once');
+select is((select count(*) from public.notifications where type = 'WEEKLY_PLAN_PUBLISHED' and recipient_user_id = 'f1720000-0000-4000-8000-000000000001'),0::bigint,'initial week does not double notify');
 select is((select count(*) from public.push_deliveries),1::bigint,'notification atomically queues push for enabled device');
-select is((select recipient_user_id from public.notifications where type = 'PROGRAM_PUBLISHED'),
+select is((select recipient_user_id from public.notifications where event_key = 'program-published:f1723000-0000-4000-8000-000000000001'),
   'f1720000-0000-4000-8000-000000000001'::uuid,'publication recipient is assigned Athlete');
 update public.training_programs set status = 'PUBLISHED' where id = 'f1723000-0000-4000-8000-000000000001';
-select is((select count(*) from public.notifications where type = 'PROGRAM_PUBLISHED'),1::bigint,'repeat Program update does not duplicate');
+select is((select count(*) from public.notifications where type = 'PROGRAM_PUBLISHED' and recipient_user_id = 'f1720000-0000-4000-8000-000000000001'),1::bigint,'repeat Program update does not duplicate');
 
 insert into public.training_weeks(id,training_program_id,week_number,phase,start_date,end_date,planning_status) values
   ('f1724000-0000-4000-8000-000000000002','f1723000-0000-4000-8000-000000000001',2,'Build',date_trunc('week',current_date)::date + 14,date_trunc('week',current_date)::date + 20,'DRAFT');

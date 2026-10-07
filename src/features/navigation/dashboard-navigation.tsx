@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { signOut } from "@/src/features/auth/actions";
+import { DeviceSignOutForm } from "@/src/features/push/device-sign-out-form";
 import { ModeSwitcher } from "@/src/features/navigation/mode-switcher";
 import {
   getDashboardNavigationGroups,
@@ -147,14 +147,7 @@ export function DashboardNavigation({
         {email ? (
           <span className="hidden max-w-44 truncate text-sm text-gray-600 xl:inline">{email}</span>
         ) : null}
-        <form action={signOut}>
-          <button
-            className="min-h-11 rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-50"
-            type="submit"
-          >
-            Sign out
-          </button>
-        </form>
+        <DeviceSignOutForm buttonClassName="min-h-11 rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-50" />
       </div>
 
       <button
@@ -189,14 +182,7 @@ export function DashboardNavigation({
             <GroupedNavigationLinks access={access} mobile onNavigate={() => setOpen(false)} />
             <div className="mt-2 border-t border-gray-200 pt-3">
               {email ? <p className="mb-2 break-all px-3 text-xs text-gray-500">{email}</p> : null}
-              <form action={signOut}>
-                <button
-                  className="min-h-11 w-full rounded-md px-3 py-2.5 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                  type="submit"
-                >
-                  Sign out
-                </button>
-              </form>
+              <DeviceSignOutForm buttonClassName="min-h-11 w-full rounded-md px-3 py-2.5 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50" />
             </div>
           </nav>
         </div>

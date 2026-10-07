@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { signOut } from "@/src/features/auth/actions";
+import { DeviceSignOutForm } from "@/src/features/push/device-sign-out-form";
 import { ChangePasswordForm } from "@/src/features/auth/change-password-form";
 import { currentUserMustChangePassword } from "@/src/features/auth/password-queries";
 
@@ -12,7 +12,7 @@ export default async function RequiredPasswordChangePage() {
       <h1 className="mt-2 text-3xl font-bold">Change your password</h1>
       <p className="mt-3 text-sm text-gray-600">Your temporary password must be replaced before you continue to ProgrACE.</p>
       <ChangePasswordForm />
-      <form action={signOut} className="mt-5 border-t border-gray-200 pt-5"><button className="min-h-11 text-sm font-semibold text-gray-700" type="submit">Sign out</button></form>
+      <DeviceSignOutForm className="mt-5 border-t border-gray-200 pt-5" buttonClassName="min-h-11 text-sm font-semibold text-gray-700" />
     </section>
   </main>;
 }

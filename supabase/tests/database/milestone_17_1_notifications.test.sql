@@ -59,8 +59,8 @@ select * from pg_temp.throws_any_ok($$select public.submit_training_claim('f1718
 reset role;
 select is((select result from public.claim_validations where claim_id = 'f1718000-0000-4000-8000-000000000001'), 'NEEDS_REVIEW', 'interval evidence requires Coach review');
 select is((select count(*) from public.notifications where event_key = 'claim-submitted:f1718000-0000-4000-8000-000000000001'), 1::bigint, 'one Coach notification for submission');
-select is((select recipient_user_id from public.notifications where type = 'CLAIM_SUBMITTED'), 'f1710000-0000-4000-8000-000000000003'::uuid, 'responsible Program Coach receives notification');
-select set_config('test.notification_id', (select id::text from public.notifications where type = 'CLAIM_SUBMITTED'), true);
+select is((select recipient_user_id from public.notifications where event_key = 'claim-submitted:f1718000-0000-4000-8000-000000000001'), 'f1710000-0000-4000-8000-000000000003'::uuid, 'responsible Program Coach receives notification');
+select set_config('test.notification_id', (select id::text from public.notifications where event_key = 'claim-submitted:f1718000-0000-4000-8000-000000000001'), true);
 select * from pg_temp.throws_any_ok($$insert into public.notifications (recipient_user_id, type, event_key, title, body, target_path) values ('f1710000-0000-4000-8000-000000000003', 'CLAIM_SUBMITTED', 'unsafe-target', 'Unsafe', 'Unsafe', 'https://example.com')$$, 'external notification target is rejected by database constraint');
 
 set local role authenticated;
@@ -98,7 +98,7 @@ select is(public.mark_all_notifications_read(), 2, 'mark all reads only remainin
 reset role;
 
 select is((select count(*) from public.notifications where type = 'PROGRAM_CANCELLATION_DECIDED'), 2::bigint, 'approval and decline each notify Athlete once');
-select is((select count(*) from public.notifications where type = 'CLAIM_REVIEWED'), 1::bigint, 'Coach review notifies Athlete once');
+select is((select count(*) from public.notifications where event_key = 'claim-reviewed:f1718000-0000-4000-8000-000000000001'), 1::bigint, 'Coach review notifies Athlete once');
 select is((select count(*) from public.notifications where event_key like 'cancellation-decided:%'), 2::bigint, 'each decision has one durable event identity');
 
 insert into public.user_roles (user_id, role_id)

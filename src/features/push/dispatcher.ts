@@ -44,7 +44,7 @@ async function sendPush(delivery: Delivery, env: PushWorkerEnv, send: typeof fet
     const payload = await buildPushPayload({
       data: {
         id: delivery.notification_id,
-        title: delivery.title,
+        title: "ProgrACE notification",
         body: "Open ProgrACE to view your notification.",
         targetPath: safeTargetPath(delivery.target_path),
       },
