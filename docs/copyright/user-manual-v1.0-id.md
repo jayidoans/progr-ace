@@ -1,18 +1,24 @@
 # BUKU PANDUAN PENGGUNAAN PROGRACE
 
-## ProgrACE Versi 1.0 — Baseline Dokumentasi Hak Cipta
+## ProgrACE — Manual Pengguna Edisi 1.5
 
 **Status dokumen:** Naskah sumber manual pengguna (untuk peninjauan pemilik)
 
 | Informasi | Nilai |
 |---|---|
 | Nama aplikasi | ProgrACE |
-| Versi dokumentasi | 1.0 |
+| Edisi manual | 1.5 |
+| Baseline produk/copyright | ProgrACE Versi 1.0 |
 | Baseline perangkat lunak | `v1.0.0-copyright` |
 | Pemegang hak cipta | Jay Idoan Sihotang |
 | Institusi | Fakultas Teknologi Informasi, Universitas Advent Indonesia |
 | Tahun | 2026 |
 | Situs resmi | https://progr-ace.idoans.app |
+
+Edisi 1.5 memperbarui panduan berdasarkan fitur PWA, konektivitas, Notification
+Center, dan Web Push yang telah ditambahkan setelah baseline produk Versi 1.0.
+Pembaruan manual ini tidak mengubah tag copyright atau mendefinisikan ulang
+baseline aplikasi yang dibekukan.
 
 Informasi registrasi, nomor pencatatan, tempat/tanggal publikasi pertama, dan
 metadata hukum lain yang belum tersedia harus dilengkapi oleh pemilik hak cipta.
@@ -172,11 +178,6 @@ Race Result, penyalinan program, dan pembatalan program. Fitur seperti prediksi
 waktu lomba, VO2Max, readiness score, rekomendasi otomatis, analisis GPS/lap,
 dan integrasi official timing bukan bagian dari baseline Versi 1.0.
 
-> **[PLACEHOLDER GAMBAR 1.1]**
-> **Gambar 1.1. Halaman awal ProgrACE dan navigasi utama.**
-> Peran: pengguna terautentikasi. Rute: `/dashboard`. Tampilkan identitas
-> aplikasi, navigasi sesuai peran, dan data demonstrasi saja.
-
 ## 1.8 Prinsip keamanan penggunaan
 
 Gunakan akun sendiri dan jangan membagikan kata sandi. Active Mode pada
@@ -259,11 +260,6 @@ Satu akun dapat memiliki lebih dari satu peran. Athlete mengelola data dan bukti
 miliknya; Coach mengelola Athlete dalam lingkup Training Program yang menjadi
 tanggung jawabnya; Admin menjalankan fungsi administrasi yang disediakan. Peran
 Coach tidak otomatis berarti akses ke seluruh Athlete.
-
-> **[PLACEHOLDER GAMBAR 2.1]**
-> **Gambar 2.1. Contoh navigasi ProgrACE berdasarkan peran pengguna.**
-> Peran: Athlete atau Coach. Rute: `/dashboard`. Gunakan data demonstrasi dan
-> jangan tampilkan nama, email, atau ID produksi.
 
 ## 2.9 Status dan lifecycle penting
 
@@ -361,7 +357,83 @@ Kata sandi tidak boleh dimasukkan ke URL, catatan Activity, atau kolom teks lain
 > Peran: pengguna terautentikasi. Rute: area Profile/Account. Jangan tampilkan
 > nilai kata sandi atau data akun nyata.
 
-## 3.4 Bantuan saat akses gagal
+## 3.4 Install ProgrACE sebagai PWA
+
+ProgrACE dapat dipasang sebagai Progressive Web App (PWA) untuk akses yang lebih
+cepat dari Home Screen atau app launcher. Instalasi bersifat opsional; penggunaan
+melalui browser tetap didukung. Pada browser Chromium yang kompatibel, tindakan
+`Install ProgrACE` muncul di Profile setelah kemampuan instalasi terdeteksi. Pada
+iPhone/iPad, tindakan tersebut membuka petunjuk untuk memilih “Add to Home
+Screen” melalui menu Share.
+
+PWA ProgrACE tetap online-first. Instalasi tidak berarti halaman dashboard,
+Training Schedule, Activity, Claim, atau data autentikasi tersedia tanpa jaringan.
+
+**Langkah penggunaan:**
+
+1. Buka Profile saat login.
+2. Pilih `Install ProgrACE` bila tindakan tersebut tersedia.
+3. Pada Chromium, ikuti prompt pemasangan browser.
+4. Pada iPhone/iPad, ikuti petunjuk Share → “Add to Home Screen”.
+5. Buka aplikasi dari Home Screen untuk menggunakan tampilan standalone.
+
+> **[PLACEHOLDER GAMBAR 3.4]**
+> **Gambar 3.4. Tindakan Install ProgrACE pada Profile.**
+> Tampilkan hanya status instalasi dengan data demonstrasi; jangan tampilkan akun nyata.
+
+## 3.5 Status koneksi dan pembaruan aplikasi
+
+Saat aplikasi terbuka kehilangan jaringan, ProgrACE menampilkan `You’re offline`
+dan menjelaskan bahwa sebagian fitur tidak tersedia sampai koneksi kembali.
+Ketika jaringan pulih, pesan `Back online` tampil sementara. Formulir perubahan
+data tidak dikirim atau diantrekan secara otomatis ketika offline; pengguna perlu
+mencoba kembali secara sadar setelah koneksi tersedia.
+
+Jika versi service worker baru tersedia, aplikasi menampilkan `An update to
+ProgrACE is available.` Pilih `Update` untuk menerapkan pembaruan dan memuat
+ulang sekali, atau `Later` untuk menundanya pada halaman saat ini. Pembaruan tidak
+mengubah sesi, peran, atau data latihan.
+
+> **[PLACEHOLDER GAMBAR 3.5]**
+> **Gambar 3.5. Pemberitahuan status offline, Back online, atau pembaruan PWA.**
+> Gunakan layar demonstrasi tanpa data Athlete atau Coach.
+
+## 3.6 Notifications dan Push Notifications
+
+Header pengguna terautentikasi menyediakan tombol `Notifications` dengan badge
+jumlah unread yang dibatasi hingga `9+`. Saat dibuka, Notification Center memuat
+hingga sepuluh notifikasi terbaru. Pilih sebuah notifikasi untuk menandainya
+sebagai dibaca dan, bila tersedia, menuju halaman internal terkait. `Mark all as
+read` menandai semua notifikasi yang sedang tersedia sebagai telah dibaca.
+
+Notification Center adalah sumber informasi di dalam aplikasi dan tetap tersedia
+meskipun Push Notifications dimatikan. Pada Profile, pengguna dapat memilih
+`Enable Push Notifications` atau `Disable Push Notifications` untuk perangkat
+yang sedang digunakan. Permission browser tidak diminta otomatis saat halaman
+dibuka. Browser yang tidak mendukung, permission yang ditolak, atau iPhone/iPad
+yang belum dipasang ke Home Screen menampilkan penjelasan yang sesuai.
+
+Notifikasi push bersifat opsional dan memerlukan koneksi online. Notifikasi yang
+didukung meliputi Claim yang memerlukan perhatian Coach, hasil review Claim,
+permintaan cancellation, keputusan cancellation, publikasi pertama Training
+Program, dan publikasi Training Week berikutnya. Push hanya menyampaikan ringkasan
+umum; rincian tetap dibaca setelah pengguna membuka ProgrACE.
+
+**Langkah penggunaan:**
+
+1. Buka tombol `Notifications` pada header untuk membaca notifikasi terbaru.
+2. Pilih item untuk menandainya telah dibaca dan membuka target internal bila ada.
+3. Gunakan `Mark all as read` bila seluruh item ingin ditandai selesai dibaca.
+4. Buka Profile dan pilih `Enable Push Notifications` bila ingin menerima alert
+   pada perangkat ini.
+5. Pilih `Disable Push Notifications` untuk menghentikan alert pada perangkat ini;
+   Notification Center tetap tersedia.
+
+> **[PLACEHOLDER GAMBAR 3.6]**
+> **Gambar 3.6. Notification Center dan pengaturan Push Notifications.**
+> Gunakan notifikasi sintetis; jangan tampilkan nama Athlete, email, atau target produksi.
+
+## 3.7 Bantuan saat akses gagal
 
 Jika halaman mengembalikan akses tidak tersedia, pastikan sesi masih aktif dan
 akun memiliki peran yang sesuai. Jangan mencoba mengganti Active Mode sebagai
@@ -781,6 +853,14 @@ setiap minggu: program aktif masih dapat memiliki minggu yang belum direncanakan
 Dengan demikian, Coach dapat membuka rencana untuk Athlete tanpa berpura-pura
 bahwa seluruh bagian masa depan telah selesai ditulis.
 
+Jika publikasi menghasilkan notifikasi, Athlete menerima item pada Notification
+Center dan—bila telah mengaktifkan push pada perangkat—alert umum dari sistem.
+Publikasi pertama Training Program tidak menghasilkan notifikasi minggu yang sama
+secara ganda. Ketika minggu berikutnya diterbitkan pada program yang sudah aktif,
+Athlete dapat menerima notifikasi `WEEKLY_PLAN_PUBLISHED` sesuai aturan aplikasi.
+Notifikasi hanya membantu memberi tahu; status program dan minggu tetap ditentukan
+oleh Training Schedule.
+
 ## 5.11 Memvalidasi Claim
 
 Buka Claim yang telah `SUBMITTED`, tinjau Prescription dan Activity pendukung,
@@ -905,18 +985,14 @@ ringkasan Accounts, Athletes, Coaches, dan Athlete yang terhubung ke Strava.
 Badge role tetap menunjukkan `ATHLETE` atau `COACH`; warna oranye pada Athlete
 hanya menandakan koneksi Strava saat ini, bukan izin, Claim, atau hasil sinkronisasi.
 
-> **[PLACEHOLDER GAMBAR 6.1]**
-> **Gambar 6.1. Admin Manage Users dan ringkasan akun.**
-> Gunakan data sintetis; jangan tampilkan nama, email, atau identifier produksi.
-
 ## 6.3 User Detail dan Strava Access
 
 Admin dapat membuka User Detail untuk melihat Account, Roles, Password Status,
 dan Strava Access sesuai kewenangan. Informasi koneksi provider ditampilkan hanya
 sebagai status yang diperlukan untuk pengelolaan akun.
 
-> **[PLACEHOLDER GAMBAR 6.2]**
-> **Gambar 6.2. Admin User Detail.**
+> **[PLACEHOLDER GAMBAR 6.1]**
+> **Gambar 6.1. Admin User Detail.**
 > Tampilkan status umum Roles/Password/Strava tanpa nilai rahasia.
 
 ## 6.4 Admin Reset Password
@@ -1159,6 +1235,9 @@ gunakan data demonstrasi dan tangkapan layar yang telah disanitasi.
 | Copy | Copy struktur program menjadi Draft | Implemented |
 | Cancellation | Athlete request, Coach review, direct cancel | Implemented |
 | Admin | User directory, Strava status, reset password | Implemented |
+| PWA | Install ProgrACE, online-first offline fallback, connectivity notice, update notice | Implemented |
+| Notifications | Notification Center, unread badge, read actions | Implemented |
+| Web Push | Optional device push for supported publication and attention events | Implemented |
 
 Fitur prediksi performa, fitness/readiness score, AI recommendation, official
 timing, lap/stream analysis, dan Race Result charts tidak termasuk baseline ini.
@@ -1199,7 +1278,7 @@ data tersebut, bukan tabel score terpisah.
 > **Gambar B.1. Diagram konseptual entitas database.**
 > Gunakan diagram yang dirender dari data konseptual; jangan tampilkan row nyata.
 
-# Lampiran C — Versi dan bukti repository
+# Lampiran C — Versi, riwayat manual, dan bukti repository
 
 | Item | Nilai |
 |---|---|
@@ -1207,7 +1286,19 @@ data tersebut, bukan tabel score terpisah.
 | Baseline copyright | `v1.0.0-copyright` |
 | Baseline aplikasi | `7b08de311f043b51551ec71e54ffba1028a54dc2` |
 | Baseline dokumentasi | `5121c6afc013a668b985c02eca38d8ab49d8468f` |
+| Edisi manual saat ini | 1.5 |
 | Tahun dokumentasi | 2026 |
+
+## Riwayat editorial yang relevan
+
+| Edisi | Cakupan |
+|---|---|
+| 1.0 | Manual awal untuk baseline ProgrACE Versi 1.0 dan fitur sampai M15. |
+| 1.5 | Penambahan panduan PWA online-first, instalasi opsional, konektivitas,
+  Notification Center, dan Web Push setelah baseline copyright. |
+
+Edisi manual 1.5 tidak mengubah tag `v1.0.0-copyright`. Fitur PWA dan notifikasi
+didokumentasikan sebagai perkembangan aplikasi setelah baseline tersebut.
 
 ## Repository Evidence
 
@@ -1217,6 +1308,10 @@ data tersebut, bukan tabel score terpisah.
   Running Analytics, Race Result, Copy, dan Cancellation
 - `supabase/migrations/` untuk schema, constraints, RLS, serta RPC
 - `supabase/tests/` dan `src/features/**/__tests__` untuk perilaku teruji
+- `docs/04-features/milestone-16-1-online-first-pwa.md`
+- `docs/04-features/milestone-16-2-pwa-experience-polish.md`
+- `docs/04-features/milestone-17-1-notification-foundation.md`
+- `docs/04-features/milestone-17-2-web-push-publication.md`
 - `docs/copyright/00-baseline-audit.md` sampai `13-demo-data-specification.md`
   untuk audit, inventaris, dan rencana screenshot
 - `package.json`, `next.config.*`, `open-next.config.*`, dan `wrangler.jsonc`
