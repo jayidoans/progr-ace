@@ -55,3 +55,40 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(fetch(request).catch(() => getOfflineResponse()));
   }
 });
+
+function safeNotificationTarget(path) {
+  return typeof path === "string" && /^\/dashboard(?:\/[a-zA-Z0-9_-]+)*$/.test(path)
+    ? path : "/dashboard";
+}
+
+self.addEventListener("push", (event) => {
+  let payload;
+  try { payload = event.data?.json(); } catch { payload = null; }
+  const title = typeof payload?.title === "string" && payload.title.length <= 160
+    ? payload.title : "ProgrACE notification";
+  const body = typeof payload?.body === "string" && payload.body.length <= 180
+    ? payload.body : "Open ProgrACE to view your notification.";
+  const notificationId = typeof payload?.id === "string" && /^[0-9a-f-]{36}$/i.test(payload.id)
+    ? payload.id : undefined;
+  event.waitUntil(self.registration.showNotification(title, {
+    body,
+    icon: "/icons/prograce-192.png",
+    tag: notificationId,
+    data: { targetPath: safeNotificationTarget(payload?.targetPath) },
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const path = safeNotificationTarget(event.notification.data?.targetPath);
+  const target = new URL(path, self.location.origin).href;
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const existing = windows.find((client) => new URL(client.url).origin === self.location.origin);
+    if (existing) {
+      await existing.navigate(target);
+      return existing.focus();
+    }
+    return self.clients.openWindow(target);
+  })());
+});

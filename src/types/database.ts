@@ -167,7 +167,7 @@ export type Database = {
         Row: {
           id: string
           recipient_user_id: string
-          type: "CLAIM_SUBMITTED" | "CLAIM_REVIEWED" | "PROGRAM_CANCELLATION_REQUESTED" | "PROGRAM_CANCELLATION_DECIDED"
+          type: "CLAIM_SUBMITTED" | "CLAIM_REVIEWED" | "PROGRAM_CANCELLATION_REQUESTED" | "PROGRAM_CANCELLATION_DECIDED" | "PROGRAM_PUBLISHED" | "WEEKLY_PLAN_PUBLISHED"
           event_key: string
           title: string
           body: string
@@ -178,7 +178,7 @@ export type Database = {
         Insert: {
           id?: string
           recipient_user_id: string
-          type: "CLAIM_SUBMITTED" | "CLAIM_REVIEWED" | "PROGRAM_CANCELLATION_REQUESTED" | "PROGRAM_CANCELLATION_DECIDED"
+          type: "CLAIM_SUBMITTED" | "CLAIM_REVIEWED" | "PROGRAM_CANCELLATION_REQUESTED" | "PROGRAM_CANCELLATION_DECIDED" | "PROGRAM_PUBLISHED" | "WEEKLY_PLAN_PUBLISHED"
           event_key: string
           title: string
           body: string
@@ -189,7 +189,7 @@ export type Database = {
         Update: {
           id?: string
           recipient_user_id?: string
-          type?: "CLAIM_SUBMITTED" | "CLAIM_REVIEWED" | "PROGRAM_CANCELLATION_REQUESTED" | "PROGRAM_CANCELLATION_DECIDED"
+          type?: "CLAIM_SUBMITTED" | "CLAIM_REVIEWED" | "PROGRAM_CANCELLATION_REQUESTED" | "PROGRAM_CANCELLATION_DECIDED" | "PROGRAM_PUBLISHED" | "WEEKLY_PLAN_PUBLISHED"
           event_key?: string
           title?: string
           body?: string
@@ -205,6 +205,21 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      push_subscriptions: {
+        Row: { id: string; user_id: string; endpoint: string; p256dh: string; auth_secret: string; revoked_at: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; user_id: string; endpoint: string; p256dh: string; auth_secret: string; revoked_at?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; user_id?: string; endpoint?: string; p256dh?: string; auth_secret?: string; revoked_at?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [{ foreignKeyName: "push_subscriptions_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }]
+      }
+      push_deliveries: {
+        Row: { id: string; notification_id: string; subscription_id: string; status: string; attempts: number; next_attempt_at: string; last_http_status: number | null; created_at: string; updated_at: string }
+        Insert: { id?: string; notification_id: string; subscription_id: string; status?: string; attempts?: number; next_attempt_at?: string; last_http_status?: number | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; notification_id?: string; subscription_id?: string; status?: string; attempts?: number; next_attempt_at?: string; last_http_status?: number | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: "push_deliveries_notification_id_fkey"; columns: ["notification_id"]; isOneToOne: false; referencedRelation: "notifications"; referencedColumns: ["id"] },
+          { foreignKeyName: "push_deliveries_subscription_id_fkey"; columns: ["subscription_id"]; isOneToOne: false; referencedRelation: "push_subscriptions"; referencedColumns: ["id"] },
         ]
       }
       race_results: {
@@ -1132,6 +1147,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      register_push_subscription: { Args: { p_endpoint: string; p_p256dh: string; p_auth: string }; Returns: string }
+      push_subscription_is_active: { Args: { p_endpoint: string }; Returns: boolean }
+      revoke_push_subscription: { Args: { p_endpoint: string }; Returns: boolean }
+      revoke_all_push_subscriptions: { Args: Record<PropertyKey, never>; Returns: number }
+      claim_push_deliveries: { Args: { p_limit?: number }; Returns: Array<{ delivery_id: string; notification_id: string; endpoint: string; p256dh: string; auth_secret: string; title: string; body: string; target_path: string | null; attempt_number: number }> }
+      finish_push_delivery: { Args: { p_delivery_id: string; p_outcome: string; p_http_status?: number | null }; Returns: undefined }
       mark_notification_read: {
         Args: { p_notification_id: string }
         Returns: boolean

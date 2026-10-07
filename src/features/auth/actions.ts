@@ -113,6 +113,11 @@ export async function register(formData: FormData) {
 
 export async function signOut() {
   const supabase = await createClient();
+  // Revoking all active endpoints guarantees that a shared browser cannot
+  // continue receiving this account's pushes after sign-out, even when the
+  // browser cannot unsubscribe its local PushSubscription.
+  const { error: revokeError } = await supabase.rpc("revoke_all_push_subscriptions");
+  if (revokeError) throw new Error("Unable to safely sign out. Please try again.");
   await supabase.auth.signOut();
   (await cookies()).delete(ACTIVE_MODE_STORAGE_KEY);
   revalidatePath("/", "layout");
