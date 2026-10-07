@@ -25,6 +25,8 @@ Profile offers explicit Enable/Disable Push Notifications actions. Permission is
 
 ## Configuration and deployment order
 
+Production builds must follow [the guarded build environment procedure](../03-architecture/production-build-environment.md). Dashboard variables cannot repair a bundle compiled with local `NEXT_PUBLIC_*` values.
+
 This milestone adds one Cloudflare Cron Trigger (`* * * * *`) and a small custom OpenNext Worker entrypoint that preserves OpenNext's fetch handler. No Queue is required. The dispatcher uses `@block65/webcrypto-web-push` (Web Crypto-compatible VAPID and `aes128gcm` payload encryption), Supabase service-role access, and a bounded batch. This is an infrastructure change: deploy only after reviewing Cron availability/cost for the Cloudflare account.
 
 Required server/Worker variables: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (`mailto:` contact or HTTPS URL). Configure the same public VAPID key for browser subscriptions and server delivery. Generate the VAPID key pair securely; never commit the private key. Store private values in Cloudflare secrets. Existing `keep_vars` remains enabled. The push endpoints are constrained to known browser push providers to reduce SSRF exposure.
