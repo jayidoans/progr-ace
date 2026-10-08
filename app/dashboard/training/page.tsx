@@ -3,6 +3,7 @@ import Link from "next/link";
 import { TrainingImportForm } from "@/src/features/training-import/components";
 import { formatTrainingDate } from "@/src/features/training/format";
 import { getTrainingDashboardData } from "@/src/features/training/queries";
+import { measureRouteWorkflow } from "@/src/features/performance/diagnostics";
 
 const errors: Record<string, string> = {
   "invalid-import": "Choose a program, race goal, and XLSX file.",
@@ -21,7 +22,14 @@ export default async function TrainingPage({
 }: {
   searchParams: Promise<{ error?: string; detail?: string; message?: string }>;
 }) {
-  const [data, params] = await Promise.all([getTrainingDashboardData(), searchParams]);
+  const [data, params] = await Promise.all([
+    measureRouteWorkflow(
+      { route: "dashboard.training", workflow: "training.dashboard", operation: "route" },
+      () => getTrainingDashboardData(),
+      (result) => ({ programs: result.programs.length, raceGoals: result.raceGoals.length }),
+    ),
+    searchParams,
+  ]);
   const activeGoals = data.raceGoals.filter((goal) => goal.status === "ACTIVE");
   const activeProgramByGoal = new Map<string, (typeof data.programs)[number]>();
   data.programs

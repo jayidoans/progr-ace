@@ -1,10 +1,15 @@
 import Link from "next/link";
 
 import { getCoachAthletesProgress } from "@/src/features/evaluation/queries";
+import { measureRouteWorkflow } from "@/src/features/performance/diagnostics";
 import { formatRaceDate } from "@/src/features/race-goals/format";
 
 export default async function CoachAthletesPage() {
-  const data = await getCoachAthletesProgress();
+  const data = await measureRouteWorkflow(
+    { route: "dashboard.coaching.athletes", workflow: "coach.athletes.progress", operation: "route" },
+    () => getCoachAthletesProgress(),
+    (result) => ({ athletes: result.athletes.length, raceGoals: result.athletes.reduce((total, athlete) => total + athlete.goals.length, 0) }),
+  );
 
   return (
     <div className="space-y-8">

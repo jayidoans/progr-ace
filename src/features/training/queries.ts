@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 
 import { getCurrentSession, getCurrentUserRoles, requireAuthenticatedSession } from "@/src/features/auth/session";
+import { measureAsync, measureSync } from "@/src/features/performance/diagnostics";
 import type { Json, Tables } from "@/src/types/database";
 import { ACTIVE_MODE_STORAGE_KEY, resolveActiveMode } from "@/src/features/navigation/active-mode";
 import {
@@ -189,16 +190,22 @@ async function context() {
 
 export async function getTrainingDashboardData() {
   const { supabase, userId, roles, isAuthor } = await context();
-  const programsQuery = supabase
-    .from("training_programs")
-    .select(`*, race_goal:athlete_race_goals (${goalSelection})`)
-    .order("start_date", { ascending: false });
+  const programsQuery = measureAsync(
+    { route: "dashboard.training", workflow: "training.dashboard", operation: "programs-query", queryCount: 1 },
+    async () => await supabase
+      .from("training_programs")
+      .select(`*, race_goal:athlete_race_goals (${goalSelection})`)
+      .order("start_date", { ascending: false }),
+  );
   const raceGoalsQuery = isAuthor
-    ? supabase
-        .from("athlete_race_goals")
-        .select(goalSelection)
-        .eq("status", "ACTIVE")
-        .order("created_at", { ascending: false })
+    ? measureAsync(
+        { route: "dashboard.training", workflow: "training.dashboard", operation: "active-race-goals-query", queryCount: 1 },
+        async () => await supabase
+          .from("athlete_race_goals")
+          .select(goalSelection)
+          .eq("status", "ACTIVE")
+          .order("created_at", { ascending: false }),
+      )
     : Promise.resolve({ data: [], error: null });
   const [programsResult, goalsResult] = await Promise.all([programsQuery, raceGoalsQuery]);
   if (programsResult.error || goalsResult.error) throw new Error("Unable to load training programs.");
@@ -261,36 +268,47 @@ export async function getHomepageTrainingPrograms(): Promise<HomepageTrainingPro
 
 export const getTrainingProgram = cache(async (programId: string) => {
   const { supabase, user, roles, activeMode, isAuthor } = await context();
-  const { data, error } = await supabase
-    .from("training_programs")
-    .select(trainingProgramSelection)
-    .eq("id", programId)
-    .maybeSingle();
+  const { data, error } = await measureAsync(
+    { route: "dashboard.training.program", workflow: "training.program.detail", operation: "program-query", queryCount: 1 },
+    async () => await supabase
+      .from("training_programs")
+      .select(trainingProgramSelection)
+      .eq("id", programId)
+      .maybeSingle(),
+  );
   if (error) throw new Error("Unable to load the training program.");
   if (!data) return { program: null, scheduleWeeks: [], user, roles, activeMode, isAuthor: false, canEdit: false, canPlan: false };
 
   const program = data as unknown as TrainingProgramDetail;
   program.cancellation_requests ??= [];
-  program.cancellation_requests.sort((left, right) =>
-    right.requested_at.localeCompare(left.requested_at) || right.id.localeCompare(left.id),
+  measureSync(
+    { route: "dashboard.training.program", workflow: "training.program.detail", operation: "sort-program-data" },
+    () => {
+      program.cancellation_requests.sort((left, right) =>
+        right.requested_at.localeCompare(left.requested_at) || right.id.localeCompare(left.id),
+      );
+      program.weeks.sort((a, b) => a.week_number - b.week_number);
+      program.weeks.forEach((week) => {
+        week.prescriptions.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
+        week.prescriptions.forEach((prescription) =>
+          prescription.components.sort((a, b) => a.sequence_order - b.sequence_order),
+        );
+      });
+    },
   );
-  program.weeks.sort((a, b) => a.week_number - b.week_number);
-  program.weeks.forEach((week) => {
-    week.prescriptions.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
-    week.prescriptions.forEach((prescription) =>
-      prescription.components.sort((a, b) => a.sequence_order - b.sequence_order),
-    );
-  });
 
   const prescriptionIds = program.weeks.flatMap((week) =>
     week.prescriptions.map((prescription) => prescription.id),
   );
   const claimByPrescription = new Map<string, PrescriptionWithComponents["claim"]>();
   if (prescriptionIds.length > 0) {
-    const { data: claims, error: claimError } = await supabase
-      .from("training_claims")
-      .select("id, prescription_id, status, submitted_at, validation:claim_validations(result, automatic_result, evaluation_source, checks:validation_checks(check_type, target_value, actual_value, result, message)), evidence:claim_activities(id, comment:training_activity_comments(id, coach_comment, reviewed_by, updated_at), activity:activities(id, average_hr_bpm, distance_m, duration_sec, name, notes, rpe, source, sport_type, started_at))")
-      .in("prescription_id", prescriptionIds);
+    const { data: claims, error: claimError } = await measureAsync(
+      { route: "dashboard.training.program", workflow: "training.program.detail", operation: "claims-query", queryCount: 1 },
+      async () => await supabase
+        .from("training_claims")
+        .select("id, prescription_id, status, submitted_at, validation:claim_validations(result, automatic_result, evaluation_source, checks:validation_checks(check_type, target_value, actual_value, result, message)), evidence:claim_activities(id, comment:training_activity_comments(id, coach_comment, reviewed_by, updated_at), activity:activities(id, average_hr_bpm, distance_m, duration_sec, name, notes, rpe, source, sport_type, started_at))")
+        .in("prescription_id", prescriptionIds),
+    );
     if (claimError) throw new Error("Unable to load training claim states.");
     claims.forEach((claim) => claimByPrescription.set(claim.prescription_id, claim));
   }
@@ -301,18 +319,35 @@ export const getTrainingProgram = cache(async (programId: string) => {
   );
 
   const reviewByStart = new Map(program.weeks.map((week) => [week.start_date, week.review]));
-  const scheduleWeeks = materializeProgramCalendar<PrescriptionWithComponents>(
-    program.start_date,
-    program.end_date,
-    program.weeks.map((week) => ({
-      ...week,
-      planning_status: week.planning_status as WeekPlanningStatus,
-      prescriptions: week.prescriptions.map((prescription) => ({
-        ...prescription,
-        claim: prescription.claim,
+  const scheduleWeeks = measureSync(
+    () => ({
+      route: "dashboard.training.program",
+      workflow: "training.program.detail",
+      operation: "materialize-calendar",
+      counts: {
+        programs: 1,
+        weeks: program.weeks.length,
+        prescriptions: prescriptionIds.length,
+        components: program.weeks.reduce((total, week) => total + week.prescriptions.reduce(
+          (weekTotal, prescription) => weekTotal + prescription.components.length,
+          0,
+        ), 0),
+        claims: claimByPrescription.size,
+      },
+    }),
+    () => materializeProgramCalendar<PrescriptionWithComponents>(
+      program.start_date,
+      program.end_date,
+      program.weeks.map((week) => ({
+        ...week,
+        planning_status: week.planning_status as WeekPlanningStatus,
+        prescriptions: week.prescriptions.map((prescription) => ({
+          ...prescription,
+          claim: prescription.claim,
+        })),
       })),
-    })),
-  ).map((week) => ({ ...week, review: reviewByStart.get(week.start_date) ?? null }));
+    ).map((week) => ({ ...week, review: reviewByStart.get(week.start_date) ?? null })),
+  );
 
   return {
     program,

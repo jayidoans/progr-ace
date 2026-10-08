@@ -22,6 +22,7 @@ import {
 } from "@/src/features/evaluation/analytics";
 import { groupCoachProgramsByGoal } from "@/src/features/evaluation/coach-athlete-progress";
 import { evaluationProgramFromTrainingProgram } from "@/src/features/evaluation/training-program-adapter";
+import { measureAsync, measureSync, type PerformanceRoute } from "@/src/features/performance/diagnostics";
 import type { Profile } from "@/src/features/profiles/queries";
 import type { RaceGoalWithRace } from "@/src/features/race-goals/queries";
 import { utcDateString } from "@/src/features/validation/engine/compliance";
@@ -252,8 +253,10 @@ async function loadPrograms(
     isAdmin?: boolean;
     limit?: number;
     programId?: string;
+    diagnosticRoute?: PerformanceRoute;
   },
 ) {
+  const diagnosticRoute = options.diagnosticRoute ?? "dashboard";
   let query = supabase
     .from("training_programs")
     .select(evaluationProgramSelection as string)
@@ -263,9 +266,29 @@ async function loadPrograms(
   if (options.athleteId) query = query.eq("race_goal.athlete_id", options.athleteId);
   if (options.coachId && !options.isAdmin) query = query.eq("created_by", options.coachId);
   if (options.programId) query = query.eq("id", options.programId);
-  const { data, error } = await query;
+  const { data, error } = await measureAsync(
+    { route: diagnosticRoute, workflow: "evaluation.programs", operation: "published-programs-query", queryCount: 1 },
+    async () => query,
+  );
   if (error) throw new Error("Unable to load evaluation programs.");
-  return (data as unknown as EvaluationProgram[]).map(normalizeProgram);
+  const programs = data as unknown as EvaluationProgram[];
+  return measureSync(
+    () => ({
+      route: diagnosticRoute,
+      workflow: "evaluation.programs",
+      operation: "normalize-programs",
+      counts: {
+        programs: programs.length,
+        weeks: programs.reduce((total, program) => total + program.weeks.length, 0),
+        prescriptions: programs.reduce((total, program) => total + flattenPrescriptions(program).length, 0),
+        claims: programs.reduce((total, program) => total + flattenPrescriptions(program).reduce(
+          (programTotal, prescription) => programTotal + prescription.claims.length,
+          0,
+        ), 0),
+      },
+    }),
+    () => programs.map(normalizeProgram),
+  );
 }
 
 function coachAthleteProgress(
@@ -324,15 +347,25 @@ function coachAthleteProgress(
 async function authorizedClaimStates(
   supabase: Awaited<ReturnType<typeof requireAuthenticatedSession>>["supabase"],
   programIds: string[],
+  diagnosticRoute: PerformanceRoute = "dashboard",
 ) {
   if (programIds.length === 0) return new Map<string, string | null>();
   const batches = Array.from(
     { length: Math.ceil(programIds.length / 20) },
     (_, index) => programIds.slice(index * 20, (index + 1) * 20),
   );
-  const results = await Promise.all(batches.map((batch) =>
-    supabase.rpc("get_authorized_program_claim_states", { p_program_ids: batch }),
-  ));
+  const results = await measureAsync(
+    () => ({
+      route: diagnosticRoute,
+      workflow: "evaluation.claim-states",
+      operation: "authorized-claim-states-rpc",
+      queryCount: batches.length,
+      counts: { programs: programIds.length },
+    }),
+    () => Promise.all(batches.map((batch) =>
+      supabase.rpc("get_authorized_program_claim_states", { p_program_ids: batch }),
+    )),
+  );
   if (results.some((result) => result.error)) {
     throw new Error("Unable to load authorized Claim states.");
   }
@@ -417,14 +450,20 @@ async function athleteDashboard(
   today: string,
 ): Promise<AthleteEvaluationDashboard> {
   const [profileResult, goalResult, programs] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, email, created_at, updated_at").eq("id", userId).maybeSingle(),
-    supabase
-      .from("athlete_race_goals")
-      .select(activeGoalSelection)
-      .eq("athlete_id", userId)
-      .eq("status", "ACTIVE")
-      .maybeSingle(),
-    loadPrograms(supabase, { athleteId: userId }),
+    measureAsync(
+      { route: "dashboard", workflow: "evaluation.athlete-dashboard", operation: "profile-query", queryCount: 1 },
+      async () => await supabase.from("profiles").select("id, full_name, email, created_at, updated_at").eq("id", userId).maybeSingle(),
+    ),
+    measureAsync(
+      { route: "dashboard", workflow: "evaluation.athlete-dashboard", operation: "active-race-goal-query", queryCount: 1 },
+      async () => await supabase
+        .from("athlete_race_goals")
+        .select(activeGoalSelection)
+        .eq("athlete_id", userId)
+        .eq("status", "ACTIVE")
+        .maybeSingle(),
+    ),
+    loadPrograms(supabase, { athleteId: userId, diagnosticRoute: "dashboard" }),
   ]);
   if (profileResult.error || goalResult.error) throw new Error("Unable to load athlete evaluation data.");
 
@@ -446,30 +485,38 @@ async function athleteDashboard(
     ? weeklyDistanceSummary(weeklyPrescriptions, currentProgram?.cancelled_at)
     : null;
 
-  const submitted = programs
-    .flatMap((program) => flattenPrescriptions(program))
-    .flatMap((prescription) =>
-      prescription.claims
-        .filter((claim) => claim.status === "SUBMITTED" && claim.validation)
-        .map((claim) => ({ prescription, claim })),
-    )
-    .sort((left, right) =>
-      (right.claim.submitted_at ?? "").localeCompare(left.claim.submitted_at ?? ""),
-    )
-    .slice(0, 5);
-  const recentValidations = submitted.map(({ prescription, claim }) => {
-    const activities = uniqueClaimActivities(prescription);
-    return {
-      claimId: claim.id,
-      prescriptionId: prescription.id,
-      title: prescription.title,
-      scheduledDate: prescription.scheduled_date,
-      result: claim.validation?.result ?? "SUBMITTED",
-      actualDistanceM: activities.reduce((sum, activity) => sum + (activity.distance_m ?? 0), 0),
-      activityCount: activities.length,
-      rpeValues: activities.flatMap((activity) => (activity.rpe === null ? [] : [activity.rpe])),
-    };
-  });
+  const recentValidations = measureSync(
+    () => ({
+      route: "dashboard",
+      workflow: "evaluation.athlete-dashboard",
+      operation: "recent-validations-transform",
+      counts: { programs: programs.length, prescriptions: programs.reduce((total, program) => total + flattenPrescriptions(program).length, 0) },
+    }),
+    () => programs
+      .flatMap((program) => flattenPrescriptions(program))
+      .flatMap((prescription) =>
+        prescription.claims
+          .filter((claim) => claim.status === "SUBMITTED" && claim.validation)
+          .map((claim) => ({ prescription, claim })),
+      )
+      .sort((left, right) =>
+        (right.claim.submitted_at ?? "").localeCompare(left.claim.submitted_at ?? ""),
+      )
+      .slice(0, 5)
+      .map(({ prescription, claim }) => {
+        const activities = uniqueClaimActivities(prescription);
+        return {
+          claimId: claim.id,
+          prescriptionId: prescription.id,
+          title: prescription.title,
+          scheduledDate: prescription.scheduled_date,
+          result: claim.validation?.result ?? "SUBMITTED",
+          actualDistanceM: activities.reduce((sum, activity) => sum + (activity.distance_m ?? 0), 0),
+          activityCount: activities.length,
+          rpeValues: activities.flatMap((activity) => (activity.rpe === null ? [] : [activity.rpe])),
+        };
+      }),
+  );
   const attention = weeklyPrescriptions
     .filter((prescription) => isExpectedPrescription(prescription, currentProgram?.cancelled_at))
     .map((prescription) => {
@@ -505,25 +552,35 @@ async function coachDashboard(
   isAdmin: boolean,
   today: string,
 ): Promise<CoachEvaluationDashboard> {
-  const programs = await loadPrograms(supabase, { coachId: userId, isAdmin });
-  const claimStates = await authorizedClaimStates(supabase, programs.map((program) => program.id));
-  const programOverviews = programs.map((program) => coachProgramOverview(program, today, claimStates));
-  const athleteMap = new Map<string, CoachAthleteOverview>();
-  programOverviews.forEach((program) => {
-    const existing = athleteMap.get(program.athleteId) ?? {
-      athleteId: program.athleteId,
-      athleteName: program.athleteName,
-      raceName: program.raceName,
-      currentWeekNumber: program.currentWeekNumber,
-      programCount: 0,
-      compliance: emptyCompliance(),
-    };
-    existing.programCount += 1;
-    if (existing.currentWeekNumber === null) existing.currentWeekNumber = program.currentWeekNumber;
-    addCompliance(existing.compliance, program.compliance);
-    athleteMap.set(program.athleteId, existing);
-  });
-  const operational = coachOperationalItems(programs, today, claimStates);
+  const programs = await loadPrograms(supabase, { coachId: userId, isAdmin, diagnosticRoute: "dashboard" });
+  const claimStates = await authorizedClaimStates(supabase, programs.map((program) => program.id), "dashboard");
+  const { athleteMap, operational, programOverviews } = measureSync(
+    () => ({
+      route: "dashboard",
+      workflow: "evaluation.coach-dashboard",
+      operation: "coach-dashboard-transform",
+      counts: { programs: programs.length, prescriptions: programs.reduce((total, program) => total + flattenPrescriptions(program).length, 0) },
+    }),
+    () => {
+      const programOverviews = programs.map((program) => coachProgramOverview(program, today, claimStates));
+      const athleteMap = new Map<string, CoachAthleteOverview>();
+      programOverviews.forEach((program) => {
+        const existing = athleteMap.get(program.athleteId) ?? {
+          athleteId: program.athleteId,
+          athleteName: program.athleteName,
+          raceName: program.raceName,
+          currentWeekNumber: program.currentWeekNumber,
+          programCount: 0,
+          compliance: emptyCompliance(),
+        };
+        existing.programCount += 1;
+        if (existing.currentWeekNumber === null) existing.currentWeekNumber = program.currentWeekNumber;
+        addCompliance(existing.compliance, program.compliance);
+        athleteMap.set(program.athleteId, existing);
+      });
+      return { athleteMap, operational: coachOperationalItems(programs, today, claimStates), programOverviews };
+    },
+  );
   return {
     mode: "COACH",
     isAdmin,
@@ -567,7 +624,7 @@ export async function getCoachProgramEvaluation(
   ) return null;
   const program = evaluationProgramFromTrainingProgram(trainingProgram.program);
   const today = utcDateString();
-  const claimStates = await authorizedClaimStates(supabase, [programId]);
+  const claimStates = await authorizedClaimStates(supabase, [programId], "dashboard.training.program");
   const operational = coachOperationalItems([program], today, claimStates);
   return {
     program: coachProgramOverview(program, today, claimStates),
@@ -589,17 +646,30 @@ export async function getCoachAthletesProgress(
   const roles = await getCurrentUserRoles();
   const isAdmin = roles.includes("ADMIN");
   if (!isAdmin && !roles.includes("COACH")) notFound();
+  const diagnosticRoute: PerformanceRoute = athleteId
+    ? "dashboard.coaching.athlete"
+    : "dashboard.coaching.athletes";
   const programs = await loadPrograms(supabase, {
     athleteId,
     coachId: user.id,
     isAdmin,
     limit: 50,
+    diagnosticRoute,
   });
-  const claimStates = await authorizedClaimStates(supabase, programs.map((program) => program.id));
+  const claimStates = await authorizedClaimStates(supabase, programs.map((program) => program.id), diagnosticRoute);
   const today = utcDateString();
+  const athleteProgress = measureSync(
+    {
+      route: diagnosticRoute,
+      workflow: "coach.athletes.progress",
+      operation: "group-athlete-progress",
+      counts: { programs: programs.length },
+    },
+    () => coachAthleteProgress(programs, today, claimStates),
+  );
   return {
     isAdmin,
-    athletes: coachAthleteProgress(programs, today, claimStates),
+    athletes: athleteProgress,
     today,
   };
 }

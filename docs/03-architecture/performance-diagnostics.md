@@ -1,0 +1,75 @@
+# Performance diagnostics
+
+## Purpose
+
+M18 Batch 1 adds opt-in server-side timing and aggregate-count diagnostics for
+the highest-priority dashboard and training workflows. The diagnostics provide
+application elapsed time only; they do not measure Cloudflare Worker CPU time.
+
+Cloudflare Workers Analytics and Logs remain the authoritative source for CPU
+time, wall time, errors, and invocation-level resource limits.
+
+## Enablement
+
+Diagnostics are disabled by default in every environment. To enable them for a
+bounded baseline capture, set the runtime environment variable below to the
+literal value `1`:
+
+```text
+PROGRACE_PERFORMANCE_DIAGNOSTICS=1
+```
+
+Do not expose this variable with a `NEXT_PUBLIC_` prefix. It is evaluated only
+on the server/Worker and writes structured diagnostics to Worker logs.
+
+Disable diagnostics by removing the variable or setting it to any value other
+than `1`. No database migration, persistent storage, or deployment code change
+is required.
+
+## Captured data
+
+Each record contains only:
+
+- static route, workflow, and operation identifiers;
+- elapsed duration in milliseconds;
+- query count for the instrumented operation;
+- aggregate counts such as programs, weeks, prescriptions, claims, and athletes;
+- an optional byte estimate of the server value that would be serialized; and
+- environment, diagnostic status, and success/error outcome.
+
+It never records user IDs, emails, names, cookies, headers, tokens, raw rows,
+training notes, Strava credentials, or request URLs/query parameters.
+
+The payload-byte value is an estimate from server-object JSON serialization. It
+is not the exact Next.js RSC response size and is calculated only while
+diagnostics are enabled.
+
+## Baseline capture
+
+1. Enable `PROGRACE_PERFORMANCE_DIAGNOSTICS=1` only in the intended safe
+   environment.
+2. Exercise each route with representative small, medium, and historical
+   programs:
+   - `/dashboard`
+   - `/dashboard/training`
+   - `/dashboard/training/[programId]`
+   - `/dashboard/coaching/athletes`
+   - `/dashboard/coaching/athletes/[athleteId]`
+3. Filter Worker logs for the JSON event `prograce.performance`.
+4. Group by `route`, `workflow`, and `operation`; compare duration and aggregate
+   counts rather than any individual user data.
+5. Correlate timestamps with Cloudflare Analytics route/invocation CPU and wall
+   time. Application elapsed duration includes database/network waiting and must
+   not be interpreted as Worker CPU time.
+6. Disable the variable after the baseline window.
+
+## Limitations
+
+- The instrumentation does not provide route-level Worker CPU time.
+- Supabase network wait, Worker CPU, and database execution time are not
+  separately measured by a single application timer.
+- Query counts apply to named logical loader operations, not a global database
+  trace for the entire request.
+- React request caching can change actual downstream call counts; Cloudflare and
+  Supabase observability are required to validate them in production.
+- No authenticated response, Notification Center data, or PWA cache is added.

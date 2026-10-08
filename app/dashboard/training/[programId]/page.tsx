@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ProgramEvaluationOverview } from "@/src/features/evaluation/components/program-evaluation-overview";
 import { getCoachProgramEvaluation } from "@/src/features/evaluation/queries";
 import { TrainingSchedule } from "@/src/features/training/calendar/training-schedule";
+import { measureRouteWorkflow } from "@/src/features/performance/diagnostics";
 import { ProgramCancellationExperience } from "@/src/features/training-cancellation/components/program-cancellation-experience";
 import { trainingProgramStatusLabel } from "@/src/features/training-cancellation/presentation";
 import { formatTrainingDate } from "@/src/features/training/format";
@@ -65,10 +66,22 @@ const errors: Record<string, string> = {
 
 export default async function TrainingProgramPage({ params, searchParams }: { params: Promise<{ programId: string }>; searchParams: Promise<{ detail?: string; error?: string; message?: string }> }) {
   const [{ programId }, feedback] = await Promise.all([params, searchParams]);
-  const [data, evaluation] = await Promise.all([
-    getTrainingProgram(programId),
-    getCoachProgramEvaluation(programId),
-  ]);
+  const [data, evaluation] = await measureRouteWorkflow(
+    { route: "dashboard.training.program", workflow: "training.program.page", operation: "route" },
+    () => Promise.all([
+      getTrainingProgram(programId),
+      getCoachProgramEvaluation(programId),
+    ]),
+    ([result]) => {
+      const program = result.program;
+      if (!program) return {};
+      return {
+        programs: 1,
+        weeks: result.scheduleWeeks.length,
+        prescriptions: program.weeks.reduce((total, week) => total + week.prescriptions.length, 0),
+      };
+    },
+  );
   if (!data.program) notFound();
   const program = data.program;
   const canExtendToRaceDate = data.canPlan && program.end_date < program.race_goal.race.event_date && new Date(`${program.end_date}T00:00:00Z`).getUTCDay() === 0;

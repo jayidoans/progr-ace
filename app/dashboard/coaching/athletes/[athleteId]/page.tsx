@@ -11,6 +11,7 @@ import { getRaceResultsForGoals } from "@/src/features/race-results/queries";
 import { RaceResultCard } from "@/src/features/race-results/components/race-result-card";
 import { CoachProgramStatistics } from "@/src/features/running-analytics/components/coach-program-statistics";
 import { getCoachProgramsRunningAnalytics } from "@/src/features/running-analytics/queries";
+import { measureRouteWorkflow } from "@/src/features/performance/diagnostics";
 
 const messages: Record<string, string> = {
   "goal-completed": "The race goal is completed. Training history remains available.",
@@ -30,16 +31,24 @@ export default async function CoachAthleteDetailPage({
   searchParams: Promise<{ error?: string; message?: string }>;
 }) {
   const [{ athleteId }, query] = await Promise.all([params, searchParams]);
-  const data = await getCoachAthletesProgress(athleteId);
+  const data = await measureRouteWorkflow(
+    { route: "dashboard.coaching.athlete", workflow: "coach.athlete.progress", operation: "progress-route" },
+    () => getCoachAthletesProgress(athleteId),
+    (result) => ({ athletes: result.athletes.length, raceGoals: result.athletes.reduce((total, item) => total + item.goals.length, 0) }),
+  );
   const athlete = data.athletes.find((item) => item.athleteId === athleteId);
   if (!athlete) notFound();
-  const [raceResults, programAnalytics] = await Promise.all([
-    getRaceResultsForGoals(athlete.goals.map((goal) => goal.goalId)),
-    getCoachProgramsRunningAnalytics(
-      athlete.goals.map((goal) => goal.currentProgram.id),
-      data.today,
-    ),
-  ]);
+  const [raceResults, programAnalytics] = await measureRouteWorkflow(
+    { route: "dashboard.coaching.athlete", workflow: "coach.athlete.progress", operation: "detail-data" },
+    () => Promise.all([
+      getRaceResultsForGoals(athlete.goals.map((goal) => goal.goalId)),
+      getCoachProgramsRunningAnalytics(
+        athlete.goals.map((goal) => goal.currentProgram.id),
+        data.today,
+      ),
+    ]),
+    ([results, analytics]) => ({ programs: analytics.length, raceGoals: results.length }),
+  );
   const resultByGoal = new Map(raceResults.map((result) => [result.athleteRaceGoalId, result]));
   const analyticsByProgram = new Map(programAnalytics.map((analytics) => [analytics.context.programId, analytics]));
 
