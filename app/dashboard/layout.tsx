@@ -5,6 +5,11 @@ import { getCurrentUserRoles, requireAuthenticatedSession } from "@/src/features
 import { DashboardNavigation } from "@/src/features/navigation/dashboard-navigation";
 import { NotificationCenter } from "@/src/features/notifications/notification-center";
 import {
+  measureAsync,
+  withPerformanceRequestContext,
+} from "@/src/features/performance/diagnostics";
+import { getServerPerformanceRequestContext } from "@/src/features/performance/request-context";
+import {
   ACTIVE_MODE_STORAGE_KEY,
   resolveActiveMode,
   type ActiveMode,
@@ -13,18 +18,56 @@ import {
 export default async function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { user, supabase } = await requireAuthenticatedSession();
-
-  const [roles, unreadResult] = await Promise.all([
-    getCurrentUserRoles(),
-    supabase.from("notifications").select("id", { count: "exact", head: true })
-      .eq("recipient_user_id", user.id).is("read_at", null),
-  ]);
+  const performance = await getServerPerformanceRequestContext();
+  const { user, roles, unreadResult, activeMode } = await measureAsync(
+    withPerformanceRequestContext(
+      { route: performance.context?.route ?? "dashboard.training", workflow: "dashboard.layout", operation: "data-preparation" },
+      performance.context,
+    ),
+    async () => {
+      const { user, supabase } = await measureAsync(
+        withPerformanceRequestContext(
+          { route: performance.context?.route ?? "dashboard.training", workflow: "dashboard.layout", operation: "authenticated-session" },
+          performance.context,
+        ),
+        () => requireAuthenticatedSession(),
+        performance.settings,
+      );
+      const [roles, unreadResult] = await Promise.all([
+        measureAsync(
+          withPerformanceRequestContext(
+            { route: performance.context?.route ?? "dashboard.training", workflow: "dashboard.layout", operation: "roles-query", queryCount: 1 },
+            performance.context,
+          ),
+          () => getCurrentUserRoles(),
+          performance.settings,
+        ),
+        measureAsync(
+          withPerformanceRequestContext(
+            { route: performance.context?.route ?? "dashboard.training", workflow: "dashboard.layout", operation: "notification-unread-count-query", queryCount: 1 },
+            performance.context,
+          ),
+          async () => await supabase.from("notifications").select("id", { count: "exact", head: true })
+            .eq("recipient_user_id", user.id).is("read_at", null),
+          performance.settings,
+        ),
+      ]);
+      const activeMode = await measureAsync(
+        withPerformanceRequestContext(
+          { route: performance.context?.route ?? "dashboard.training", workflow: "dashboard.layout", operation: "active-mode-resolution" },
+          performance.context,
+        ),
+        async () => resolveActiveMode(
+          roles,
+          (await cookies()).get(ACTIVE_MODE_STORAGE_KEY)?.value,
+        ) as ActiveMode | null,
+        performance.settings,
+      );
+      return { user, roles, unreadResult, activeMode };
+    },
+    performance.settings,
+  );
   if (unreadResult.error) throw new Error("Unable to load notification status.");
-  const activeMode = resolveActiveMode(
-    roles,
-    (await cookies()).get(ACTIVE_MODE_STORAGE_KEY)?.value,
-  ) as ActiveMode | null;
 
   return (
     <div className="min-h-[100dvh] bg-gray-50 text-gray-950">

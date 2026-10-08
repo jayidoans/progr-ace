@@ -20,7 +20,13 @@ import {
   type EvaluationWeek,
 } from "@/src/features/evaluation/analytics";
 import { groupCoachProgramsByGoal } from "@/src/features/evaluation/coach-athlete-progress";
-import { measureAsync, measureSync, type PerformanceRoute } from "@/src/features/performance/diagnostics";
+import {
+  measureAsync,
+  measureSync,
+  type PerformanceRoute,
+  withPerformanceRequestContext,
+} from "@/src/features/performance/diagnostics";
+import { getServerPerformanceRequestContext, type ServerPerformanceRequestContext } from "@/src/features/performance/request-context";
 import type { Profile } from "@/src/features/profiles/queries";
 import type { RaceGoalWithRace } from "@/src/features/race-goals/queries";
 import { utcDateString } from "@/src/features/validation/engine/compliance";
@@ -346,6 +352,7 @@ async function authorizedClaimStates(
   supabase: Awaited<ReturnType<typeof requireAuthenticatedSession>>["supabase"],
   programIds: string[],
   diagnosticRoute: PerformanceRoute = "dashboard",
+  performance?: ServerPerformanceRequestContext,
 ) {
   if (programIds.length === 0) return new Map<string, string | null>();
   const batches = Array.from(
@@ -353,16 +360,17 @@ async function authorizedClaimStates(
     (_, index) => programIds.slice(index * 20, (index + 1) * 20),
   );
   const results = await measureAsync(
-    () => ({
+    () => withPerformanceRequestContext({
       route: diagnosticRoute,
       workflow: "evaluation.claim-states",
       operation: "authorized-claim-states-rpc",
       queryCount: batches.length,
       counts: { programs: programIds.length },
-    }),
+    }, performance?.context ?? null),
     () => Promise.all(batches.map((batch) =>
       supabase.rpc("get_authorized_program_claim_states", { p_program_ids: batch }),
     )),
+    performance?.settings,
   );
   if (results.some((result) => result.error)) {
     throw new Error("Unable to load authorized Claim states.");
@@ -610,23 +618,25 @@ export async function getEvaluationDashboard(): Promise<EvaluationDashboard> {
 export async function getCoachProgramEvaluation(
   programId: string,
 ): Promise<ProgramEvaluationOverview | null> {
+  const performance = await getServerPerformanceRequestContext("dashboard.training.program");
   const { supabase, user } = await requireAuthenticatedSession(`/dashboard/training/${programId}`);
   const roles = await getCurrentUserRoles();
   const isAdmin = roles.includes("ADMIN");
   if (!isAdmin && !roles.includes("COACH")) return null;
   const { data, error } = await measureAsync(
-    {
+    withPerformanceRequestContext({
       route: "dashboard.training.program",
       workflow: "evaluation.program-detail",
       operation: "program-evaluation-query",
       queryCount: 1,
-    },
+    }, performance.context),
     async () => await supabase
       .from("training_programs")
       .select(evaluationProgramSelection as string)
       .eq("id", programId)
       .in("status", ["PUBLISHED", "CANCELLED"])
       .maybeSingle(),
+    performance.settings,
   );
   if (error) throw new Error("Unable to load training program evaluation.");
   const program = data as unknown as EvaluationProgram | null;
@@ -634,9 +644,31 @@ export async function getCoachProgramEvaluation(
     !program
     || (!isAdmin && program.created_by !== user.id)
   ) return null;
+  measureSync(
+    () => withPerformanceRequestContext({
+      route: "dashboard.training.program",
+      workflow: "evaluation.program-detail",
+      operation: "program-evaluation-cardinality",
+      counts: {
+        programs: 1,
+        weeks: program.weeks.length,
+        prescriptions: program.weeks.reduce((total, week) => total + week.prescriptions.length, 0),
+        components: program.weeks.reduce((total, week) => total + week.prescriptions.reduce(
+          (weekTotal, prescription) => weekTotal + prescription.components.length,
+          0,
+        ), 0),
+        claims: program.weeks.reduce((total, week) => total + week.prescriptions.reduce(
+          (weekTotal, prescription) => weekTotal + prescription.claims.length,
+          0,
+        ), 0),
+      },
+    }, performance.context),
+    () => undefined,
+    performance.settings,
+  );
   normalizeProgram(program);
   const today = utcDateString();
-  const claimStates = await authorizedClaimStates(supabase, [programId], "dashboard.training.program");
+  const claimStates = await authorizedClaimStates(supabase, [programId], "dashboard.training.program", performance);
   const operational = coachOperationalItems([program], today, claimStates);
   return {
     program: coachProgramOverview(program, today, claimStates),

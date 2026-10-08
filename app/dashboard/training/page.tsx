@@ -3,7 +3,12 @@ import Link from "next/link";
 import { TrainingImportForm } from "@/src/features/training-import/components";
 import { formatTrainingDate } from "@/src/features/training/format";
 import { getTrainingDashboardData } from "@/src/features/training/queries";
-import { measureRouteWorkflow } from "@/src/features/performance/diagnostics";
+import {
+  measureRouteWorkflow,
+  measureSync,
+  withPerformanceRequestContext,
+} from "@/src/features/performance/diagnostics";
+import { getServerPerformanceRequestContext } from "@/src/features/performance/request-context";
 
 const errors: Record<string, string> = {
   "invalid-import": "Choose a program, race goal, and XLSX file.",
@@ -22,28 +27,48 @@ export default async function TrainingPage({
 }: {
   searchParams: Promise<{ error?: string; detail?: string; message?: string }>;
 }) {
+  const performance = await getServerPerformanceRequestContext("dashboard.training");
   const [data, params] = await Promise.all([
     measureRouteWorkflow(
-      { route: "dashboard.training", workflow: "training.dashboard", operation: "route" },
+      withPerformanceRequestContext(
+        { route: "dashboard.training", workflow: "training.dashboard", operation: "route" },
+        performance.context,
+      ),
       () => getTrainingDashboardData(),
       (result) => ({ programs: result.programs.length, raceGoals: result.raceGoals.length }),
+      performance.settings,
     ),
     searchParams,
   ]);
-  const activeGoals = data.raceGoals.filter((goal) => goal.status === "ACTIVE");
-  const activeProgramByGoal = new Map<string, (typeof data.programs)[number]>();
-  data.programs
-    .filter((program) => program.status === "PUBLISHED")
-    .sort((a, b) => b.start_date.localeCompare(a.start_date))
-    .forEach((program) => {
-      if (!activeProgramByGoal.has(program.race_goal.id)) {
-        activeProgramByGoal.set(program.race_goal.id, program);
-      }
-    });
-  activeGoals.sort((a, b) => Number(activeProgramByGoal.has(a.id)) - Number(activeProgramByGoal.has(b.id)));
-  const visiblePrograms = data.isAuthor
-    ? data.programs.filter((program) => program.created_by === data.userId)
-    : data.programs;
+  const { activeGoals, activeProgramByGoal, visiblePrograms } = measureSync(
+    withPerformanceRequestContext(
+      {
+        route: "dashboard.training",
+        workflow: "training.dashboard",
+        operation: "list-transform",
+        counts: { programs: data.programs.length, raceGoals: data.raceGoals.length },
+      },
+      performance.context,
+    ),
+    () => {
+      const activeGoals = data.raceGoals.filter((goal) => goal.status === "ACTIVE");
+      const activeProgramByGoal = new Map<string, (typeof data.programs)[number]>();
+      data.programs
+        .filter((program) => program.status === "PUBLISHED")
+        .sort((a, b) => b.start_date.localeCompare(a.start_date))
+        .forEach((program) => {
+          if (!activeProgramByGoal.has(program.race_goal.id)) {
+            activeProgramByGoal.set(program.race_goal.id, program);
+          }
+        });
+      activeGoals.sort((a, b) => Number(activeProgramByGoal.has(a.id)) - Number(activeProgramByGoal.has(b.id)));
+      const visiblePrograms = data.isAuthor
+        ? data.programs.filter((program) => program.created_by === data.userId)
+        : data.programs;
+      return { activeGoals, activeProgramByGoal, visiblePrograms };
+    },
+    performance.settings,
+  );
 
   return (
     <div className="space-y-8">

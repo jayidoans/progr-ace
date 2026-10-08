@@ -3,7 +3,11 @@ import { notFound } from "next/navigation";
 import { ProgramEvaluationOverview } from "@/src/features/evaluation/components/program-evaluation-overview";
 import { getCoachProgramEvaluation } from "@/src/features/evaluation/queries";
 import { TrainingSchedule } from "@/src/features/training/calendar/training-schedule";
-import { measureRouteWorkflow } from "@/src/features/performance/diagnostics";
+import {
+  measureRouteWorkflow,
+  withPerformanceRequestContext,
+} from "@/src/features/performance/diagnostics";
+import { getServerPerformanceRequestContext } from "@/src/features/performance/request-context";
 import { ProgramCancellationExperience } from "@/src/features/training-cancellation/components/program-cancellation-experience";
 import { trainingProgramStatusLabel } from "@/src/features/training-cancellation/presentation";
 import { formatTrainingDate } from "@/src/features/training/format";
@@ -65,11 +69,15 @@ const errors: Record<string, string> = {
 };
 
 export default async function TrainingProgramPage({ params, searchParams }: { params: Promise<{ programId: string }>; searchParams: Promise<{ detail?: string; error?: string; message?: string; week?: string }> }) {
+  const performance = await getServerPerformanceRequestContext("dashboard.training.program");
   const [{ programId }, feedback] = await Promise.all([params, searchParams]);
   const today = new Date().toISOString().slice(0, 10);
   const focusNextWeek = feedback.message === "next-week-started" || feedback.message === "program-extended-next-week";
   const [data, evaluation] = await measureRouteWorkflow(
-    { route: "dashboard.training.program", workflow: "training.program.page", operation: "route" },
+    withPerformanceRequestContext(
+      { route: "dashboard.training.program", workflow: "training.program.page", operation: "route" },
+      performance.context,
+    ),
     () => Promise.all([
       getTrainingProgram(programId, feedback.week ?? null, focusNextWeek, today),
       getCoachProgramEvaluation(programId),
@@ -83,6 +91,7 @@ export default async function TrainingProgramPage({ params, searchParams }: { pa
         prescriptions: program.weeks.reduce((total, week) => total + week.prescriptions.length, 0),
       };
     },
+    performance.settings,
   );
   if (!data.program || !data.scheduleNavigation) notFound();
   const program = data.program;
