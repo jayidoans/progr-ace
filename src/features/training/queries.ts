@@ -12,6 +12,8 @@ import {
   type MaterializedScheduleWeek,
   type WeekPlanningStatus,
 } from "@/src/features/training/weekly-planning";
+import { selectTrainingScheduleWindow } from "@/src/features/training/calendar/schedule-window";
+import type { TrainingScheduleContext } from "@/src/features/training/calendar/training-schedule-utils";
 
 export type TrainingProgram = Tables<"training_programs">;
 export type TrainingWeek = Tables<"training_weeks">;
@@ -67,6 +69,18 @@ export type TrainingProgramDetail = TrainingProgramWithGoal & {
   weeks: WeekWithPrescriptions[];
   cancellation_requests: TrainingProgramCancellationRequest[];
 };
+export type TrainingProgramEditorCatalog = {
+  weeks: Array<Pick<TrainingWeek, "id" | "week_number" | "phase"> & {
+    prescriptions: Array<Pick<TrainingPrescription, "id" | "scheduled_date" | "title">>;
+  }>;
+};
+export type TrainingScheduleNavigation = {
+  context: TrainingScheduleContext;
+  isAnchorWeek: boolean;
+  nextWeekStart: string | null;
+  previousWeekStart: string | null;
+  selectedWeekStart: string;
+};
 export type HomepageTrainingProgram = Pick<
   TrainingProgram,
   "id" | "name" | "start_date" | "end_date" | "status"
@@ -104,7 +118,7 @@ const goalSelection = `
   race:races (id, name, event_date, distance_m, location)
 `;
 
-const trainingProgramSelection = `
+const trainingProgramBaseSelection = `
   id,
   race_goal_id,
   name,
@@ -130,8 +144,10 @@ const trainingProgramSelection = `
     created_at,
     updated_at
   ),
-  race_goal:athlete_race_goals (${goalSelection}),
-  weeks:training_weeks (
+  race_goal:athlete_race_goals (${goalSelection})
+`;
+
+const trainingProgramWeekSelection = `
     id,
     training_program_id,
     week_number,
@@ -168,7 +184,13 @@ const trainingProgramSelection = `
         instruction
       )
     )
-  )
+`;
+
+const trainingProgramEditorCatalogSelection = `
+  id,
+  week_number,
+  phase,
+  prescriptions:training_prescriptions (id, scheduled_date, title)
 `;
 
 async function context() {
@@ -266,38 +288,81 @@ export async function getHomepageTrainingPrograms(): Promise<HomepageTrainingPro
   return data as HomepageTrainingProgram[];
 }
 
-export const getTrainingProgram = cache(async (programId: string) => {
+function sortProgramWeeks(weeks: WeekWithPrescriptions[]) {
+  weeks.sort((a, b) => a.week_number - b.week_number);
+  weeks.forEach((week) => {
+    week.prescriptions.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
+    week.prescriptions.forEach((prescription) =>
+      prescription.components.sort((a, b) => a.sequence_order - b.sequence_order),
+    );
+  });
+}
+
+export const getTrainingProgram = cache(async (
+  programId: string,
+  requestedWeekStart: string | null = null,
+  focusNextWeek = false,
+  today = new Date().toISOString().slice(0, 10),
+) => {
   const { supabase, user, roles, activeMode, isAuthor } = await context();
   const { data, error } = await measureAsync(
-    { route: "dashboard.training.program", workflow: "training.program.detail", operation: "program-query", queryCount: 1 },
+    { route: "dashboard.training.program", workflow: "training.program.detail", operation: "program-metadata-query", queryCount: 1 },
     async () => await supabase
       .from("training_programs")
-      .select(trainingProgramSelection)
+      .select(trainingProgramBaseSelection)
       .eq("id", programId)
       .maybeSingle(),
   );
   if (error) throw new Error("Unable to load the training program.");
-  if (!data) return { program: null, scheduleWeeks: [], user, roles, activeMode, isAuthor: false, canEdit: false, canPlan: false };
+  if (!data) return {
+    program: null,
+    scheduleNavigation: null,
+    scheduleWeeks: [],
+    editingCatalog: null,
+    user,
+    roles,
+    activeMode,
+    isAuthor: false,
+    canEdit: false,
+    canPlan: false,
+  };
 
-  const program = data as unknown as TrainingProgramDetail;
+  const program = { ...(data as unknown as Omit<TrainingProgramDetail, "weeks">), weeks: [] as WeekWithPrescriptions[] };
   program.cancellation_requests ??= [];
+  const canEdit = program.status === "DRAFT" && (roles.includes("ADMIN") || program.created_by === user.id);
   measureSync(
     { route: "dashboard.training.program", workflow: "training.program.detail", operation: "sort-program-data" },
     () => {
       program.cancellation_requests.sort((left, right) =>
         right.requested_at.localeCompare(left.requested_at) || right.id.localeCompare(left.id),
       );
-      program.weeks.sort((a, b) => a.week_number - b.week_number);
-      program.weeks.forEach((week) => {
-        week.prescriptions.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
-        week.prescriptions.forEach((prescription) =>
-          prescription.components.sort((a, b) => a.sequence_order - b.sequence_order),
-        );
-      });
     },
   );
 
-  const prescriptionIds = program.weeks.flatMap((week) =>
+  const window = selectTrainingScheduleWindow<PrescriptionWithComponents>(
+    program.start_date,
+    program.end_date,
+    today,
+    requestedWeekStart,
+    focusNextWeek,
+  );
+  const weekStarts = [window.selected.start_date, window.next?.start_date].filter(
+    (startDate): startDate is string => Boolean(startDate),
+  );
+  const { data: windowWeeks, error: windowWeeksError } = await measureAsync(
+    { route: "dashboard.training.program", workflow: "training.program.detail", operation: "schedule-weeks-query", queryCount: 1 },
+    async () => await supabase
+      .from("training_weeks")
+      .select(trainingProgramWeekSelection)
+      .eq("training_program_id", programId)
+      .in("start_date", weekStarts)
+      .order("start_date", { ascending: true }),
+  );
+  if (windowWeeksError) throw new Error("Unable to load the selected training weeks.");
+  const loadedWeeks = (windowWeeks ?? []) as unknown as WeekWithPrescriptions[];
+  sortProgramWeeks(loadedWeeks);
+
+  const prescriptionIds = loadedWeeks.flatMap((week) =>
     week.prescriptions.map((prescription) => prescription.id),
   );
   const claimByPrescription = new Map<string, PrescriptionWithComponents["claim"]>();
@@ -312,13 +377,13 @@ export const getTrainingProgram = cache(async (programId: string) => {
     if (claimError) throw new Error("Unable to load training claim states.");
     claims.forEach((claim) => claimByPrescription.set(claim.prescription_id, claim));
   }
-  program.weeks.forEach((week) =>
+  loadedWeeks.forEach((week) =>
     week.prescriptions.forEach((prescription) => {
       prescription.claim = claimByPrescription.get(prescription.id) ?? null;
     }),
   );
 
-  const reviewByStart = new Map(program.weeks.map((week) => [week.start_date, week.review]));
+  const reviewByStart = new Map(loadedWeeks.map((week) => [week.start_date, week.review]));
   const scheduleWeeks = measureSync(
     () => ({
       route: "dashboard.training.program",
@@ -326,9 +391,9 @@ export const getTrainingProgram = cache(async (programId: string) => {
       operation: "materialize-calendar",
       counts: {
         programs: 1,
-        weeks: program.weeks.length,
+        weeks: loadedWeeks.length,
         prescriptions: prescriptionIds.length,
-        components: program.weeks.reduce((total, week) => total + week.prescriptions.reduce(
+        components: loadedWeeks.reduce((total, week) => total + week.prescriptions.reduce(
           (weekTotal, prescription) => weekTotal + prescription.components.length,
           0,
         ), 0),
@@ -338,7 +403,7 @@ export const getTrainingProgram = cache(async (programId: string) => {
     () => materializeProgramCalendar<PrescriptionWithComponents>(
       program.start_date,
       program.end_date,
-      program.weeks.map((week) => ({
+      loadedWeeks.map((week) => ({
         ...week,
         planning_status: week.planning_status as WeekPlanningStatus,
         prescriptions: week.prescriptions.map((prescription) => ({
@@ -346,17 +411,47 @@ export const getTrainingProgram = cache(async (programId: string) => {
           claim: prescription.claim,
         })),
       })),
-    ).map((week) => ({ ...week, review: reviewByStart.get(week.start_date) ?? null })),
+    )
+      .filter((week) => week.start_date === window.selected.start_date || week.start_date === window.next?.start_date)
+      .map((week) => ({ ...week, review: reviewByStart.get(week.start_date) ?? null })),
   );
+  program.weeks = loadedWeeks;
+
+  let editingCatalog: TrainingProgramEditorCatalog | null = null;
+  if (canEdit) {
+    const { data: catalogWeeks, error: catalogError } = await measureAsync(
+      { route: "dashboard.training.program", workflow: "training.program.detail", operation: "draft-editor-catalog-query", queryCount: 1 },
+      async () => await supabase
+        .from("training_weeks")
+        .select(trainingProgramEditorCatalogSelection)
+        .eq("training_program_id", programId)
+        .order("week_number", { ascending: true }),
+    );
+    if (catalogError) throw new Error("Unable to load the draft program editor catalog.");
+    editingCatalog = { weeks: (catalogWeeks ?? []) as TrainingProgramEditorCatalog["weeks"] };
+    editingCatalog.weeks.forEach((week) => {
+      week.prescriptions.sort((left, right) =>
+        left.scheduled_date.localeCompare(right.scheduled_date) || left.id.localeCompare(right.id),
+      );
+    });
+  }
 
   return {
     program,
     scheduleWeeks,
+    scheduleNavigation: {
+      context: window.anchorContext,
+      isAnchorWeek: window.selectedIndex === window.anchorIndex,
+      previousWeekStart: window.previous?.start_date ?? null,
+      nextWeekStart: window.next?.start_date ?? null,
+      selectedWeekStart: window.selected.start_date,
+    } satisfies TrainingScheduleNavigation,
+    editingCatalog,
     user,
     roles,
     activeMode,
     isAuthor,
-    canEdit: program.status === "DRAFT" && (roles.includes("ADMIN") || program.created_by === user.id),
+    canEdit,
     canDeleteDraft:
       program.status === "DRAFT"
       && (roles.includes("ADMIN") || (roles.includes("COACH") && program.created_by === user.id)),

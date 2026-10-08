@@ -4,7 +4,6 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { getCurrentUserRoles, requireAuthenticatedSession } from "@/src/features/auth/session";
-import { getTrainingProgram } from "@/src/features/training/queries";
 import {
   complianceCounts,
   currentWeekFromPrescriptionDates,
@@ -21,7 +20,6 @@ import {
   type EvaluationWeek,
 } from "@/src/features/evaluation/analytics";
 import { groupCoachProgramsByGoal } from "@/src/features/evaluation/coach-athlete-progress";
-import { evaluationProgramFromTrainingProgram } from "@/src/features/evaluation/training-program-adapter";
 import { measureAsync, measureSync, type PerformanceRoute } from "@/src/features/performance/diagnostics";
 import type { Profile } from "@/src/features/profiles/queries";
 import type { RaceGoalWithRace } from "@/src/features/race-goals/queries";
@@ -616,13 +614,27 @@ export async function getCoachProgramEvaluation(
   const roles = await getCurrentUserRoles();
   const isAdmin = roles.includes("ADMIN");
   if (!isAdmin && !roles.includes("COACH")) return null;
-  const trainingProgram = await getTrainingProgram(programId);
+  const { data, error } = await measureAsync(
+    {
+      route: "dashboard.training.program",
+      workflow: "evaluation.program-detail",
+      operation: "program-evaluation-query",
+      queryCount: 1,
+    },
+    async () => await supabase
+      .from("training_programs")
+      .select(evaluationProgramSelection as string)
+      .eq("id", programId)
+      .in("status", ["PUBLISHED", "CANCELLED"])
+      .maybeSingle(),
+  );
+  if (error) throw new Error("Unable to load training program evaluation.");
+  const program = data as unknown as EvaluationProgram | null;
   if (
-    !trainingProgram.program
-    || !["PUBLISHED", "CANCELLED"].includes(trainingProgram.program.status)
-    || (!isAdmin && trainingProgram.program.created_by !== user.id)
+    !program
+    || (!isAdmin && program.created_by !== user.id)
   ) return null;
-  const program = evaluationProgramFromTrainingProgram(trainingProgram.program);
+  normalizeProgram(program);
   const today = utcDateString();
   const claimStates = await authorizedClaimStates(supabase, [programId], "dashboard.training.program");
   const operational = coachOperationalItems([program], today, claimStates);

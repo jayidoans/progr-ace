@@ -11,7 +11,7 @@ import { FieldHelp } from "@/src/features/ui/field-help";
 import type {
   CopyableTrainingProgram,
   ProgramRaceGoal,
-  TrainingProgramDetail,
+  TrainingProgramEditorCatalog,
 } from "@/src/features/training/queries";
 
 const input =
@@ -129,26 +129,26 @@ function ComponentFields() {
   );
 }
 
-export function PrescriptionForm({ program }: { program: TrainingProgramDetail }) {
+export function PrescriptionForm({ programId, weeks }: { programId: string; weeks: TrainingProgramEditorCatalog["weeks"] }) {
   return (
     <form action={addTrainingPrescription} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <input name="programId" type="hidden" value={program.id} />
-      <label className="text-sm font-medium text-gray-800">Week<select className={input} name="trainingWeekId" required><option value="">Select week</option>{program.weeks.map((week) => <option key={week.id} value={week.id}>Week {week.week_number} — {week.phase}</option>)}</select></label>
+      <input name="programId" type="hidden" value={programId} />
+      <label className="text-sm font-medium text-gray-800">Week<select className={input} name="trainingWeekId" required><option value="">Select week</option>{weeks.map((week) => <option key={week.id} value={week.id}>Week {week.week_number} — {week.phase}</option>)}</select></label>
       <label className="text-sm font-medium text-gray-800">Training day<input className={input} name="scheduledDate" required type="date" /></label>
       <label className="text-sm font-medium text-gray-800">Training menu <FieldHelp label="Training menu">The main training category used to organize this session.</FieldHelp><select className={input} name="trainingMenu" required>{TRAINING_MENUS.map((menu) => <option key={menu}>{menu}</option>)}</select></label>
       <label className="text-sm font-medium text-gray-800 sm:col-span-2">Title<input className={input} name="title" placeholder="e.g. Speed session" required /></label>
       <label className="text-sm font-medium text-gray-800">Description<input className={input} name="description" placeholder="Optional session summary" /></label>
       <ComponentFields />
-      <button className="rounded-md border border-indigo-600 px-4 py-2 font-semibold text-indigo-700 hover:bg-indigo-50 sm:col-span-2 lg:col-span-3" disabled={program.weeks.length === 0} type="submit">Add prescription and first component</button>
+      <button className="rounded-md border border-indigo-600 px-4 py-2 font-semibold text-indigo-700 hover:bg-indigo-50 sm:col-span-2 lg:col-span-3" disabled={weeks.length === 0} type="submit">Add prescription and first component</button>
     </form>
   );
 }
 
-export function ComponentForm({ program }: { program: TrainingProgramDetail }) {
-  const prescriptions = program.weeks.flatMap((week) => week.prescriptions);
+export function ComponentForm({ programId, weeks }: { programId: string; weeks: TrainingProgramEditorCatalog["weeks"] }) {
+  const prescriptions = weeks.flatMap((week) => week.prescriptions);
   return (
     <form action={addPrescriptionComponent} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <input name="programId" type="hidden" value={program.id} />
+      <input name="programId" type="hidden" value={programId} />
       <label className="text-sm font-medium text-gray-800 sm:col-span-2 lg:col-span-3">Prescription<select className={input} name="prescriptionId" required><option value="">Select prescription</option>{prescriptions.map((item) => <option key={item.id} value={item.id}>{item.scheduled_date} — {item.title}</option>)}</select></label>
       <ComponentFields />
       <button className="rounded-md border border-indigo-600 px-4 py-2 font-semibold text-indigo-700 hover:bg-indigo-50 sm:col-span-2 lg:col-span-3" disabled={prescriptions.length === 0} type="submit">Add component</button>
