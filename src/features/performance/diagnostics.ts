@@ -196,7 +196,11 @@ export function emitPerformanceDiagnostic(
   diagnostic: PerformanceDiagnostic,
   write: (message: string) => void = console.info,
 ) {
-  write(JSON.stringify(diagnostic));
+  try {
+    write(JSON.stringify(diagnostic));
+  } catch {
+    // Diagnostics must never change application success or failure behavior.
+  }
 }
 
 export async function measureAsync<T>(

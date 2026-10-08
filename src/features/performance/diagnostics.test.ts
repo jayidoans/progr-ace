@@ -43,6 +43,20 @@ test("performance diagnostics are disabled unless explicitly enabled", async () 
   );
   assert.equal(transformed, "unchanged");
   assert.equal(inputFactoryCalls, 0);
+
+  const originalInfo = console.info;
+  let logCalls = 0;
+  console.info = () => { logCalls += 1; };
+  try {
+    measureSync(
+      { route: "dashboard", workflow: "evaluation.dashboard", operation: "disabled-log" },
+      () => "unchanged",
+      settings,
+    );
+  } finally {
+    console.info = originalInfo;
+  }
+  assert.equal(logCalls, 0);
 });
 
 test("enabled diagnostics emit only safe aggregate fields", () => {
@@ -97,6 +111,32 @@ test("measurements report duration and do not change return values", () => {
   const metric = JSON.parse(output[0]) as PerformanceDiagnostic;
   assert.equal(metric.durationMs >= 0, true);
   assert.deepEqual(metric.counts, { programs: 2 });
+});
+
+test("diagnostic log failures do not change application success or failure behavior", async () => {
+  const settings = { enabled: true, environment: "non-production" as const };
+  const originalInfo = console.info;
+  console.info = () => { throw new Error("logging unavailable"); };
+  try {
+    assert.equal(
+      measureSync(
+        { route: "dashboard", workflow: "evaluation.dashboard", operation: "log-failure" },
+        () => "application result",
+        settings,
+      ),
+      "application result",
+    );
+    await assert.rejects(
+      () => measureAsync(
+        { route: "dashboard", workflow: "evaluation.dashboard", operation: "application-error" },
+        async () => { throw new Error("application failure"); },
+        settings,
+      ),
+      /application failure/,
+    );
+  } finally {
+    console.info = originalInfo;
+  }
 });
 
 test("serialized payload estimates contain only byte counts, not payload contents", () => {
