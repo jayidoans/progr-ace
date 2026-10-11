@@ -1,5 +1,4 @@
 import type { Tables } from "@/src/types/database";
-import { componentTargetDistanceM } from "@/src/features/dashboard/weekly-stats";
 import {
   cancellationEffectiveDate,
   complianceCounts,
@@ -7,6 +6,15 @@ import {
   prescriptionComplianceState,
   type ComplianceCounts,
 } from "@/src/features/evaluation/analytics";
+import {
+  actualDistanceCoverage,
+  actualDurationCoverage,
+  deduplicateActivities,
+  metricCoverage,
+  plannedDistanceCoverage,
+  plannedDistanceForComponent,
+  plannedDurationCoverage,
+} from "@/src/features/training-insights/domain";
 
 export const RUNNING_TRAINING_MENUS = ["EASY", "MEDIUM", "LONG", "SPEED"] as const;
 export type RunningTrainingMenu = (typeof RUNNING_TRAINING_MENUS)[number];
@@ -138,17 +146,12 @@ function isRunningMenu(value: string): value is RunningTrainingMenu {
   return RUNNING_TRAINING_MENUS.includes(value as RunningTrainingMenu);
 }
 
-function sumKnown(values: (number | null)[]) {
-  const known = values.filter((value): value is number => value !== null);
-  return known.length === 0 ? null : known.reduce((sum, value) => sum + value, 0);
-}
-
 function prescribedDistance(components: RunningAnalyticsComponent[]) {
-  return sumKnown(components.map(componentTargetDistanceM));
+  return plannedDistanceCoverage(components).value;
 }
 
 function prescribedDuration(components: RunningAnalyticsComponent[]) {
-  return sumKnown(components.map((component) => component.target_duration_sec));
+  return plannedDurationCoverage(components).value;
 }
 
 function submittedRunningActivities(prescription: RunningAnalyticsPrescription) {
@@ -159,7 +162,7 @@ function submittedRunningActivities(prescription: RunningAnalyticsPrescription) 
   });
   return {
     claim: submittedClaim,
-    activities: [...activities.values()].sort(
+    activities: deduplicateActivities([...activities.values()]).sort(
       (left, right) => left.started_at.localeCompare(right.started_at) || left.id.localeCompare(right.id),
     ),
   };
@@ -178,8 +181,8 @@ function sessionTrend(
 ): RunningSessionTrend | null {
   if (!isRunningMenu(prescription.training_menu)) return null;
   const { claim, activities } = submittedRunningActivities(prescription);
-  const distance = sumKnown(activities.map((activity) => activity.distance_m));
-  const duration = sumKnown(activities.map((activity) => activity.duration_sec));
+  const distance = actualDistanceCoverage(activities).value;
+  const duration = actualDurationCoverage(activities).value;
   const completePaceInputs = activities.length > 0 && activities.every(
     (activity) =>
       activity.distance_m !== null && activity.distance_m > 0
@@ -234,11 +237,11 @@ function weeklyAnalytics(
   );
   const runningPrescriptions = expectedPrescriptions.filter((item) => isRunningMenu(item.training_menu));
   const prescribedDistances = runningPrescriptions.flatMap((prescription) =>
-    prescription.components.map(componentTargetDistanceM),
+    prescription.components.map(plannedDistanceForComponent),
   );
   const durationOnlyRunningComponentCount = runningPrescriptions.reduce(
     (count, prescription) => count + prescription.components.filter(
-      (component) => componentTargetDistanceM(component) === null
+      (component) => plannedDistanceForComponent(component) === null
         && component.target_duration_sec !== null,
     ).length,
     0,
@@ -262,10 +265,8 @@ function weeklyAnalytics(
     phase: week.phase || null,
     isCurrentWeek: week.start_date <= today && today <= week.end_date
       && (cancellationDate === null || today < cancellationDate),
-    prescribedRunningDistanceM: sumKnown(prescribedDistances),
-    actualClaimedRunningDistanceM: sumKnown(
-      [...uniqueActivities.values()].map((activity) => activity.distance_m),
-    ),
+    prescribedRunningDistanceM: metricCoverage(prescribedDistances).value,
+    actualClaimedRunningDistanceM: actualDistanceCoverage([...uniqueActivities.values()]).value,
     durationOnlyRunningPrescriptionCount,
     durationOnlyRunningComponentCount,
     runningActivityCount: uniqueActivities.size,
