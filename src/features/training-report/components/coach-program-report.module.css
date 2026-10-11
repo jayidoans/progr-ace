@@ -1,0 +1,23 @@
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  .screenOnly {
+    display: none;
+  }
+
+  .reportSheet {
+    max-width: none;
+  }
+
+  .keepTogether {
+    break-inside: avoid;
+  }
+
+  :global(html.dark) .reportSheet,
+  :global(html.dark) .reportSheet * {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+  }
+}
