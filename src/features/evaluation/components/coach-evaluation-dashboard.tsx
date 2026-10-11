@@ -4,8 +4,16 @@ import { formatDistance } from "@/src/features/activities/format";
 import { StatusSummary } from "@/src/features/evaluation/components/status-summary";
 import type { CoachEvaluationDashboard } from "@/src/features/evaluation/queries";
 import { formatTrainingDate } from "@/src/features/training/format";
+import { CoachTrainingInsightsOverview } from "@/src/features/training-insights/components/coach-training-insights";
+import type { CoachTrainingInsightsProjection } from "@/src/features/training-insights/queries";
 
-export function CoachEvaluationDashboard({ data }: { data: CoachEvaluationDashboard }) {
+export function CoachEvaluationDashboard({
+  data,
+  insights,
+}: {
+  data: CoachEvaluationDashboard;
+  insights: CoachTrainingInsightsProjection;
+}) {
   const totalSessions = data.programs.reduce((sum, program) => sum + program.prescribedSessions, 0);
   return (
     <div className="space-y-8">
@@ -33,6 +41,8 @@ export function CoachEvaluationDashboard({ data }: { data: CoachEvaluationDashbo
           <p className="mt-2 text-3xl font-bold text-gray-950">{totalSessions}</p>
         </div>
       </section>
+
+      <CoachTrainingInsightsOverview hasMore={insights.hasMore} summaries={insights.summaries} />
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">

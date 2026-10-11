@@ -12,6 +12,8 @@ import { RaceResultCard } from "@/src/features/race-results/components/race-resu
 import { CoachProgramStatistics } from "@/src/features/running-analytics/components/coach-program-statistics";
 import { getCoachProgramsRunningAnalytics } from "@/src/features/running-analytics/queries";
 import { measureRouteWorkflow } from "@/src/features/performance/diagnostics";
+import { CoachProgramTrainingInsights } from "@/src/features/training-insights/components/coach-training-insights";
+import { getProgramTrainingInsights } from "@/src/features/training-insights/queries";
 
 const messages: Record<string, string> = {
   "goal-completed": "The race goal is completed. Training history remains available.",
@@ -38,7 +40,8 @@ export default async function CoachAthleteDetailPage({
   );
   const athlete = data.athletes.find((item) => item.athleteId === athleteId);
   if (!athlete) notFound();
-  const [raceResults, programAnalytics] = await measureRouteWorkflow(
+  const featuredProgramId = athlete.goals[0]?.currentProgram.id ?? null;
+  const [raceResults, programAnalytics, insights] = await measureRouteWorkflow(
     { route: "dashboard.coaching.athlete", workflow: "coach.athlete.progress", operation: "detail-data" },
     () => Promise.all([
       getRaceResultsForGoals(athlete.goals.map((goal) => goal.goalId)),
@@ -46,8 +49,9 @@ export default async function CoachAthleteDetailPage({
         athlete.goals.map((goal) => goal.currentProgram.id),
         data.today,
       ),
+      featuredProgramId ? getProgramTrainingInsights(featuredProgramId, data.today) : Promise.resolve(null),
     ]),
-    ([results, analytics]) => ({ programs: analytics.length, raceGoals: results.length }),
+    ([results, analytics, projection]) => ({ programs: analytics.length, raceGoals: results.length, weeks: projection?.fourWeekTrend.length ?? 0 }),
   );
   const resultByGoal = new Map(raceResults.map((result) => [result.athleteRaceGoalId, result]));
   const analyticsByProgram = new Map(programAnalytics.map((analytics) => [analytics.context.programId, analytics]));
@@ -111,6 +115,7 @@ export default async function CoachAthleteDetailPage({
                 <Link className="inline-flex min-h-11 items-center rounded-md border border-emerald-300 px-4 text-sm font-semibold text-emerald-700 hover:bg-emerald-50" href={`/reports/coaching/athletes/${athlete.athleteId}/programs/${goal.currentProgram.id}`}>Export to PDF</Link>
               </div>
               <div className="mt-5"><StatusSummary counts={goal.currentProgram.compliance} /></div>
+              {insights && goal.currentProgram.id === insights.program.id ? <CoachProgramTrainingInsights insights={insights} /> : null}
               {analyticsByProgram.get(goal.currentProgram.id) ? (
                 <CoachProgramStatistics data={analyticsByProgram.get(goal.currentProgram.id)!} />
               ) : null}
