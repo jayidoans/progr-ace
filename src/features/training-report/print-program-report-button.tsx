@@ -8,11 +8,16 @@ function filenameSegment(value: string) {
     .slice(0, 80) || "ProgrACE-report";
 }
 
+/** The browser's Save as PDF dialog appends the .pdf extension to this title. */
+export function programReportFilename(programName: string, athleteName: string, exportedDate: string) {
+  return `${filenameSegment(programName)}-${filenameSegment(athleteName)}-${exportedDate}`;
+}
+
 export function PrintProgramReportButton({ athleteName, programName }: { athleteName: string; programName: string }) {
   function exportToPdf() {
     const originalTitle = document.title;
     const exportedDate = new Date().toISOString().slice(0, 10);
-    document.title = `${filenameSegment(programName)}-${filenameSegment(athleteName)}-${exportedDate}`;
+    document.title = programReportFilename(programName, athleteName, exportedDate);
     const restoreTitle = () => {
       document.title = originalTitle;
     };

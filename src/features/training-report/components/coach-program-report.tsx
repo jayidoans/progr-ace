@@ -8,6 +8,7 @@ import { formatDuration, formatRaceDate } from "@/src/features/race-goals/format
 import { formatDistanceM, formatDurationSeconds } from "@/src/features/running-analytics/presentation";
 import { formatTrainingDate, formatTrainingWeekRange } from "@/src/features/training/format";
 import type { CoachProgramReport } from "@/src/features/training-report/domain";
+import type { MetricCoverage } from "@/src/features/training-insights/domain";
 import { PrintProgramReportButton } from "@/src/features/training-report/print-program-report-button";
 
 import styles from "./coach-program-report.module.css";
@@ -32,7 +33,7 @@ function dateForDay(startDate: string, offset: number) {
 function WeeklyFulfillmentChart({ weeks }: { weeks: CoachProgramReport["weeks"] }) {
   const maximumDistance = Math.max(
     1,
-    ...weeks.flatMap((week) => [week.prescribedRunningDistanceM ?? 0, week.actualClaimedRunningDistanceM ?? 0]),
+    ...weeks.flatMap((week) => [week.prescribedRunningDistance.value ?? 0, week.actualClaimedRunningDistance.value ?? 0]),
   );
 
   return (
@@ -50,8 +51,8 @@ function WeeklyFulfillmentChart({ weeks }: { weeks: CoachProgramReport["weeks"] 
       </div>
       <div className={styles.chartBars}>
         {weeks.map((week) => {
-          const actual = week.actualClaimedRunningDistanceM;
-          const target = week.prescribedRunningDistanceM;
+          const actual = week.actualClaimedRunningDistance.value;
+          const target = week.prescribedRunningDistance.value;
           const actualReachedTarget = actual !== null && target !== null && actual >= target;
           return (
             <div className={styles.chartWeek} key={week.id}>
@@ -66,12 +67,12 @@ function WeeklyFulfillmentChart({ weeks }: { weeks: CoachProgramReport["weeks"] 
                 /> : <span className={styles.noActual}>—</span>}
               </div>
               <strong>Week {week.weekNumber}</strong>
-              <span>{formatPercent(week.fulfillmentPercent)}</span>
+              <span>{week.fulfillmentPercent === null ? weeklyFulfillmentLabel(week) : formatPercent(week.fulfillmentPercent)}</span>
             </div>
           );
         })}
       </div>
-      <p className={styles.chartCaption}>Target is each week&apos;s planned running distance. Actual distance is based on submitted running Activities.</p>
+      <p className={styles.chartCaption}>Target is each week&apos;s planned running distance. Actual distance is based on submitted running Activities. Partial data is labelled and is not shown as a fulfillment percentage.</p>
     </section>
   );
 }
@@ -90,7 +91,7 @@ function WeeklyScheduleCards({ week }: { week: CoachProgramReport["weeks"][numbe
             {session ? <>
               <span className={styles.menuBadge}>{session.trainingMenu}</span>
               <p className={styles.sessionTitle}>{session.title}</p>
-              <p className={styles.sessionTarget}>{formatSessionTarget(session.targetDistanceM, session.targetDurationSec)}</p>
+              <p className={styles.sessionTarget}>{formatSessionTarget(session.targetDistance, session.targetDuration)}</p>
               <p className={`${styles.outcomeBadge} ${styles[`outcome${session.outcome.replaceAll("_", "")}`] ?? ""}`}>{session.outcome.replaceAll("_", " ")}</p>
             </> : <p className={styles.restDay}>Rest day</p>}
           </div>
@@ -100,11 +101,24 @@ function WeeklyScheduleCards({ week }: { week: CoachProgramReport["weeks"][numbe
   );
 }
 
-function formatSessionTarget(targetDistanceM: number | null, targetDurationSec: number | null) {
+function coverageValue(coverage: MetricCoverage, formatter: (value: number | null) => string) {
+  if (coverage.completeness === "UNAVAILABLE") return "Data unavailable";
+  const value = formatter(coverage.value);
+  return coverage.completeness === "PARTIAL" ? `${value} (partial data)` : value;
+}
+
+function weeklyFulfillmentLabel(week: CoachProgramReport["weeks"][number]) {
+  return week.prescribedRunningDistance.completeness === "PARTIAL"
+    || week.actualClaimedRunningDistance.completeness === "PARTIAL"
+    ? "Partial data"
+    : "—";
+}
+
+function formatSessionTarget(targetDistance: MetricCoverage, targetDuration: MetricCoverage) {
   const parts = [
-    targetDistanceM === null ? null : formatDistanceM(targetDistanceM),
-    targetDurationSec === null ? null : formatDurationSeconds(targetDurationSec),
-  ].filter((part): part is string => part !== null);
+    targetDistance.completeness === "UNAVAILABLE" ? null : coverageValue(targetDistance, formatDistanceM),
+    targetDuration.completeness === "UNAVAILABLE" ? null : coverageValue(targetDuration, formatDurationSeconds),
+  ];
   return parts.join(" · ") || "Details not specified";
 }
 
@@ -151,8 +165,8 @@ export function CoachProgramReportView({
           </div>
           <dl className={styles.metricGrid}>
             <Metric accent="blue" label="Average weekly fulfillment" value={formatPercent(summary.averageWeeklyFulfillmentPercent)} />
-            <Metric accent="green" label="Total training time" value={formatDurationSeconds(summary.totalClaimedRunningDurationSec)} />
-            <Metric accent="purple" label="Total training distance" value={formatDistanceM(summary.totalClaimedRunningDistanceM)} />
+            <Metric accent="green" label="Total training time" value={coverageValue(summary.totalClaimedRunningDuration, formatDurationSeconds)} />
+            <Metric accent="purple" label="Total training distance" value={coverageValue(summary.totalClaimedRunningDistance, formatDistanceM)} />
           </dl>
           <WeeklyFulfillmentChart weeks={report.weeks} />
         </section>
@@ -170,8 +184,8 @@ export function CoachProgramReportView({
                     <p>{week.phase ?? "Training"} · <span className={styles.planningStatus}>{week.planningStatus}</span></p>
                   </div>
                   <dl className={styles.weekMetrics}>
-                    <div><dt>Target</dt><dd>{formatDistanceM(week.prescribedRunningDistanceM)}</dd></div>
-                    <div><dt>Actual</dt><dd>{formatDistanceM(week.actualClaimedRunningDistanceM)}</dd></div>
+                    <div><dt>Target</dt><dd>{coverageValue(week.prescribedRunningDistance, formatDistanceM)}</dd></div>
+                    <div><dt>Actual</dt><dd>{coverageValue(week.actualClaimedRunningDistance, formatDistanceM)}</dd></div>
                     <div><dt>Fulfillment</dt><dd>{formatPercent(week.fulfillmentPercent)}</dd></div>
                   </dl>
                 </div>

@@ -7,6 +7,16 @@ import {
   type EvaluationWeek,
 } from "@/src/features/evaluation/analytics";
 import { COMPLIANCE_STATES } from "@/src/features/validation/engine/compliance";
+import { RUNNING_TRAINING_MENUS } from "@/src/features/running-analytics/domain";
+import {
+  actualDistanceCoverage,
+  actualDurationCoverage,
+  plannedDistanceCoverage,
+  plannedDurationCoverage,
+  type MetricCoverage,
+  type TrainingInsightActivity,
+  type TrainingInsightComponent,
+} from "@/src/features/training-insights/domain";
 
 type ReportPrescription = Omit<EvaluationWeek["prescriptions"][number], "components"> & {
   components: Array<{
@@ -14,6 +24,8 @@ type ReportPrescription = Omit<EvaluationWeek["prescriptions"][number], "compone
     sequence_order: number;
     target_distance_m: number | null;
     target_duration_sec: number | null;
+    repetitions: number | null;
+    distance_per_rep_m: number | null;
   }>;
 };
 
@@ -40,8 +52,8 @@ export type CoachProgramReport = {
   summary: {
     compliance: ComplianceCounts;
     averageWeeklyFulfillmentPercent: number | null;
-    totalClaimedRunningDistanceM: number | null;
-    totalClaimedRunningDurationSec: number | null;
+    totalClaimedRunningDistance: MetricCoverage;
+    totalClaimedRunningDuration: MetricCoverage;
   };
   weeks: Array<{
     id: string;
@@ -50,8 +62,10 @@ export type CoachProgramReport = {
     planningStatus: string;
     startDate: string;
     endDate: string;
-    prescribedRunningDistanceM: number | null;
-    actualClaimedRunningDistanceM: number | null;
+    prescribedRunningDistance: MetricCoverage;
+    actualClaimedRunningDistance: MetricCoverage;
+    prescribedRunningDuration: MetricCoverage;
+    actualClaimedRunningDuration: MetricCoverage;
     fulfillmentPercent: number | null;
     outcomes: ComplianceCounts;
     fulfillmentRating: number | null;
@@ -61,8 +75,8 @@ export type CoachProgramReport = {
         scheduledDate: string;
         trainingMenu: string;
         title: string;
-        targetDistanceM: number | null;
-        targetDurationSec: number | null;
+        targetDistance: MetricCoverage;
+        targetDuration: MetricCoverage;
         outcome: keyof ComplianceCounts;
       }>;
   }>;
@@ -72,29 +86,43 @@ function emptyCounts(): ComplianceCounts {
   return Object.fromEntries(COMPLIANCE_STATES.map((state) => [state, 0])) as ComplianceCounts;
 }
 
-function uniqueRunningActivities(week: EvaluationWeek, cancelledAt?: string | null) {
-  const activities = new Map<string, (typeof week.prescriptions)[number]["claims"][number]["evidence"][number]["activity"]>();
-  week.prescriptions.forEach((prescription) => {
-    if (!isExpectedPrescription(prescription, cancelledAt)) return;
-    prescription.claims.find((claim) => claim.status === "SUBMITTED")?.evidence.forEach(({ activity }) => {
-      if (activity.sport_type === "RUNNING") activities.set(activity.id, activity);
-    });
-  });
-  return [...activities.values()];
+function isRunningMenu(value: string) {
+  return RUNNING_TRAINING_MENUS.includes(value as (typeof RUNNING_TRAINING_MENUS)[number]);
 }
 
-function weekDistance(week: EvaluationWeek, cancelledAt?: string | null) {
-  const target = week.prescriptions.reduce((total, prescription) => {
-    if (!isExpectedPrescription(prescription, cancelledAt) || !["EASY", "MEDIUM", "LONG", "SPEED"].includes(prescription.training_menu)) return total;
-    const distances = prescription.components.map((component) => component.target_distance_m);
-    if (distances.length === 0 || distances.some((distance) => distance === null)) return total;
-    return { value: total.value + (distances as number[]).reduce((sum, distance) => sum + distance, 0), count: total.count + 1 };
-  }, { value: 0, count: 0 });
-  const activities = uniqueRunningActivities(week, cancelledAt);
-  const distances = activities.map((activity) => activity.distance_m).filter((distance): distance is number => distance !== null);
+function insightComponents(components: ReportPrescription["components"]): TrainingInsightComponent[] {
+  return components.map((component) => ({
+    target_distance_m: component.target_distance_m,
+    target_duration_sec: component.target_duration_sec,
+    repetitions: component.repetitions,
+    distance_per_rep_m: component.distance_per_rep_m,
+  }));
+}
+
+function runningActivities(prescriptions: ReportWeek["prescriptions"]): TrainingInsightActivity[] {
+  return prescriptions.flatMap((prescription) => {
+    const submittedClaim = prescription.claims.find((claim) => claim.status === "SUBMITTED");
+    return (submittedClaim?.evidence ?? [])
+      .map(({ activity }) => activity)
+      .filter((activity) => activity.sport_type === "RUNNING")
+      .map((activity) => ({
+        id: activity.id,
+        distance_m: activity.distance_m,
+        duration_sec: activity.duration_sec,
+      }));
+  });
+}
+
+function weeklyMetrics(week: ReportWeek, cancelledAt?: string | null) {
+  const expectedRunning = week.prescriptions.filter((prescription) =>
+    isExpectedPrescription(prescription, cancelledAt) && isRunningMenu(prescription.training_menu),
+  );
+  const activities = runningActivities(expectedRunning);
   return {
-    prescribedRunningDistanceM: target.count > 0 ? target.value : null,
-    actualClaimedRunningDistanceM: distances.length > 0 ? distances.reduce((sum, distance) => sum + distance, 0) : null,
+    prescribedRunningDistance: plannedDistanceCoverage(expectedRunning.flatMap((prescription) => insightComponents(prescription.components))),
+    actualClaimedRunningDistance: actualDistanceCoverage(activities),
+    prescribedRunningDuration: plannedDurationCoverage(expectedRunning.flatMap((prescription) => insightComponents(prescription.components))),
+    actualClaimedRunningDuration: actualDurationCoverage(activities),
     activities,
   };
 }
@@ -107,7 +135,7 @@ export function buildCoachProgramReport(
   const weeks = [...program.weeks]
     .sort((left, right) => left.start_date.localeCompare(right.start_date) || left.week_number - right.week_number)
     .map((week) => {
-      const distance = weekDistance(week, program.cancelled_at);
+      const metrics = weeklyMetrics(week, program.cancelled_at);
       const published = week.planning_status === "PUBLISHED";
       const outcomes = published
         ? complianceCounts(week.prescriptions, today, claimStates, program.tracking_start_date, program.cancelled_at)
@@ -119,11 +147,17 @@ export function buildCoachProgramReport(
         planningStatus: week.planning_status,
         startDate: week.start_date,
         endDate: week.end_date,
-        prescribedRunningDistanceM: distance.prescribedRunningDistanceM,
-        actualClaimedRunningDistanceM: distance.actualClaimedRunningDistanceM,
-        fulfillmentPercent: distance.prescribedRunningDistanceM === null || distance.actualClaimedRunningDistanceM === null
+        prescribedRunningDistance: metrics.prescribedRunningDistance,
+        actualClaimedRunningDistance: metrics.actualClaimedRunningDistance,
+        prescribedRunningDuration: metrics.prescribedRunningDuration,
+        actualClaimedRunningDuration: metrics.actualClaimedRunningDuration,
+        fulfillmentPercent: metrics.prescribedRunningDistance.completeness !== "COMPLETE"
+          || metrics.actualClaimedRunningDistance.completeness !== "COMPLETE"
+          || metrics.prescribedRunningDistance.value === null
+          || metrics.actualClaimedRunningDistance.value === null
+          || metrics.prescribedRunningDistance.value === 0
           ? null
-          : (distance.actualClaimedRunningDistanceM / distance.prescribedRunningDistanceM) * 100,
+          : (metrics.actualClaimedRunningDistance.value / metrics.prescribedRunningDistance.value) * 100,
         outcomes,
         fulfillmentRating: week.review?.fulfillment_rating ?? null,
         coachComment: week.review?.coach_comment ?? null,
@@ -134,17 +168,8 @@ export function buildCoachProgramReport(
             scheduledDate: prescription.scheduled_date,
             trainingMenu: prescription.training_menu,
             title: prescription.title,
-            targetDistanceM: (() => {
-              const distances = prescription.components.map((component) => component.target_distance_m);
-              return distances.length > 0 && distances.every((distance) => distance !== null)
-                ? (distances as number[]).reduce((sum, distance) => sum + distance, 0)
-                : null;
-            })(),
-            targetDurationSec: (() => {
-              const durations = prescription.components.map((component) => component.target_duration_sec);
-              const knownDurations = durations.filter((duration): duration is number => duration !== null);
-              return knownDurations.length > 0 ? knownDurations.reduce((sum, duration) => sum + duration, 0) : null;
-            })(),
+            targetDistance: plannedDistanceCoverage(insightComponents(prescription.components)),
+            targetDuration: plannedDurationCoverage(insightComponents(prescription.components)),
             outcome: published
               ? prescriptionComplianceState(
                   prescription,
@@ -156,14 +181,7 @@ export function buildCoachProgramReport(
           })),
       };
     });
-  const allActivities = new Map<string, ReturnType<typeof weekDistance>["activities"][number]>();
-  weeks.forEach((week) => {
-    const sourceWeek = program.weeks.find((item) => item.id === week.id);
-    if (!sourceWeek) return;
-    weekDistance(sourceWeek, program.cancelled_at).activities.forEach((activity) => allActivities.set(activity.id, activity));
-  });
-  const knownDistances = [...allActivities.values()].map((activity) => activity.distance_m).filter((distance): distance is number => distance !== null);
-  const knownDurations = [...allActivities.values()].map((activity) => activity.duration_sec).filter((duration): duration is number => duration !== null);
+  const allActivities = program.weeks.flatMap((week) => weeklyMetrics(week, program.cancelled_at).activities);
   const completedWeeks = weeks.filter((week) => week.endDate < today && week.fulfillmentPercent !== null);
 
   return {
@@ -190,8 +208,8 @@ export function buildCoachProgramReport(
       averageWeeklyFulfillmentPercent: completedWeeks.length === 0
         ? null
         : completedWeeks.reduce((sum, week) => sum + (week.fulfillmentPercent ?? 0), 0) / completedWeeks.length,
-      totalClaimedRunningDistanceM: knownDistances.length === 0 ? null : knownDistances.reduce((sum, distance) => sum + distance, 0),
-      totalClaimedRunningDurationSec: knownDurations.length === 0 ? null : knownDurations.reduce((sum, duration) => sum + duration, 0),
+      totalClaimedRunningDistance: actualDistanceCoverage(allActivities),
+      totalClaimedRunningDuration: actualDurationCoverage(allActivities),
     },
     weeks,
   };

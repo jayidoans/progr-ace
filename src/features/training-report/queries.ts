@@ -19,7 +19,7 @@ const reportSelection = `
     review:training_week_reviews (fulfillment_rating, coach_comment),
     prescriptions:training_prescriptions (
       id, scheduled_date, title, training_menu,
-      components:prescription_components (id, target_distance_m, target_duration_sec, sequence_order),
+      components:prescription_components (id, target_distance_m, target_duration_sec, repetitions, distance_per_rep_m, sequence_order),
       claims:training_claims (
         id, status, submitted_at,
         validation:claim_validations (result, evaluation_source),
