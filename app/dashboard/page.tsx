@@ -2,6 +2,7 @@ import { AthleteEvaluationDashboard } from "@/src/features/evaluation/components
 import { CoachEvaluationDashboard } from "@/src/features/evaluation/components/coach-evaluation-dashboard";
 import { getEvaluationDashboard } from "@/src/features/evaluation/queries";
 import { measureRouteWorkflow } from "@/src/features/performance/diagnostics";
+import { getProgramTrainingInsights } from "@/src/features/training-insights/queries";
 
 export default async function DashboardPage() {
   const data = await measureRouteWorkflow(
@@ -15,9 +16,16 @@ export default async function DashboardPage() {
           claims: result.recentValidations.length,
         },
   );
-  return data.mode === "COACH" ? (
-    <CoachEvaluationDashboard data={data} />
-  ) : (
-    <AthleteEvaluationDashboard data={data} />
+  if (data.mode === "COACH") {
+    return <CoachEvaluationDashboard data={data} />;
+  }
+
+  // Keep the existing dashboard's current-program selection authoritative, then
+  // load exactly one bounded insight projection for the Athlete presentation.
+  const insights = data.currentProgram
+    ? await getProgramTrainingInsights(data.currentProgram.id, data.today)
+    : null;
+  return (
+    <AthleteEvaluationDashboard data={data} insights={insights} />
   );
 }

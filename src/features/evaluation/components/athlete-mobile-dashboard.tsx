@@ -5,6 +5,8 @@ import { EvaluationStateBadge } from "@/src/features/evaluation/components/statu
 import type { AthleteEvaluationDashboard } from "@/src/features/evaluation/queries";
 import { formatTrainingDate } from "@/src/features/training/format";
 import { prescriptionComplianceState } from "@/src/features/evaluation/analytics";
+import { AthleteTrainingInsights } from "@/src/features/training-insights/components/athlete-training-insights";
+import type { ProgramTrainingInsights } from "@/src/features/training-insights/types";
 
 function firstName(name: string | null | undefined) {
   return name?.trim().split(/\s+/)[0] || "Athlete";
@@ -17,7 +19,13 @@ function countdownLabel(days: number | null) {
   return `Race was ${Math.abs(days)} days ago`;
 }
 
-export function AthleteMobileDashboard({ data }: { data: AthleteEvaluationDashboard }) {
+export function AthleteMobileDashboard({
+  data,
+  insights,
+}: {
+  data: AthleteEvaluationDashboard;
+  insights: ProgramTrainingInsights | null;
+}) {
   const countdown = countdownLabel(data.daysUntilRace);
   const prescriptions = data.currentWeek?.prescriptions ?? [];
 
@@ -57,7 +65,7 @@ export function AthleteMobileDashboard({ data }: { data: AthleteEvaluationDashbo
           {data.currentProgram ? <Link className="rounded-full bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700" href={`/dashboard/training/${data.currentProgram.id}`}>Schedule</Link> : null}
         </div>
 
-        {data.weeklyDistance ? <div className="mt-4 grid grid-cols-2 gap-3 border-y border-gray-100 py-4">
+        {data.weeklyDistance && !insights ? <div className="mt-4 grid grid-cols-2 gap-3 border-y border-gray-100 py-4">
           <div><p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">Target</p><p className="mt-1 text-lg font-extrabold text-gray-950">{data.weeklyDistance.prescribedDistanceM === null ? "—" : formatDistance(data.weeklyDistance.prescribedDistanceM)}</p></div>
           <div><p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">Claimed</p><p className="mt-1 text-lg font-extrabold text-emerald-700">{formatDistance(data.weeklyDistance.claimedRunningDistanceM)}</p></div>
         </div> : null}
@@ -79,6 +87,8 @@ export function AthleteMobileDashboard({ data }: { data: AthleteEvaluationDashbo
         <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-extrabold uppercase tracking-wider text-amber-700">Action needed</p><h2 className="mt-1 text-lg font-extrabold text-gray-950">Complete your training claim</h2></div><span className="rounded-full bg-white px-3 py-1 text-sm font-extrabold text-amber-800">{data.attention.length}</span></div>
         <Link className="mt-4 inline-flex text-sm font-extrabold text-indigo-700" href={data.attention[0].claimId ? `/dashboard/claims/${data.attention[0].claimId}` : `/dashboard/training/prescriptions/${data.attention[0].prescriptionId}/claim`}>Review next action →</Link>
       </section> : null}
+
+      <AthleteTrainingInsights insights={insights} mobile />
     </div>
   );
 }

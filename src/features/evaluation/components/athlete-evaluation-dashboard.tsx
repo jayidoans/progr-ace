@@ -10,6 +10,8 @@ import { ActiveRaceGoalCard } from "@/src/features/race-goals/components/active-
 import { formatTrainingDate } from "@/src/features/training/format";
 import { prescriptionComplianceState } from "@/src/features/evaluation/analytics";
 import { AthleteMobileDashboard } from "@/src/features/evaluation/components/athlete-mobile-dashboard";
+import { AthleteTrainingInsights } from "@/src/features/training-insights/components/athlete-training-insights";
+import type { ProgramTrainingInsights } from "@/src/features/training-insights/types";
 
 function countdownLabel(days: number | null) {
   if (days === null) return null;
@@ -18,7 +20,13 @@ function countdownLabel(days: number | null) {
   return `Race was ${Math.abs(days)} days ago`;
 }
 
-function WeeklySessionStatus({ data }: { data: AthleteEvaluationDashboard }) {
+function WeeklySessionStatus({
+  data,
+  hasInsights,
+}: {
+  data: AthleteEvaluationDashboard;
+  hasInsights: boolean;
+}) {
   if (!data.compliance || !data.weeklyDistance) return null;
   return (
     <section className="space-y-5 rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6">
@@ -29,7 +37,7 @@ function WeeklySessionStatus({ data }: { data: AthleteEvaluationDashboard }) {
         </p>
       </div>
       <StatusSummary counts={data.compliance} />
-      <div className="grid gap-3 border-t border-gray-200 pt-5 sm:grid-cols-2">
+      {!hasInsights ? <div className="grid gap-3 border-t border-gray-200 pt-5 sm:grid-cols-2">
         <div className="rounded-lg bg-gray-50 p-4">
           <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Prescribed running distance</p>
           <p className="mt-2 text-2xl font-bold text-gray-950">
@@ -41,16 +49,22 @@ function WeeklySessionStatus({ data }: { data: AthleteEvaluationDashboard }) {
           <p className="mt-2 text-2xl font-bold text-gray-950">{formatDistance(data.weeklyDistance.claimedRunningDistanceM)}</p>
           <p className="mt-1 text-xs text-gray-500">Submitted Claim evidence only</p>
         </div>
-      </div>
+      </div> : null}
     </section>
   );
 }
 
-export function AthleteEvaluationDashboard({ data }: { data: AthleteEvaluationDashboard }) {
+export function AthleteEvaluationDashboard({
+  data,
+  insights,
+}: {
+  data: AthleteEvaluationDashboard;
+  insights: ProgramTrainingInsights | null;
+}) {
   const countdown = countdownLabel(data.daysUntilRace);
   return (
     <>
-      <AthleteMobileDashboard data={data} />
+      <AthleteMobileDashboard data={data} insights={insights} />
       <div className="hidden space-y-8 md:block">
       <section>
         <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">Dashboard</p>
@@ -71,7 +85,7 @@ export function AthleteEvaluationDashboard({ data }: { data: AthleteEvaluationDa
         ) : null}
       </div>
 
-      <WeeklySessionStatus data={data} />
+      <WeeklySessionStatus data={data} hasInsights={insights !== null} />
 
       <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -123,6 +137,8 @@ export function AthleteEvaluationDashboard({ data }: { data: AthleteEvaluationDa
           </p>
         )}
       </section>
+
+      <AthleteTrainingInsights insights={insights} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6">
