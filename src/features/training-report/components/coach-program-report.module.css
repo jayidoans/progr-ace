@@ -1,6 +1,218 @@
+ .reportSheet {
+  color: #111827;
+}
+
+.reportHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  border-bottom: 1px solid #dbe2ef;
+  padding-bottom: 1.5rem;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #2563eb;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reportHeader h1,
+.sectionHeading h2,
+.weeklySection h2,
+.chartHeading h2,
+.weekCard h3 {
+  color: #111827;
+}
+
+.reportHeader h1 {
+  margin: 0.45rem 0 0;
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.reportAthlete {
+  margin: 0.75rem 0 0;
+  color: #374151;
+  font-size: 1.05rem;
+}
+
+.reportMeta {
+  margin: 0.35rem 0 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.reportLogo {
+  width: 150px;
+  height: 50px;
+  object-fit: contain;
+  object-position: right top;
+}
+
+.summarySection,
+.weeklySection {
+  margin-top: 2rem;
+}
+
+.sectionHeading,
+.chartHeading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sectionHeading h2,
+.weeklySection h2,
+.chartHeading h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1.25rem;
+}
+
+.outcomeSummary {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.metric {
+  min-height: 5.75rem;
+  border-radius: 0.65rem;
+  padding: 1rem;
+}
+
+.metric dt {
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.metric dd {
+  margin: 0.45rem 0 0;
+  color: #111827;
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.metricblue { background: #eaf2ff; }
+.metricgreen { background: #e7f9f0; }
+.metricpurple { background: #eef0ff; }
+
+.fulfillmentChart {
+  margin-top: 1.5rem;
+  border: 1px solid #dbe2ef;
+  border-radius: 0.65rem;
+  background: #fbfdff;
+  padding: 1rem;
+}
+
+.chartLegend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  color: #475569;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.chartLegend span { display: inline-flex; align-items: center; gap: 0.28rem; }
+.chartLegend i { width: 0.55rem; height: 0.55rem; border-radius: 0.12rem; }
+.targetLegend { background: #bfdbfe; }
+.reachedLegend { background: #a7f3d0; }
+.belowLegend { background: #fed7aa; }
+
+.chartBars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(4.2rem, 1fr));
+  align-items: end;
+  gap: 0.45rem;
+  min-height: 10.5rem;
+  margin-top: 1rem;
+  border-bottom: 1px solid #dbe2ef;
+  padding: 0 0.35rem 0.45rem;
+}
+
+.chartWeek { min-width: 0; color: #334155; font-size: 0.65rem; text-align: center; }
+.chartWeek strong, .chartWeek span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chartWeek strong { margin-top: 0.35rem; color: #1e293b; }
+.chartWeek span:last-child { color: #64748b; }
+.barArea { display: flex; height: 7.5rem; align-items: end; justify-content: center; gap: 0.2rem; }
+.chartBar { width: 0.75rem; min-height: 0; border-radius: 0.2rem 0.2rem 0 0; }
+.targetBar { background: #bfdbfe; }
+.reachedBar { background: #a7f3d0; }
+.belowBar { background: #fed7aa; }
+.noActual { color: #94a3b8; font-size: 1.15rem; line-height: 1; }
+.chartCaption { margin: 0.7rem 0 0; color: #64748b; font-size: 0.7rem; }
+
+.sectionDescription { margin: 0.4rem 0 0; color: #64748b; font-size: 0.875rem; }
+.weekList { display: grid; gap: 1rem; margin-top: 1rem; }
+.weekCard { border: 1px solid #dbe2ef; border-radius: 0.75rem; background: #fff; padding: 1rem; }
+.weekCardHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.weekCard h3 { margin: 0; font-size: 1rem; }
+.weekCardHeader > div > p { margin: 0.3rem 0 0; color: #64748b; font-size: 0.78rem; }
+.planningStatus { color: #047857; font-weight: 800; }
+.weekMetrics { display: grid; grid-template-columns: repeat(3, auto); gap: 1rem; margin: 0; text-align: right; }
+.weekMetrics dt { color: #64748b; font-size: 0.68rem; }
+.weekMetrics dd { margin: 0.15rem 0 0; color: #111827; font-size: 0.86rem; font-weight: 800; }
+.weekOutcomes { margin: 0.75rem 0; color: #475569; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; }
+
+.weekDayGrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.45rem; }
+.dayCard { min-width: 0; min-height: 6.9rem; border: 1px solid #e2e8f0; border-radius: 0.48rem; background: #fff; padding: 0.5rem; }
+.dayHeading { display: flex; justify-content: space-between; color: #64748b; font-size: 0.62rem; font-weight: 800; }
+.dayHeading time { color: #94a3b8; font-weight: 500; }
+.menuBadge { display: inline-block; margin-top: 0.55rem; border-radius: 0.22rem; background: #eef2ff; color: #4338ca; padding: 0.14rem 0.32rem; font-size: 0.6rem; font-weight: 800; }
+.sessionTitle { margin: 0.35rem 0 0; color: #111827; font-size: 0.72rem; font-weight: 800; line-height: 1.25; }
+.outcomeBadge { display: inline-block; margin: 0.45rem 0 0; border-radius: 0.25rem; background: #f1f5f9; color: #475569; padding: 0.14rem 0.32rem; font-size: 0.58rem; font-weight: 800; }
+.outcomeVERIFIED { background: #dcfce7; color: #047857; }
+.outcomePARTIAL { background: #fef3c7; color: #b45309; }
+.outcomeNEEDSREVIEW { background: #dbeafe; color: #1d4ed8; }
+.outcomeREJECTED { background: #fee2e2; color: #b91c1c; }
+.outcomeMISSED { background: #e5e7eb; color: #4b5563; }
+.outcomeUPCOMING, .outcomeNOTCLAIMED, .outcomeDRAFT { background: #eef2ff; color: #4338ca; }
+.restDay { margin: 1.05rem 0 0; color: #94a3b8; font-size: 0.72rem; }
+
+.coachNote { margin-top: 0.75rem; border-radius: 0.48rem; background: #eef2ff; padding: 0.7rem; color: #312e81; font-size: 0.78rem; }
+.coachNote > p:first-child { margin: 0; font-weight: 800; }
+.coachComment { margin: 0.35rem 0 0; color: #374151; white-space: pre-wrap; }
+.noComment { margin: 0.35rem 0 0; color: #64748b; }
+
+.printFooter { display: none; }
+
+@media (max-width: 640px) {
+  .reportHeader, .sectionHeading, .chartHeading, .weekCardHeader { flex-direction: column; }
+  .reportLogo { object-position: left top; }
+  .outcomeSummary, .chartLegend { justify-content: flex-start; text-align: left; }
+  .metricGrid { grid-template-columns: 1fr; }
+  .weekMetrics { width: 100%; justify-content: start; text-align: left; }
+  .weekDayGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media print {
   @page {
-    margin: 14mm;
+    margin: 14mm 14mm 19mm;
+
+    @bottom-right {
+      color: #64748b;
+      content: "Page " counter(page);
+      font-size: 7.5pt;
+    }
   }
 
   .screenOnly {
@@ -10,6 +222,30 @@
   .reportSheet {
     max-width: none;
   }
+
+  .reportHeader { break-after: avoid; }
+
+  .fulfillmentChart { break-inside: avoid; }
+
+  .weekDayGrid { gap: 0.35rem; }
+
+  .dayCard { min-height: 6.1rem; padding: 0.38rem; }
+
+  .printFooter {
+    position: fixed;
+    right: 14mm;
+    bottom: 5mm;
+    left: 14mm;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    border-top: 1px solid #dbe2ef;
+    padding-top: 2.5mm;
+    color: #64748b;
+    font-size: 7.5pt;
+  }
+
+  .footerLogo { width: 50px; height: auto; object-fit: contain; }
 
   .keepTogether {
     break-inside: avoid;
