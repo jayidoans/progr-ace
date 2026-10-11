@@ -25,3 +25,50 @@ export type TrainingInsightActivity = {
   distance_m: number | null;
   duration_sec: number | null;
 };
+
+export type TrainingInsightOutcomeCounts = {
+  UPCOMING: number;
+  NOT_CLAIMED: number;
+  DRAFT: number;
+  SUBMITTED: number;
+  VERIFIED: number;
+  PARTIAL: number;
+  NEEDS_REVIEW: number;
+  REJECTED: number;
+  MISSED: number;
+};
+
+export type TrainingInsightProgramReference = {
+  id: string;
+  name: string;
+  status: string;
+  athleteId: string;
+  coachId: string;
+};
+
+export type TrainingInsightWeek = {
+  id: string;
+  weekNumber: number;
+  phase: string | null;
+  startDate: string;
+  endDate: string;
+  plannedDistance: MetricCoverage;
+  actualDistance: MetricCoverage;
+  outcomes: TrainingInsightOutcomeCounts;
+  needsReviewCount: number;
+  missedCount: number;
+};
+
+export type ProgramTrainingInsights = {
+  program: TrainingInsightProgramReference;
+  currentWeek: TrainingInsightWeek | null;
+  fourWeekTrend: TrainingInsightWeek[];
+  timezone: "UTC";
+};
+
+export type CoachTrainingInsightsSummary = {
+  athlete: { id: string; name: string | null };
+  program: TrainingInsightProgramReference;
+  currentWeek: TrainingInsightWeek | null;
+  trend: Array<Pick<TrainingInsightWeek, "startDate" | "endDate" | "plannedDistance" | "actualDistance">>;
+};

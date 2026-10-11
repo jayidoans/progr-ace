@@ -10,7 +10,17 @@ import type {
   TrainingInsightComponent,
 } from "./types";
 
-export type { MetricCompleteness, MetricCoverage, TrainingInsightActivity, TrainingInsightComponent } from "./types";
+export type {
+  CoachTrainingInsightsSummary,
+  MetricCompleteness,
+  MetricCoverage,
+  ProgramTrainingInsights,
+  TrainingInsightActivity,
+  TrainingInsightComponent,
+  TrainingInsightOutcomeCounts,
+  TrainingInsightProgramReference,
+  TrainingInsightWeek,
+} from "./types";
 
 function knownNonNegative(value: number | null | undefined): value is number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0;
