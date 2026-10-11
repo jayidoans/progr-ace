@@ -90,6 +90,7 @@ function WeeklyScheduleCards({ week }: { week: CoachProgramReport["weeks"][numbe
             {session ? <>
               <span className={styles.menuBadge}>{session.trainingMenu}</span>
               <p className={styles.sessionTitle}>{session.title}</p>
+              <p className={styles.sessionTarget}>{formatSessionTarget(session.targetDistanceM, session.targetDurationSec)}</p>
               <p className={`${styles.outcomeBadge} ${styles[`outcome${session.outcome.replaceAll("_", "")}`] ?? ""}`}>{session.outcome.replaceAll("_", " ")}</p>
             </> : <p className={styles.restDay}>Rest day</p>}
           </div>
@@ -97,6 +98,14 @@ function WeeklyScheduleCards({ week }: { week: CoachProgramReport["weeks"][numbe
       })}
     </div>
   );
+}
+
+function formatSessionTarget(targetDistanceM: number | null, targetDurationSec: number | null) {
+  const parts = [
+    targetDistanceM === null ? null : formatDistanceM(targetDistanceM),
+    targetDurationSec === null ? null : formatDurationSeconds(targetDurationSec),
+  ].filter((part): part is string => part !== null);
+  return parts.join(" · ") || "Details not specified";
 }
 
 export function CoachProgramReportView({
@@ -111,7 +120,7 @@ export function CoachProgramReportView({
     <main className="mx-auto max-w-5xl space-y-6 pb-10">
       <div className={`flex flex-wrap items-center justify-between gap-3 ${styles.screenOnly}`}>
         <Link className="text-sm font-semibold text-indigo-700" href={`/dashboard/coaching/athletes/${context.athleteId}`}>← Athlete evaluation</Link>
-        <PrintProgramReportButton />
+        <PrintProgramReportButton athleteName={context.athleteName} programName={context.programName} />
       </div>
 
       <section className={styles.reportSheet}>

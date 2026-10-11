@@ -179,6 +179,7 @@
 .dayHeading time { color: #94a3b8; font-weight: 500; }
 .menuBadge { display: inline-block; margin-top: 0.55rem; border-radius: 0.22rem; background: #eef2ff; color: #4338ca; padding: 0.14rem 0.32rem; font-size: 0.6rem; font-weight: 800; }
 .sessionTitle { margin: 0.35rem 0 0; color: #111827; font-size: 0.72rem; font-weight: 800; line-height: 1.25; }
+.sessionTarget { margin: 0.24rem 0 0; color: #64748b; font-size: 0.62rem; line-height: 1.25; }
 .outcomeBadge { display: inline-block; margin: 0.45rem 0 0; border-radius: 0.25rem; background: #f1f5f9; color: #475569; padding: 0.14rem 0.32rem; font-size: 0.58rem; font-weight: 800; }
 .outcomeVERIFIED { background: #dcfce7; color: #047857; }
 .outcomePARTIAL { background: #fef3c7; color: #b45309; }
@@ -226,6 +227,11 @@
   .reportHeader { break-after: avoid; }
 
   .fulfillmentChart { break-inside: avoid; }
+
+  .weeklySection {
+    break-before: page;
+    page-break-before: always;
+  }
 
   .weekDayGrid { gap: 0.35rem; }
 

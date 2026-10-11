@@ -29,7 +29,7 @@ test("report keeps the full schedule while calculating fulfillment from publishe
         review: { fulfillment_rating: 8, coach_comment: "Good consistency." },
         prescriptions: [{
           id: "prescription-1", scheduled_date: "2026-01-06", title: "Easy Run", training_menu: "EASY",
-          components: [{ id: "component-1", target_distance_m: 10000, sequence_order: 1 }],
+          components: [{ id: "component-1", target_distance_m: 10000, target_duration_sec: 3600, sequence_order: 1 }],
           claims: [{
             id: "claim-1", status: "SUBMITTED", submitted_at: "2026-01-06T01:00:00Z", validation: { result: "VERIFIED", evaluation_source: "COACH" },
             evidence: [{ activity: { id: "activity-1", distance_m: 8000, duration_sec: 3000, rpe: 5, source: "MANUAL", sport_type: "RUNNING", started_at: "2026-01-06T00:00:00Z" } }],
@@ -50,6 +50,8 @@ test("report keeps the full schedule while calculating fulfillment from publishe
   assert.equal(report.weeks[0].fulfillmentPercent, 80);
   assert.equal(report.weeks[0].fulfillmentRating, 8);
   assert.equal(report.weeks[0].coachComment, "Good consistency.");
+  assert.equal(report.weeks[0].sessions[0].targetDistanceM, 10000);
+  assert.equal(report.weeks[0].sessions[0].targetDurationSec, 3600);
   assert.equal(report.weeks[1].planningStatus, "DRAFT");
   assert.equal(report.weeks[1].outcomes.DRAFT, 1);
   assert.equal(report.summary.averageWeeklyFulfillmentPercent, 80);

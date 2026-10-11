@@ -8,11 +8,21 @@ import {
 } from "@/src/features/evaluation/analytics";
 import { COMPLIANCE_STATES } from "@/src/features/validation/engine/compliance";
 
-export type ReportWeek = EvaluationWeek & {
+type ReportPrescription = Omit<EvaluationWeek["prescriptions"][number], "components"> & {
+  components: Array<{
+    id: string;
+    sequence_order: number;
+    target_distance_m: number | null;
+    target_duration_sec: number | null;
+  }>;
+};
+
+export type ReportWeek = Omit<EvaluationWeek, "prescriptions"> & {
+  prescriptions: ReportPrescription[];
   review: { fulfillment_rating: number | null; coach_comment: string | null } | null;
 };
 
-export type ReportProgram = EvaluationProgram & { weeks: ReportWeek[] };
+export type ReportProgram = Omit<EvaluationProgram, "weeks"> & { weeks: ReportWeek[] };
 
 export type CoachProgramReport = {
   context: {
@@ -46,13 +56,15 @@ export type CoachProgramReport = {
     outcomes: ComplianceCounts;
     fulfillmentRating: number | null;
     coachComment: string | null;
-    sessions: Array<{
-      id: string;
-      scheduledDate: string;
-      trainingMenu: string;
-      title: string;
-      outcome: keyof ComplianceCounts;
-    }>;
+      sessions: Array<{
+        id: string;
+        scheduledDate: string;
+        trainingMenu: string;
+        title: string;
+        targetDistanceM: number | null;
+        targetDurationSec: number | null;
+        outcome: keyof ComplianceCounts;
+      }>;
   }>;
 };
 
@@ -122,6 +134,17 @@ export function buildCoachProgramReport(
             scheduledDate: prescription.scheduled_date,
             trainingMenu: prescription.training_menu,
             title: prescription.title,
+            targetDistanceM: (() => {
+              const distances = prescription.components.map((component) => component.target_distance_m);
+              return distances.length > 0 && distances.every((distance) => distance !== null)
+                ? (distances as number[]).reduce((sum, distance) => sum + distance, 0)
+                : null;
+            })(),
+            targetDurationSec: (() => {
+              const durations = prescription.components.map((component) => component.target_duration_sec);
+              const knownDurations = durations.filter((duration): duration is number => duration !== null);
+              return knownDurations.length > 0 ? knownDurations.reduce((sum, duration) => sum + duration, 0) : null;
+            })(),
             outcome: published
               ? prescriptionComplianceState(
                   prescription,
