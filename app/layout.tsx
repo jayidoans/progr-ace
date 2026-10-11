@@ -39,11 +39,11 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  colorScheme: "light dark",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#080d1b" },
-  ],
+  // The app preference, rather than the OS preference, owns the browser UI
+  // color scheme. The beforeInteractive script switches this to dark first
+  // when the user has explicitly selected it.
+  colorScheme: "light",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
@@ -57,10 +57,11 @@ export default function RootLayout({
         <Script id="theme-preference" strategy="beforeInteractive">
           {`(() => {
             const theme = document.cookie.split('; ').find((item) => item.startsWith('${THEME_STORAGE_KEY}='))?.split('=')[1];
-            if (theme === 'dark') {
-              document.documentElement.classList.add('dark');
-              document.documentElement.dataset.theme = 'dark';
-            }
+            const selectedTheme = theme === 'dark' ? 'dark' : 'light';
+            document.documentElement.classList.toggle('dark', selectedTheme === 'dark');
+            document.documentElement.dataset.theme = selectedTheme;
+            document.documentElement.style.colorScheme = selectedTheme;
+            document.querySelector('meta[name="theme-color"]')?.setAttribute('content', selectedTheme === 'dark' ? '#080d1b' : '#ffffff');
           })();`}
         </Script>
       </head>

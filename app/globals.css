@@ -5,6 +5,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  color-scheme: light;
 }
 
 body {
@@ -17,7 +18,18 @@ body {
  * dark color scheme. Individual forms can still refine these with utilities. */
 input,
 textarea,
-select {
+select,
+option,
+optgroup {
+  color: #111827;
+  background-color: #ffffff;
+  color-scheme: light;
+}
+
+/* Native dialogs do not receive a Tailwind background utility by default.
+ * Declare both palettes explicitly so Chrome cannot apply its OS-driven
+ * dark dialog treatment while the user selected ProgrACE light mode. */
+dialog {
   color: #111827;
   background-color: #ffffff;
   color-scheme: light;
@@ -64,7 +76,10 @@ html.dark .hover\:bg-indigo-50:hover,
 html.dark .hover\:bg-blue-50:hover { background-color: #1e2d65 !important; }
 html.dark input,
 html.dark textarea,
-html.dark select { background-color: #0d1529; color: #e7edf9; }
+html.dark select,
+html.dark option,
+html.dark optgroup { background-color: #0d1529; color: #e7edf9; }
 html.dark input,
 html.dark textarea,
 html.dark select { color-scheme: dark; }
+html.dark dialog { background-color: #111a31; color: #e7edf9; color-scheme: dark; }

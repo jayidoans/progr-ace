@@ -13,6 +13,8 @@ export function ThemeToggle({ initialTheme }: { initialTheme: AppTheme }) {
     setTheme(nextTheme);
     document.documentElement.classList.toggle("dark", nextTheme === "dark");
     document.documentElement.dataset.theme = nextTheme;
+    document.documentElement.style.colorScheme = nextTheme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", nextTheme === "dark" ? "#080d1b" : "#ffffff");
     document.cookie = `${THEME_STORAGE_KEY}=${nextTheme}; path=/; max-age=31536000; samesite=lax`;
   };
 
