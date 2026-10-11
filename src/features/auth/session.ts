@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 
 import { createClient } from "@/src/lib/supabase/server";
+import { passwordGateRedirectPath } from "@/src/features/auth/password-enforcement";
 
 export const getCurrentSession = cache(async () => {
   const supabase = await createClient();
@@ -50,7 +51,11 @@ export async function requireAuthenticatedSession(
 
   if (!options.allowForcedPasswordChange) {
     const { mustChangePassword, error: passwordStatusError } = await getCurrentPasswordChangeRequirement();
-    if (passwordStatusError || mustChangePassword) redirect("/account/change-password");
+    const redirectPath = passwordGateRedirectPath({
+      mustChangePassword: mustChangePassword === true,
+      passwordStatusUnavailable: Boolean(passwordStatusError),
+    });
+    if (redirectPath) redirect(redirectPath);
   }
 
   return { supabase, user };

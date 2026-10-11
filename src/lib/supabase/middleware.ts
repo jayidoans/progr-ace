@@ -3,7 +3,10 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { getSupabasePublicEnv } from "@/src/lib/supabase/env";
 import type { Database } from "@/src/types/database";
-import { requiresPasswordGate } from "@/src/features/auth/password-enforcement";
+import {
+  passwordGateRedirectPath,
+  requiresPasswordGate,
+} from "@/src/features/auth/password-enforcement";
 import {
   createPerformanceRequestContext,
   getPerformanceDiagnosticSettings,
@@ -109,9 +112,13 @@ async function updateSessionWithDiagnostics(
         async () => await supabase.rpc("current_user_must_change_password"),
         diagnosticSettings,
       );
-      if (passwordStatusError || mustChange) {
+      const redirectPath = passwordGateRedirectPath({
+        mustChangePassword: mustChange === true,
+        passwordStatusUnavailable: Boolean(passwordStatusError),
+      });
+      if (redirectPath) {
         const url = request.nextUrl.clone();
-        url.pathname = "/account/change-password";
+        url.pathname = redirectPath;
         url.search = "";
         const redirect = NextResponse.redirect(url);
         response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
