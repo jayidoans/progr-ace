@@ -9,6 +9,7 @@ import type { AthleteEvaluationDashboard } from "@/src/features/evaluation/queri
 import { ActiveRaceGoalCard } from "@/src/features/race-goals/components/active-race-goal-card";
 import { formatTrainingDate } from "@/src/features/training/format";
 import { prescriptionComplianceState } from "@/src/features/evaluation/analytics";
+import { AthleteMobileDashboard } from "@/src/features/evaluation/components/athlete-mobile-dashboard";
 
 function countdownLabel(days: number | null) {
   if (days === null) return null;
@@ -48,7 +49,9 @@ function WeeklySessionStatus({ data }: { data: AthleteEvaluationDashboard }) {
 export function AthleteEvaluationDashboard({ data }: { data: AthleteEvaluationDashboard }) {
   const countdown = countdownLabel(data.daysUntilRace);
   return (
-    <div className="space-y-8">
+    <>
+      <AthleteMobileDashboard data={data} />
+      <div className="hidden space-y-8 md:block">
       <section>
         <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">Dashboard</p>
         <h1 className="mt-2 text-3xl font-bold text-gray-950">
@@ -178,6 +181,7 @@ export function AthleteEvaluationDashboard({ data }: { data: AthleteEvaluationDa
           )}
         </section>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

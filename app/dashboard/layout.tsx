@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { getCurrentUserRoles, requireAuthenticatedSession } from "@/src/features/auth/session";
 import { DashboardNavigation } from "@/src/features/navigation/dashboard-navigation";
+import { AthleteMobileNavigation } from "@/src/features/navigation/athlete-mobile-navigation";
 import { NotificationCenter } from "@/src/features/notifications/notification-center";
 import {
   measureAsync,
@@ -72,7 +73,7 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-[100dvh] bg-gray-50 text-gray-950">
       <header className="border-b border-gray-200 bg-white pt-[env(safe-area-inset-top)]">
-        <div className="relative mx-auto flex min-h-20 max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <div className={`relative mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 ${activeMode === "ATHLETE" ? "min-h-14 md:min-h-20" : "min-h-20"}`}>
           <Link className={`text-lg font-bold ${activeMode === "ATHLETE" ? "text-emerald-600" : "text-blue-700"}`} href="/dashboard">
             ProgrACE
           </Link>
@@ -85,9 +86,10 @@ export default async function DashboardLayout({
           <NotificationCenter initialUnreadCount={unreadResult.count ?? 0} />
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 sm:px-6 sm:pt-8">
+      <main className={`mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-8 ${activeMode === "ATHLETE" ? "pb-28 md:pb-[max(1.5rem,env(safe-area-inset-bottom))]" : "pb-[max(1.5rem,env(safe-area-inset-bottom))]"}`}>
         {children}
       </main>
+      {activeMode === "ATHLETE" ? <AthleteMobileNavigation /> : null}
     </div>
   );
 }
