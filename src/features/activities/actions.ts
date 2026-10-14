@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { z } from "zod";
+import { assertDemoFeatureAvailable } from "@/src/features/demo/server";
 
 import {
   activityFormSchema,
@@ -12,6 +13,7 @@ import {
 import { createClient } from "@/src/lib/supabase/server";
 
 async function activityContext() {
+  assertDemoFeatureAvailable("domain-mutations");
   const supabase = await createClient();
   const {
     data: { user },

@@ -25,6 +25,7 @@ import {
   stravaCallbackSchema,
 } from "@/src/features/strava/schemas";
 import { getSiteUrl } from "@/src/lib/supabase/env";
+import { isDemoDeployment } from "@/src/features/demo/server";
 
 export const runtime = "nodejs";
 
@@ -44,6 +45,9 @@ function clearStateCookie(response: NextResponse) {
 }
 
 export async function GET(request: NextRequest) {
+  if (isDemoDeployment()) {
+    return new NextResponse("Not found", { status: 404 });
+  }
   try {
     const { user } = await requireAthleteSession();
     const parsed = stravaCallbackSchema.safeParse({

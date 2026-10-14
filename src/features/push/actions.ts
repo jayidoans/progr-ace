@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
+import { assertDemoFeatureAvailable, isDemoDeployment } from "@/src/features/demo/server";
 
 const subscriptionSchema = z.object({
   endpoint: z.string().url().max(2048),
@@ -12,11 +13,13 @@ const subscriptionSchema = z.object({
 
 export async function getPushPublicKey() {
   await requireAuthenticatedSession("/dashboard/profile");
+  if (isDemoDeployment()) return null;
   return process.env.VAPID_PUBLIC_KEY ?? null;
 }
 
 export async function isCurrentPushSubscriptionActive(endpoint: string) {
   if (endpoint.length > 2048) return false;
+  if (isDemoDeployment()) return false;
   const { supabase } = await requireAuthenticatedSession("/dashboard/profile", { allowForcedPasswordChange: true });
   const { data, error } = await supabase.rpc("push_subscription_is_active", { p_endpoint: endpoint });
   if (error) throw new Error("Unable to check push notifications on this device.");
@@ -24,6 +27,7 @@ export async function isCurrentPushSubscriptionActive(endpoint: string) {
 }
 
 export async function registerCurrentPushSubscription(input: unknown) {
+  assertDemoFeatureAvailable("push");
   const parsed = subscriptionSchema.safeParse(input);
   if (!parsed.success) throw new Error("The browser push subscription is invalid.");
   const { supabase } = await requireAuthenticatedSession("/dashboard/profile");
@@ -37,6 +41,7 @@ export async function registerCurrentPushSubscription(input: unknown) {
 }
 
 export async function revokeCurrentPushSubscription(endpoint: string) {
+  assertDemoFeatureAvailable("push");
   if (endpoint.length > 2048) return false;
   const { supabase } = await requireAuthenticatedSession("/dashboard/profile");
   const { data, error } = await supabase.rpc("revoke_push_subscription", { p_endpoint: endpoint });

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { getApplicationToday } from "@/src/features/demo/server";
 import { notFound } from "next/navigation";
 
 import { getCurrentUserRoles, requireAuthenticatedSession } from "@/src/features/auth/session";
@@ -29,7 +30,6 @@ import {
 import { getServerPerformanceRequestContext, type ServerPerformanceRequestContext } from "@/src/features/performance/request-context";
 import type { Profile } from "@/src/features/profiles/queries";
 import type { RaceGoalWithRace } from "@/src/features/race-goals/queries";
-import { utcDateString } from "@/src/features/validation/engine/compliance";
 import {
   ACTIVE_MODE_STORAGE_KEY,
   resolveActiveMode,
@@ -603,7 +603,7 @@ async function coachDashboard(
 export async function getEvaluationDashboard(): Promise<EvaluationDashboard> {
   const { supabase, user } = await requireAuthenticatedSession();
   const roles = await getCurrentUserRoles();
-  const today = utcDateString();
+  const today = getApplicationToday();
   const isAdmin = roles.includes("ADMIN");
   const activeMode = resolveActiveMode(
     roles,
@@ -667,7 +667,7 @@ export async function getCoachProgramEvaluation(
     performance.settings,
   );
   normalizeProgram(program);
-  const today = utcDateString();
+  const today = getApplicationToday();
   const claimStates = await authorizedClaimStates(supabase, [programId], "dashboard.training.program", performance);
   const operational = coachOperationalItems([program], today, claimStates);
   return {
@@ -701,7 +701,7 @@ export async function getCoachAthletesProgress(
     diagnosticRoute,
   });
   const claimStates = await authorizedClaimStates(supabase, programs.map((program) => program.id), diagnosticRoute);
-  const today = utcDateString();
+  const today = getApplicationToday();
   const athleteProgress = measureSync(
     {
       route: diagnosticRoute,

@@ -1,10 +1,12 @@
 import { AthleteEvaluationDashboard } from "@/src/features/evaluation/components/athlete-evaluation-dashboard";
 import { CoachEvaluationDashboard } from "@/src/features/evaluation/components/coach-evaluation-dashboard";
+import { isDemoDeployment } from "@/src/features/demo/server";
 import { getEvaluationDashboard } from "@/src/features/evaluation/queries";
 import { measureRouteWorkflow } from "@/src/features/performance/diagnostics";
 import { getCoachTrainingInsights, getProgramTrainingInsights } from "@/src/features/training-insights/queries";
 
 export default async function DashboardPage() {
+  const demoMode = isDemoDeployment();
   const data = await measureRouteWorkflow(
     { route: "dashboard", workflow: "evaluation.dashboard", operation: "route" },
     () => getEvaluationDashboard(),
@@ -27,6 +29,6 @@ export default async function DashboardPage() {
     ? await getProgramTrainingInsights(data.currentProgram.id, data.today)
     : null;
   return (
-    <AthleteEvaluationDashboard data={data} insights={insights} />
+    <AthleteEvaluationDashboard data={data} insights={insights} readOnly={demoMode} />
   );
 }

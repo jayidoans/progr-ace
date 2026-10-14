@@ -28,6 +28,8 @@ validateProductionBuildEnv(env, readLocalPublishableKey(join(projectRoot, ".env.
 // Next's env loader from importing local development secrets during the build.
 for (const key of RUNTIME_ONLY_KEYS) env[key] = "";
 env.PROGRACE_PRODUCTION_BUILD = "1";
+env.PROGRACE_DEPLOYMENT_MODE = "production";
+delete env.PROGRACE_DEMO_REFERENCE_DATE;
 
 const target = process.argv[2];
 if (target !== "next" && target !== "cloudflare") throw new Error("Choose next or cloudflare production build.");

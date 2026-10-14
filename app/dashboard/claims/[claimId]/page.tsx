@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isDemoDeployment } from "@/src/features/demo/server";
 
 import {
   deleteClaimDraft,
@@ -39,6 +40,7 @@ export default async function TrainingClaimPage({
   const claim = await getClaim(claimId);
   const availableActivities = await getAvailableActivitiesForClaim(claim);
   const isDraft = claim.status === "DRAFT";
+  const demoMode = isDemoDeployment();
   const totalDistance = claim.evidence.reduce(
     (sum, item) => sum + (item.activity.distance_m ?? 0),
     0,
@@ -145,7 +147,7 @@ export default async function TrainingClaimPage({
             {claim.evidence.map((item) => (
               <div key={item.id}>
                 <ActivityEvidenceCard activity={item.activity} showNote />
-                {isDraft ? (
+                {isDraft && !demoMode ? (
                   <form action={removeClaimActivity} className="mt-2 text-right">
                     <input name="claimId" type="hidden" value={claim.id} />
                     <input name="activityId" type="hidden" value={item.activity_id} />
@@ -160,7 +162,7 @@ export default async function TrainingClaimPage({
         )}
       </section>
 
-      {isDraft ? (
+      {isDraft && !demoMode ? (
         <>
           <ClaimDraftSubmission
             athleteNote={claim.athlete_note}

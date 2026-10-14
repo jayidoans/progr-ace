@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { assertDemoFeatureAvailable } from "@/src/features/demo/server";
 
 import { activityCommentSchema, weekReviewSchema } from "@/src/features/training-review/schemas";
 import { createClient } from "@/src/lib/supabase/server";
@@ -12,6 +13,7 @@ function destination(programId: FormDataEntryValue | null, feedback: string) {
 }
 
 export async function saveActivityComment(formData: FormData) {
+  assertDemoFeatureAvailable("domain-mutations");
   const parsed = activityCommentSchema.safeParse({
     claimActivityId: formData.get("claimActivityId"),
     coachComment: formData.get("coachComment"),
@@ -31,6 +33,7 @@ export async function saveActivityComment(formData: FormData) {
 }
 
 export async function saveWeekReview(formData: FormData) {
+  assertDemoFeatureAvailable("domain-mutations");
   const parsed = weekReviewSchema.safeParse({
     coachComment: formData.get("coachComment"),
     fulfillmentRating: formData.get("fulfillmentRating"),

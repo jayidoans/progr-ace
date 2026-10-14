@@ -1,9 +1,9 @@
 import "server-only";
+import { getApplicationToday } from "@/src/features/demo/server";
 
 import { notFound } from "next/navigation";
 
 import { getCurrentUserRoles, requireAuthenticatedSession } from "@/src/features/auth/session";
-import { utcDateString } from "@/src/features/validation/engine/compliance";
 import { utcCalendarWeek } from "@/src/features/evaluation/analytics";
 
 import { canReadCoachTrainingInsights, canReadTrainingInsightsProgram } from "./authorization";
@@ -158,7 +158,7 @@ function attachBoundedWeeks(
  */
 export async function getProgramTrainingInsights(
   programId: string,
-  today = utcDateString(),
+  today = getApplicationToday(),
 ): Promise<ProgramTrainingInsights> {
   if (!isUuid(programId)) notFound();
   const [{ supabase, user }, roles] = await Promise.all([
@@ -191,7 +191,7 @@ export type CoachTrainingInsightsProjection = {
  * program, so this endpoint has no per-athlete or per-program request loop.
  */
 export async function getCoachTrainingInsights(
-  today = utcDateString(),
+  today = getApplicationToday(),
 ): Promise<CoachTrainingInsightsProjection> {
   const [{ supabase, user }, roles] = await Promise.all([
     requireAuthenticatedSession("/dashboard/coaching/athletes"),

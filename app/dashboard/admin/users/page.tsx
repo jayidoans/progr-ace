@@ -1,12 +1,15 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { filterAdminUsers } from "@/src/features/admin/directory";
 import { getAdminUsers } from "@/src/features/admin/queries";
 import { adminRoleBadgeClass, summarizeAdminUsers } from "@/src/features/admin/summary";
+import { isDemoDeployment } from "@/src/features/demo/server";
 
 export default async function AdminUsersPage({ searchParams }: {
   searchParams: Promise<{ search?: string }>;
 }) {
+  if (isDemoDeployment()) notFound();
   const [users, params] = await Promise.all([getAdminUsers(), searchParams]);
   const search = typeof params.search === "string" ? params.search.slice(0, 100) : "";
   const results = filterAdminUsers(users, search);

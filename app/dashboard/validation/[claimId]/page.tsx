@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isDemoDeployment } from "@/src/features/demo/server";
 
 import { ActivityEvidenceCard } from "@/src/features/claims/components/activity-evidence-card";
 import { formatComponent, formatTrainingDate } from "@/src/features/training/format";
@@ -23,6 +24,7 @@ export default async function ValidationReviewPage({
 }) {
   const [{ claimId }, feedback] = await Promise.all([params, searchParams]);
   const review = await getValidationReview(claimId);
+  const demoMode = isDemoDeployment();
   const prescription = review.claim.prescription;
 
   return (
@@ -81,7 +83,11 @@ export default async function ValidationReviewPage({
       </section>
 
       <ValidationSummary validation={review} />
-      <ReviewForm claimId={review.claim_id} validation={review} />
+      {demoMode ? (
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Coach decisions are read-only in this synthetic demonstration.
+        </p>
+      ) : <ReviewForm claimId={review.claim_id} validation={review} />}
     </div>
   );
 }

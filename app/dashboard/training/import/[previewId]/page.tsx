@@ -1,10 +1,12 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { isDemoDeployment } from "@/src/features/demo/server";
 
 import { ImportPreview } from "@/src/features/training-import/components";
 import type { ImportIssue, NormalizedTrainingPlan } from "@/src/features/training-import/types";
 import { getTrainingImportPreview } from "@/src/features/training/queries";
 
 export default async function TrainingImportPreviewPage({ params, searchParams }: { params: Promise<{ previewId: string }>; searchParams: Promise<{ error?: string; detail?: string }> }) {
+  if (isDemoDeployment()) redirect("/account/access-unavailable");
   const [{ previewId }, feedback] = await Promise.all([params, searchParams]);
   const preview = await getTrainingImportPreview(previewId);
   if (!preview) notFound();

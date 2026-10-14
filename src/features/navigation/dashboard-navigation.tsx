@@ -108,11 +108,13 @@ export function DashboardNavigation({
   email,
   roles,
   activeMode,
+  demoMode = false,
 }: {
   access: DashboardNavigationAccess;
   email: string | undefined;
   roles: string[];
   activeMode: "ATHLETE" | "COACH" | "ADMIN" | null;
+  demoMode?: boolean;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -142,12 +144,12 @@ export function DashboardNavigation({
           >
             Dashboard
           </Link>
-          <GroupedNavigationLinks access={access} />
+          <GroupedNavigationLinks access={{ ...access, demoMode }} />
         </nav>
-        {email ? (
+        {email && !demoMode ? (
           <span className="hidden max-w-44 truncate text-sm text-gray-600 xl:inline">{email}</span>
         ) : null}
-        <DeviceSignOutForm buttonClassName="min-h-11 rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-50" />
+        <DeviceSignOutForm buttonClassName="min-h-11 rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-50" pushEnabled={!demoMode} />
       </div>
 
       <button
@@ -179,10 +181,10 @@ export function DashboardNavigation({
             >
               Dashboard
             </Link>
-            <GroupedNavigationLinks access={access} mobile onNavigate={() => setOpen(false)} />
+            <GroupedNavigationLinks access={{ ...access, demoMode }} mobile onNavigate={() => setOpen(false)} />
             <div className="mt-2 border-t border-gray-200 pt-3">
-              {email ? <p className="mb-2 break-all px-3 text-xs text-gray-500">{email}</p> : null}
-              <DeviceSignOutForm buttonClassName="min-h-11 w-full rounded-md px-3 py-2.5 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50" />
+              {email && !demoMode ? <p className="mb-2 break-all px-3 text-xs text-gray-500">{email}</p> : null}
+              <DeviceSignOutForm buttonClassName="min-h-11 w-full rounded-md px-3 py-2.5 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50" pushEnabled={!demoMode} />
             </div>
           </nav>
         </div>

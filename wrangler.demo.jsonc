@@ -1,0 +1,41 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "progr-ace-demo",
+  "main": "custom-worker-demo.ts",
+  "compatibility_date": "2026-09-16",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "keep_vars": true,
+  "vars": {
+    "PROGRACE_DEPLOYMENT_MODE": "demo",
+    "PROGRACE_DEMO_REFERENCE_DATE": "2027-01-08"
+  },
+  "ratelimits": [
+    {
+      "name": "DEMO_LOGIN_RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "demo.progr-ace.idoans.app",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "progr-ace-demo"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

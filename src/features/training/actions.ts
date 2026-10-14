@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { assertDemoFeatureAvailable } from "@/src/features/demo/server";
 
 import { parsePrograceTemplateV1 } from "@/src/features/training-import/parsers/prograce-template-v1";
 import {
@@ -39,6 +40,7 @@ function pathWithFeedback(path: string, kind: "error" | "message", code: string,
 }
 
 async function authenticatedContext() {
+  assertDemoFeatureAvailable("domain-mutations");
   const supabase = await createClient();
   const {
     data: { user },

@@ -7,8 +7,10 @@ import { resolveTheme, THEME_STORAGE_KEY } from "@/src/features/theme/preference
 import { ThemeToggle } from "@/src/features/theme/theme-toggle";
 import { InstallPrograceControl } from "@/src/features/pwa/install-prograce-control";
 import { PushNotificationControl } from "@/src/features/push/push-control";
+import { getDemoEnvironment } from "@/src/features/demo/server";
 
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
+  const demo = getDemoEnvironment();
   const profile = await getCurrentProfile();
   const [params, cookieStore] = await Promise.all([searchParams, cookies()]);
   const theme = resolveTheme(cookieStore.get(THEME_STORAGE_KEY)?.value);
@@ -32,14 +34,23 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
           <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Full name</dt>
           <dd className="mt-2 font-semibold text-gray-950">{profile.full_name ?? "Not provided"}</dd>
         </div>
-        <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Email</dt>
-          <dd className="mt-2 font-semibold text-gray-950">{profile.email ?? "Not available"}</dd>
-        </div>
-        <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Account reference</dt>
-          <dd className="mt-2 break-all font-mono text-sm text-gray-700">{profile.id}</dd>
-        </div>
+        {demo.enabled ? (
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Environment</dt>
+            <dd className="mt-2 font-semibold text-amber-800">Read-only demo account</dd>
+          </div>
+        ) : (
+          <>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Email</dt>
+              <dd className="mt-2 font-semibold text-gray-950">{profile.email ?? "Not available"}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Account reference</dt>
+              <dd className="mt-2 break-all font-mono text-sm text-gray-700">{profile.id}</dd>
+            </div>
+          </>
+        )}
         <div>
           <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Member since</dt>
           <dd className="mt-2 font-semibold text-gray-950">
@@ -51,12 +62,14 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
           </dd>
         </div>
       </dl>
-      <section className="mt-8 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
-        <h2 className="text-xl font-bold">Change Password</h2>
-        <p className="mt-2 text-sm text-gray-600">Choose a new password for your ProgrACE account.</p>
-        {params.message === "password-changed" ? <p className="mt-4 rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">Your password has been changed.</p> : null}
-        <ChangePasswordForm />
-      </section>
+      {demo.enabled ? null : (
+        <section className="mt-8 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+          <h2 className="text-xl font-bold">Change Password</h2>
+          <p className="mt-2 text-sm text-gray-600">Choose a new password for your ProgrACE account.</p>
+          {params.message === "password-changed" ? <p className="mt-4 rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">Your password has been changed.</p> : null}
+          <ChangePasswordForm />
+        </section>
+      )}
       <section className="mt-8 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
         <h2 className="text-xl font-bold text-gray-950">Appearance</h2>
         <p className="mt-2 text-sm text-gray-600">Choose the display style that is most comfortable for you.</p>
@@ -65,7 +78,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         </div>
       </section>
       <InstallPrograceControl />
-      <PushNotificationControl />
+      {demo.enabled ? null : <PushNotificationControl />}
     </section>
   );
 }

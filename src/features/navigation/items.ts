@@ -1,5 +1,6 @@
 export type DashboardNavigationAccess = {
   activeMode: "ATHLETE" | "COACH" | "ADMIN" | null;
+  demoMode?: boolean;
   roles: readonly string[];
 };
 
@@ -10,6 +11,7 @@ export type DashboardNavigationGroup = {
 
 export function getDashboardNavigationGroups({
   activeMode,
+  demoMode = false,
   roles,
 }: DashboardNavigationAccess): DashboardNavigationGroup[] {
   const groups: DashboardNavigationGroup[] = [];
@@ -36,7 +38,7 @@ export function getDashboardNavigationGroups({
     });
   }
 
-  if (roles.includes("ADMIN")) {
+  if (!demoMode && roles.includes("ADMIN")) {
     groups.push({
       label: "Admin",
       items: [{ href: "/dashboard/admin/users", label: "Manage Users" }],
@@ -46,8 +48,8 @@ export function getDashboardNavigationGroups({
   groups.push({
     label: "Profile",
     items: [
-      { href: "/dashboard/profile", label: "Edit Profile" },
-      ...(activeMode === "ATHLETE"
+      { href: "/dashboard/profile", label: demoMode ? "Profile" : "Edit Profile" },
+      ...(!demoMode && activeMode === "ATHLETE"
         ? [{ href: "/dashboard/integrations/strava", label: "Connect to Strava" }]
         : []),
     ],

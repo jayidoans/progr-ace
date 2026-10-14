@@ -1,9 +1,9 @@
 import "server-only";
+import { getApplicationToday } from "@/src/features/demo/server";
 
 import { notFound } from "next/navigation";
 
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
-import { utcDateString } from "@/src/features/validation/engine/compliance";
 import { canReadProgramRunningAnalytics } from "@/src/features/running-analytics/authorization";
 import {
   buildProgramRunningAnalytics,
@@ -97,7 +97,7 @@ type ProgramIdentity = {
 async function loadProgramsRunningAnalytics(
   programIds: string[],
   nextPath: string,
-  today = utcDateString(),
+  today = getApplicationToday(),
 ): Promise<ProgramRunningAnalytics[]> {
   const uniqueProgramIds = [...new Set(programIds)];
   if (uniqueProgramIds.length === 0) return [];
@@ -156,7 +156,7 @@ async function loadProgramsRunningAnalytics(
 
 export async function getProgramRunningAnalytics(
   programId: string,
-  today = utcDateString(),
+  today = getApplicationToday(),
 ): Promise<ProgramRunningAnalytics> {
   const [analytics] = await loadProgramsRunningAnalytics(
     [programId],
@@ -168,7 +168,7 @@ export async function getProgramRunningAnalytics(
 
 export async function getCoachProgramsRunningAnalytics(
   programIds: string[],
-  today = utcDateString(),
+  today = getApplicationToday(),
 ) {
   return loadProgramsRunningAnalytics(
     programIds,

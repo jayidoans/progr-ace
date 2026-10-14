@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { isDemoDeployment } from "@/src/features/demo/server";
 
 import { StatusSummary } from "@/src/features/evaluation/components/status-summary";
 import { getCoachAthletesProgress } from "@/src/features/evaluation/queries";
@@ -33,6 +34,7 @@ export default async function CoachAthleteDetailPage({
   searchParams: Promise<{ error?: string; message?: string }>;
 }) {
   const [{ athleteId }, query] = await Promise.all([params, searchParams]);
+  const demoMode = isDemoDeployment();
   const data = await measureRouteWorkflow(
     { route: "dashboard.coaching.athlete", workflow: "coach.athlete.progress", operation: "progress-route" },
     () => getCoachAthletesProgress(athleteId),
@@ -69,7 +71,7 @@ export default async function CoachAthleteDetailPage({
       {query.error && errors[query.error] ? <p className="rounded-lg bg-red-50 p-4 text-sm text-red-800" role="alert">{errors[query.error]}</p> : null}
 
       {athlete.goals.map((goal) => {
-        const canComplete = canOfferRaceGoalCompletion(goal.status, goal.raceDate, data.today);
+        const canComplete = !demoMode && canOfferRaceGoalCompletion(goal.status, goal.raceDate, data.today);
         return (
           <article className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6" key={goal.goalId}>
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -122,7 +124,7 @@ export default async function CoachAthleteDetailPage({
             </section>
 
             <RaceResultCard
-              canRecord={goal.status !== "CANCELLED" && data.today >= goal.raceDate}
+              canRecord={!demoMode && goal.status !== "CANCELLED" && data.today >= goal.raceDate}
               goalId={goal.goalId}
               programId={goal.currentProgram.id}
               raceDate={goal.raceDate}

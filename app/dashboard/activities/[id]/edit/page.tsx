@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { ActivityForm } from "@/src/features/activities/components/activity-form";
 import { getActivity } from "@/src/features/activities/queries";
+import { isDemoDeployment } from "@/src/features/demo/server";
 
 export default async function EditActivityPage({
   params,
@@ -11,6 +12,7 @@ export default async function EditActivityPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
+  if (isDemoDeployment()) redirect("/account/access-unavailable");
   const [{ id }, feedback] = await Promise.all([params, searchParams]);
   const activity = await getActivity(id);
   if (activity.source !== "MANUAL" || activity.claimUsage?.status === "SUBMITTED") notFound();

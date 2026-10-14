@@ -2,11 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { assertDemoFeatureAvailable } from "@/src/features/demo/server";
 
 import { reviewValidationSchema } from "@/src/features/validation/schemas";
 import { createClient } from "@/src/lib/supabase/server";
 
 export async function reviewTrainingClaim(formData: FormData) {
+  assertDemoFeatureAvailable("domain-mutations");
   const parsed = reviewValidationSchema.safeParse({
     claimId: formData.get("claimId"),
     result: formData.get("result"),

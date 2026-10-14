@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signIn } from "@/src/features/auth/actions";
+import { isDemoDeployment } from "@/src/features/demo/server";
 import { createClient } from "@/src/lib/supabase/server";
 
 type LoginPageProps = {
@@ -13,6 +14,7 @@ type LoginPageProps = {
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
+  if (isDemoDeployment()) redirect("/");
   const supabase = await createClient();
   const [{ data }, params] = await Promise.all([supabase.auth.getUser(), searchParams]);
 

@@ -9,6 +9,11 @@ import { passwordChangeSchema, generateTemporaryPassword } from "@/src/features/
 import { performAuthenticatedPasswordChange } from "@/src/features/auth/password-change-core";
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
 import { createAdminClient } from "@/src/lib/supabase/admin";
+import { demoFeatureAvailable, resolveDemoEnvironment } from "@/src/features/demo/policy";
+
+function passwordManagementAvailable() {
+  return demoFeatureAvailable(resolveDemoEnvironment(process.env), "password-management");
+}
 
 export type PasswordActionState = { message: string; temporaryPassword?: string };
 
@@ -16,6 +21,9 @@ export async function changeMyPassword(
   _previous: PasswordActionState,
   formData: FormData,
 ): Promise<PasswordActionState> {
+  if (!passwordManagementAvailable()) {
+    return { message: "Password changes are disabled in the demonstration environment." };
+  }
   const parsed = passwordChangeSchema.safeParse({
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
@@ -67,6 +75,9 @@ export async function resetUserPassword(
 ): Promise<PasswordActionState> {
   void _previous;
   void _formData;
+  if (!passwordManagementAvailable()) {
+    return { message: "Password resets are disabled in the demonstration environment." };
+  }
   await getAdminUser(userId);
   const { supabase, user: adminUser } = await requireAuthenticatedSession(`/dashboard/admin/users/${userId}`);
   const { data: statusRows, error: statusError } = await supabase.rpc("admin_get_user_password_status", { p_user_id: userId });

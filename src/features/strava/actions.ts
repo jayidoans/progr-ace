@@ -7,8 +7,10 @@ import { disconnectAuthorizedStravaConnection } from "@/src/features/strava/disc
 import { StravaIntegrationError, stravaErrorRedirect } from "@/src/features/strava/errors";
 import { requireAthleteSession } from "@/src/features/strava/repository";
 import { synchronizeStravaActivities } from "@/src/features/strava/sync";
+import { assertDemoFeatureAvailable } from "@/src/features/demo/server";
 
 export async function disconnectStrava() {
+  assertDemoFeatureAvailable("strava");
   try {
     const { user } = await requireAthleteSession();
     await disconnectAuthorizedStravaConnection(user.id);
@@ -23,6 +25,7 @@ export async function disconnectStrava() {
 }
 
 export async function syncStravaActivities(formData?: FormData) {
+  assertDemoFeatureAvailable("strava");
   const returnPath = formData?.get("returnTo") === "activities"
     ? "/dashboard/activities"
     : "/dashboard/integrations/strava";

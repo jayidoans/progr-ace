@@ -22,9 +22,11 @@ function countdownLabel(days: number | null) {
 export function AthleteMobileDashboard({
   data,
   insights,
+  readOnly = false,
 }: {
   data: AthleteEvaluationDashboard;
   insights: ProgramTrainingInsights | null;
+  readOnly?: boolean;
 }) {
   const countdown = countdownLabel(data.daysUntilRace);
   const prescriptions = data.currentWeek?.prescriptions ?? [];
@@ -74,7 +76,7 @@ export function AthleteMobileDashboard({
           {prescriptions.map((prescription) => {
             const state = prescriptionComplianceState(prescription, data.today);
             return <li key={prescription.id}>
-              <Link className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3.5 ring-1 ring-slate-100" href={`/dashboard/training/prescriptions/${prescription.id}/claim`}>
+              <Link className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3.5 ring-1 ring-slate-100" href={readOnly && data.currentProgram ? `/dashboard/training/${data.currentProgram.id}` : `/dashboard/training/prescriptions/${prescription.id}/claim`}>
                 <span className="min-w-0"><span className="block text-[11px] font-extrabold uppercase tracking-wide text-indigo-700">{prescription.training_menu}</span><span className="mt-0.5 block truncate font-bold text-gray-950">{prescription.title}</span><span className="mt-0.5 block text-xs text-gray-500">{formatTrainingDate(prescription.scheduled_date)}</span></span>
                 <EvaluationStateBadge state={state} />
               </Link>
@@ -85,7 +87,7 @@ export function AthleteMobileDashboard({
 
       {data.attention.length > 0 ? <section className="rounded-[1.5rem] bg-amber-50 p-5 ring-1 ring-amber-100">
         <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-extrabold uppercase tracking-wider text-amber-700">Action needed</p><h2 className="mt-1 text-lg font-extrabold text-gray-950">Complete your training claim</h2></div><span className="rounded-full bg-white px-3 py-1 text-sm font-extrabold text-amber-800">{data.attention.length}</span></div>
-        <Link className="mt-4 inline-flex text-sm font-extrabold text-indigo-700" href={data.attention[0].claimId ? `/dashboard/claims/${data.attention[0].claimId}` : `/dashboard/training/prescriptions/${data.attention[0].prescriptionId}/claim`}>Review next action →</Link>
+        <Link className="mt-4 inline-flex text-sm font-extrabold text-indigo-700" href={data.attention[0].claimId ? `/dashboard/claims/${data.attention[0].claimId}` : readOnly && data.currentProgram ? `/dashboard/training/${data.currentProgram.id}` : `/dashboard/training/prescriptions/${data.attention[0].prescriptionId}/claim`}>Review next action →</Link>
       </section> : null}
 
       <AthleteTrainingInsights insights={insights} mobile />

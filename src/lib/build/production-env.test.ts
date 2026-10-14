@@ -3,7 +3,12 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
-import { parsePublicEnvFile, validateProductionBuildEnv } from "./production-env";
+import {
+  parseDemoBuildEnvFile,
+  parsePublicEnvFile,
+  validateDemoBuildEnv,
+  validateProductionBuildEnv,
+} from "./production-env";
 
 const valid = {
   NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
@@ -52,4 +57,73 @@ test("runtime secrets remain server-only and are scrubbed from the production bu
   assert.match(buildScript, /for \(const key of RUNTIME_ONLY_KEYS\) env\[key\] = ""/);
   const client = readFileSync(join(process.cwd(), "src/lib/supabase/client.ts"), "utf8");
   assert.doesNotMatch(client, /SUPABASE_SECRET_KEY|VAPID_PRIVATE_KEY|STRAVA_CLIENT_SECRET/);
+  const runtime = readFileSync(join(process.cwd(), "src/lib/build/production-env.ts"), "utf8");
+  for (const key of [
+    "PROGRACE_DEMO_ATHLETE_EMAIL",
+    "PROGRACE_DEMO_ATHLETE_PASSWORD",
+    "PROGRACE_DEMO_COACH_EMAIL",
+    "PROGRACE_DEMO_COACH_PASSWORD",
+  ]) {
+    assert.match(runtime, new RegExp(`\\"${key}\\"`));
+  }
+});
+
+test("demo build accepts only the dedicated domain, reference date, and non-production Supabase project", () => {
+  const demo = {
+    ...valid,
+    NEXT_PUBLIC_SUPABASE_URL: "https://demo-project.supabase.co",
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_demo_example",
+    NEXT_PUBLIC_SITE_URL: "https://demo.progr-ace.idoans.app",
+    PROGRACE_DEMO_REFERENCE_DATE: "2027-01-08",
+  };
+  assert.doesNotThrow(() => validateDemoBuildEnv(demo, {
+    localPublishableKey: "sb_publishable_local_example",
+    productionPublicEnv: valid,
+  }));
+  assert.throws(
+    () => validateDemoBuildEnv({ ...demo, NEXT_PUBLIC_SITE_URL: valid.NEXT_PUBLIC_SITE_URL }),
+    /demo\.progr-ace\.idoans\.app/,
+  );
+  assert.throws(
+    () => validateDemoBuildEnv({ ...demo, PROGRACE_DEMO_REFERENCE_DATE: "2027-02-30" }),
+    /valid YYYY-MM-DD/,
+  );
+  assert.throws(
+    () => validateDemoBuildEnv({ ...demo, NEXT_PUBLIC_SUPABASE_URL: valid.NEXT_PUBLIC_SUPABASE_URL }, {
+      productionPublicEnv: valid,
+    }),
+    /production Supabase URL/,
+  );
+});
+
+test("demo environment file rejects runtime secrets", () => {
+  assert.deepEqual(parseDemoBuildEnvFile([
+    "NEXT_PUBLIC_SUPABASE_URL=https://demo-project.supabase.co",
+    "PROGRACE_DEMO_REFERENCE_DATE=2027-01-08",
+  ].join("\n")), {
+    NEXT_PUBLIC_SUPABASE_URL: "https://demo-project.supabase.co",
+    PROGRACE_DEMO_REFERENCE_DATE: "2027-01-08",
+  });
+  assert.throws(() => parseDemoBuildEnvFile("SUPABASE_SECRET_KEY=never\n"), /must not contain/);
+  assert.throws(() => parseDemoBuildEnvFile("STRAVA_CLIENT_SECRET=never\n"), /must not contain/);
+});
+
+test("demo worker configuration is isolated from production background work", () => {
+  const packageJson = JSON.parse(readFileSync(join(process.cwd(), "package.json"), "utf8")) as {
+    scripts: Record<string, string>;
+  };
+  assert.match(packageJson.scripts["build:cloudflare:demo"], /demo-build\.ts cloudflare/);
+  assert.match(packageJson.scripts["deploy:demo"], /wrangler\.demo\.jsonc/);
+  const wrangler = readFileSync(join(process.cwd(), "wrangler.demo.jsonc"), "utf8");
+  assert.match(wrangler, /"name": "progr-ace-demo"/);
+  assert.match(wrangler, /"service": "progr-ace-demo"/);
+  assert.match(wrangler, /"PROGRACE_DEPLOYMENT_MODE": "demo"/);
+  assert.match(wrangler, /"PROGRACE_DEMO_REFERENCE_DATE": "2027-01-08"/);
+  assert.match(wrangler, /"custom_domain": true/);
+  assert.match(wrangler, /"DEMO_LOGIN_RATE_LIMITER"/);
+  assert.match(wrangler, /"limit": 10/);
+  assert.doesNotMatch(wrangler, /PROGRACE_DEMO_(?:ATHLETE|COACH)_(?:EMAIL|PASSWORD)/);
+  assert.doesNotMatch(wrangler, /"crons"/);
+  const worker = readFileSync(join(process.cwd(), "custom-worker-demo.ts"), "utf8");
+  assert.doesNotMatch(worker, /async scheduled|dispatchPushBatch/);
 });

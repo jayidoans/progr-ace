@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { DeviceSignOutForm } from "@/src/features/push/device-sign-out-form";
 import { ChangePasswordForm } from "@/src/features/auth/change-password-form";
 import { currentUserMustChangePassword } from "@/src/features/auth/password-queries";
+import { isDemoDeployment } from "@/src/features/demo/server";
 
 export default async function RequiredPasswordChangePage() {
+  if (isDemoDeployment()) redirect("/dashboard/profile");
   if (!(await currentUserMustChangePassword())) redirect("/dashboard/profile");
   return <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-10">
     <section className="w-full max-w-md rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200 sm:p-8">

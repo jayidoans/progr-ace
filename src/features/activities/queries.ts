@@ -1,6 +1,7 @@
 import "server-only";
 
 import { notFound, redirect } from "next/navigation";
+import { getApplicationToday } from "@/src/features/demo/server";
 
 import {
   activityHistoryCutoff,
@@ -59,7 +60,7 @@ export async function getActivities(): Promise<ActivityWithClaimUsage[]> {
     .from("activities")
     .select("*")
     .eq("athlete_id", user.id)
-    .gte("started_at", activityHistoryCutoff())
+    .gte("started_at", activityHistoryCutoff(new Date(`${getApplicationToday()}T12:00:00.000Z`)))
     .order("started_at", { ascending: false })
     .order("id", { ascending: false });
   if (error) throw new Error("Unable to load activities.");

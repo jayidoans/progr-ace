@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { register } from "@/src/features/auth/actions";
+import { isDemoDeployment } from "@/src/features/demo/server";
 import { createClient } from "@/src/lib/supabase/server";
 
 type RegisterPageProps = {
@@ -9,6 +10,9 @@ type RegisterPageProps = {
 };
 
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {
+  if (isDemoDeployment()) {
+    redirect("/login?message=Registration+is+unavailable+in+the+demonstration+environment.");
+  }
   const supabase = await createClient();
   const [{ data }, params] = await Promise.all([supabase.auth.getUser(), searchParams]);
 

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
+import { assertDemoFeatureAvailable } from "@/src/features/demo/server";
 import {
   cancelTrainingProgram,
   deleteDraftTrainingProgram,
@@ -31,6 +32,7 @@ function revalidateProgram(programId: string) {
 }
 
 export async function submitTrainingProgramCancellationRequest(formData: FormData) {
+  assertDemoFeatureAvailable("domain-mutations");
   const programId = formValue(formData, "programId");
   await requireAuthenticatedSession(programPath(programId));
   try {
@@ -43,6 +45,7 @@ export async function submitTrainingProgramCancellationRequest(formData: FormDat
 }
 
 export async function reviewTrainingProgramCancellationRequest(formData: FormData) {
+  assertDemoFeatureAvailable("domain-mutations");
   const programId = formValue(formData, "programId");
   const decision = formValue(formData, "decision");
   await requireAuthenticatedSession(programPath(programId));
@@ -64,6 +67,7 @@ export async function reviewTrainingProgramCancellationRequest(formData: FormDat
 }
 
 export async function submitDirectTrainingProgramCancellation(formData: FormData) {
+  assertDemoFeatureAvailable("domain-mutations");
   const programId = formValue(formData, "programId");
   await requireAuthenticatedSession(programPath(programId));
   try {
@@ -76,6 +80,7 @@ export async function submitDirectTrainingProgramCancellation(formData: FormData
 }
 
 export async function removeDraftTrainingProgram(formData: FormData) {
+  assertDemoFeatureAvailable("domain-mutations");
   const programId = formValue(formData, "programId");
   await requireAuthenticatedSession(programPath(programId));
   try {

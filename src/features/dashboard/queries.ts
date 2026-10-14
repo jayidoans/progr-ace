@@ -1,6 +1,7 @@
 import "server-only";
 
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
+import { getApplicationToday } from "@/src/features/demo/server";
 import {
   currentTrainingWeek,
   distanceCompletionPercent,
@@ -29,7 +30,7 @@ export async function getWeeklyStravaStats(): Promise<WeeklyStravaStats | null> 
   if (connectionError) throw new Error("Unable to load dashboard Strava status.");
   if (!connection?.last_successful_sync_at) return null;
 
-  const week = currentTrainingWeek();
+  const week = currentTrainingWeek(new Date(`${getApplicationToday()}T12:00:00.000Z`));
   const [activitiesResult, programResult] = await Promise.all([
     supabase
       .from("activities")

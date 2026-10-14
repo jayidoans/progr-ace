@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { assertDemoFeatureAvailable } from "@/src/features/demo/server";
 
 import {
   closeRaceGoalSchema,
@@ -31,6 +32,7 @@ function targetFinishTime(formData: FormData) {
 }
 
 async function authenticatedContext() {
+  assertDemoFeatureAvailable("domain-mutations");
   const supabase = await createClient();
   const {
     data: { user },

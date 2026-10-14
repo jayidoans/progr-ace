@@ -3,11 +3,21 @@ import Link from "next/link";
 
 import { formatDistance } from "@/src/features/activities/format";
 import { getCurrentSession } from "@/src/features/auth/session";
+import { DemoEntry } from "@/src/features/demo/demo-entry";
+import { isDemoDeployment } from "@/src/features/demo/server";
 import { getHomepageActions } from "@/src/features/home/presentation";
 import { formatTrainingDate } from "@/src/features/training/format";
 import { getHomepageTrainingPrograms } from "@/src/features/training/queries";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ demoError?: string }>;
+}) {
+  if (isDemoDeployment()) {
+    const params = await searchParams;
+    return <DemoEntry error={params.demoError} />;
+  }
   const { user } = await getCurrentSession();
   const programs = user ? await getHomepageTrainingPrograms() : [];
   const actions = getHomepageActions(Boolean(user));

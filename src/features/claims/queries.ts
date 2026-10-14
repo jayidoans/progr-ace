@@ -1,6 +1,7 @@
 import "server-only";
 
 import { notFound } from "next/navigation";
+import { getApplicationToday } from "@/src/features/demo/server";
 
 import { activityListCutoff } from "@/src/features/activities/listing";
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
@@ -57,7 +58,7 @@ function availableActivityQuery(
     .from("activities")
     .select("*, claim_usage:claim_activities!left(activity_id)")
     .eq("athlete_id", athleteId)
-    .gte("started_at", activityListCutoff())
+    .gte("started_at", activityListCutoff(new Date(`${getApplicationToday()}T12:00:00.000Z`)))
     .is("claim_usage", null)
     .order("started_at", { ascending: false })
     .order("id", { ascending: false })

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { assertDemoFeatureAvailable } from "@/src/features/demo/server";
 
 import { createClient } from "@/src/lib/supabase/server";
 import type { RaceResultStatus } from "@/src/features/race-results/domain";
@@ -12,6 +13,7 @@ type RaceResultInput = {
 };
 
 async function client() {
+  assertDemoFeatureAvailable("domain-mutations");
   const supabase = await createClient();
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) throw new Error("Authentication is required");

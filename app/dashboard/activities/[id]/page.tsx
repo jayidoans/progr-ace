@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isDemoDeployment } from "@/src/features/demo/server";
 
 import { deleteActivity } from "@/src/features/activities/actions";
 import { StravaActivityContextForm } from "@/src/features/activities/components/strava-activity-context-form";
@@ -20,6 +21,7 @@ export default async function ActivityDetailPage({
 }) {
   const [{ id }, feedback] = await Promise.all([params, searchParams]);
   const activity = await getActivity(id);
+  const demoMode = isDemoDeployment();
   const isSubmittedEvidence = activity.claimUsage?.status === "SUBMITTED";
   const metrics = [
     ["Distance", formatDistance(activity.distance_m)],
@@ -41,7 +43,7 @@ export default async function ActivityDetailPage({
             <h1 className="mt-2 text-3xl font-bold">{activity.name}</h1>
             <p className="mt-2 text-gray-600">{formatActivityDate(activity.started_at)}</p>
           </div>
-          {activity.source === "MANUAL" && !isSubmittedEvidence ? <Link className="rounded-md border border-indigo-600 px-4 py-2 text-sm font-semibold text-indigo-700" href={`/dashboard/activities/${activity.id}/edit`}>Edit</Link> : null}
+          {!demoMode && activity.source === "MANUAL" && !isSubmittedEvidence ? <Link className="rounded-md border border-indigo-600 px-4 py-2 text-sm font-semibold text-indigo-700" href={`/dashboard/activities/${activity.id}/edit`}>Edit</Link> : null}
         </div>
       </header>
 
@@ -79,6 +81,11 @@ export default async function ActivityDetailPage({
                 This activity has already been submitted for review, so its RPE and notes can no longer be changed.
               </p>
             </div>
+          ) : demoMode ? (
+            <div className="mt-5 space-y-4">
+              <div><p className="text-sm font-semibold text-gray-800">RPE</p><p className="mt-1 text-sm text-gray-700">{activity.rpe === null ? "Not recorded" : `${activity.rpe}/10`}</p></div>
+              <div><p className="text-sm font-semibold text-gray-800">Notes</p><p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">{activity.notes ?? "No notes recorded."}</p></div>
+            </div>
           ) : (
             <div className="mt-5">
               <StravaActivityContextForm activity={activity} />
@@ -104,7 +111,7 @@ export default async function ActivityDetailPage({
         {activity.claimUsage ? <Link className="mt-3 inline-flex text-sm font-semibold text-indigo-700" href={`/dashboard/claims/${activity.claimUsage.claimId}`}>View training session</Link> : null}
       </section>
 
-      {activity.source === "MANUAL" && !activity.claimUsage ? <form action={deleteActivity} className="border-t border-gray-200 pt-6"><input name="activityId" type="hidden" value={activity.id} /><button className="rounded-md border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" type="submit">Delete activity</button><p className="mt-2 text-xs text-gray-500">Deletion is permanent.</p></form> : null}
+      {!demoMode && activity.source === "MANUAL" && !activity.claimUsage ? <form action={deleteActivity} className="border-t border-gray-200 pt-6"><input name="activityId" type="hidden" value={activity.id} /><button className="rounded-md border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50" type="submit">Delete activity</button><p className="mt-2 text-xs text-gray-500">Deletion is permanent.</p></form> : null}
     </div>
   );
 }

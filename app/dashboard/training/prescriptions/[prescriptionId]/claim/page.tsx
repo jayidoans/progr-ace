@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { ClaimBuilder } from "@/src/features/claims/components/claim-builder";
+import { isDemoDeployment } from "@/src/features/demo/server";
 import { getClaimBuilder } from "@/src/features/claims/queries";
 
 const errors: Record<string, string> = {
@@ -17,6 +18,7 @@ export default async function NewTrainingClaimPage({
   params: Promise<{ prescriptionId: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
+  if (isDemoDeployment()) redirect("/account/access-unavailable");
   const [{ prescriptionId }, feedback] = await Promise.all([params, searchParams]);
   const data = await getClaimBuilder(prescriptionId);
   if (data.existingClaimId) redirect(`/dashboard/claims/${data.existingClaimId}`);

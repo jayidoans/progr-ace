@@ -1,4 +1,5 @@
 import "server-only";
+import { getApplicationToday } from "@/src/features/demo/server";
 
 import { cookies } from "next/headers";
 import { cache } from "react";
@@ -302,7 +303,7 @@ export const getTrainingProgram = cache(async (
   programId: string,
   requestedWeekStart: string | null = null,
   focusNextWeek = false,
-  today = new Date().toISOString().slice(0, 10),
+  today = getApplicationToday(),
 ) => {
   const { supabase, user, roles, activeMode, isAuthor } = await context();
   const { data, error } = await measureAsync(

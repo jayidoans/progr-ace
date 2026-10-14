@@ -11,9 +11,11 @@ const initialState: SignOutState = { error: null };
 export function DeviceSignOutForm({
   className,
   buttonClassName,
+  pushEnabled = true,
 }: {
   className?: string;
   buttonClassName?: string;
+  pushEnabled?: boolean;
 }) {
   const [result, formAction, pending] = useActionState(signOut, initialState);
   const [deviceError, setDeviceError] = useState<string | null>(null);
@@ -30,6 +32,13 @@ export function DeviceSignOutForm({
     event.preventDefault();
     const form = event.currentTarget;
     setDeviceError(null);
+    if (!pushEnabled) {
+      if (stateInput.current) stateInput.current.value = "NONE";
+      if (endpointInput.current) endpointInput.current.value = "";
+      ready.current = true;
+      form.requestSubmit();
+      return;
+    }
     try {
       const device = await inspectDevicePushForSignOut(
         "serviceWorker" in navigator ? navigator.serviceWorker : null,

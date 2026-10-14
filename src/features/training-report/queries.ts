@@ -3,7 +3,7 @@ import "server-only";
 import { notFound } from "next/navigation";
 
 import { getCurrentUserRoles, requireAuthenticatedSession } from "@/src/features/auth/session";
-import { utcDateString } from "@/src/features/validation/engine/compliance";
+import { getApplicationToday } from "@/src/features/demo/server";
 import { getRaceResultForGoal } from "@/src/features/race-results/queries";
 import { buildCoachProgramReport, type ReportProgram } from "@/src/features/training-report/domain";
 
@@ -57,7 +57,7 @@ export async function getCoachTrainingProgramReport(programId: string) {
   if (statesError) throw new Error("Unable to load authorized Claim states for the training program report.");
   const claimStates = new Map((states ?? []).map((row) => [row.prescription_id, row.claim_status]));
   const [report, raceResult] = await Promise.all([
-    Promise.resolve(buildCoachProgramReport(program, utcDateString(), claimStates)),
+    Promise.resolve(buildCoachProgramReport(program, getApplicationToday(), claimStates)),
     getRaceResultForGoal(program.race_goal.id),
   ]);
   return { report, raceResult };

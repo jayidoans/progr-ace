@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
+import { assertDemoFeatureAvailable } from "@/src/features/demo/server";
 import type { NotificationItem } from "./presentation";
 import { RECENT_NOTIFICATION_LIMIT } from "./presentation";
 
@@ -19,6 +20,7 @@ export async function loadRecentNotifications(): Promise<NotificationItem[]> {
 }
 
 export async function markNotificationRead(id: string): Promise<boolean> {
+  assertDemoFeatureAvailable("domain-mutations");
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
     return false;
   }
@@ -30,6 +32,7 @@ export async function markNotificationRead(id: string): Promise<boolean> {
 }
 
 export async function markAllNotificationsRead(): Promise<number> {
+  assertDemoFeatureAvailable("domain-mutations");
   const { supabase } = await requireAuthenticatedSession();
   const { data, error } = await supabase.rpc("mark_all_notifications_read");
   if (error) throw new Error("Unable to mark notifications as read.");

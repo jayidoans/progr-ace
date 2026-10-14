@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { ActivityForm } from "@/src/features/activities/components/activity-form";
+import { isDemoDeployment } from "@/src/features/demo/server";
 
 const errors: Record<string, string> = {
   "invalid-activity": "Check the activity values and try again.",
@@ -12,6 +14,7 @@ export default async function NewActivityPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  if (isDemoDeployment()) redirect("/account/access-unavailable");
   const params = await searchParams;
   return (
     <div className="mx-auto max-w-3xl space-y-6">

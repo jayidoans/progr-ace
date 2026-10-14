@@ -11,9 +11,10 @@ import type { RaceGoalWithRace } from "@/src/features/race-goals/queries";
 
 type ActiveRaceGoalCardProps = {
   goal: RaceGoalWithRace | null;
+  readOnly?: boolean;
 };
 
-export function ActiveRaceGoalCard({ goal }: ActiveRaceGoalCardProps) {
+export function ActiveRaceGoalCard({ goal, readOnly = false }: ActiveRaceGoalCardProps) {
   if (!goal) {
     return (
       <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
@@ -24,12 +25,14 @@ export function ActiveRaceGoalCard({ goal }: ActiveRaceGoalCardProps) {
         <p className="mt-2 text-sm text-gray-600">
           Choose the event you are preparing for and set a target finish time.
         </p>
-        <Link
-          className="mt-5 inline-flex rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
-          href="/dashboard/race-goals"
-        >
-          Set a race goal
-        </Link>
+        {!readOnly ? (
+          <Link
+            className="mt-5 inline-flex rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+            href="/dashboard/race-goals"
+          >
+            Set a race goal
+          </Link>
+        ) : null}
       </section>
     );
   }
@@ -82,7 +85,7 @@ export function ActiveRaceGoalCard({ goal }: ActiveRaceGoalCardProps) {
         className="mt-6 inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-500"
         href="/dashboard/race-goals"
       >
-        Manage race goal →
+        {readOnly ? "View race goal →" : "Manage race goal →"}
       </Link>
     </section>
   );

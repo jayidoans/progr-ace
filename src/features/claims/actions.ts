@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { assertDemoFeatureAvailable } from "@/src/features/demo/server";
 
 import {
   claimActivitySchema,
@@ -12,6 +13,7 @@ import {
 import { createClient } from "@/src/lib/supabase/server";
 
 async function claimContext() {
+  assertDemoFeatureAvailable("domain-mutations");
   const supabase = await createClient();
   const {
     data: { user },

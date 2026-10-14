@@ -46,3 +46,15 @@ test("coach and admin reviewers see Coaching without athlete-only Strava", () =>
   assert.ok(paths.includes("/dashboard/training"));
   assert.ok(!paths.includes("/dashboard/integrations/strava"));
 });
+
+test("demo navigation hides Admin and Strava management without changing role ownership", () => {
+  const athletePaths = getDashboardNavigationItems({
+    activeMode: "ATHLETE",
+    demoMode: true,
+    roles: ["ATHLETE", "ADMIN"],
+  }).map((item) => item.href);
+  assert.ok(!athletePaths.includes("/dashboard/integrations/strava"));
+  assert.ok(!athletePaths.includes("/dashboard/admin/users"));
+  assert.ok(athletePaths.includes("/dashboard/training"));
+  assert.ok(athletePaths.includes("/dashboard/profile"));
+});

@@ -7,11 +7,17 @@
     "build": "next build",
     "build:production": "tsx scripts/production-build.ts next",
     "build:cloudflare:production": "tsx scripts/production-build.ts cloudflare",
+    "build:demo": "tsx scripts/demo-build.ts next",
+    "build:cloudflare:demo": "tsx scripts/demo-build.ts cloudflare",
+    "provision:demo": "tsx scripts/provision-demo.ts",
+    "smoke:demo:read-only": "tsx scripts/smoke-demo-read-only.ts",
     "preview": "npm run build:cloudflare:production && opennextjs-cloudflare preview",
     "deploy": "npm run deploy:production",
     "deploy:production": "npm run build:cloudflare:production && opennextjs-cloudflare deploy",
+    "deploy:demo": "npm run build:cloudflare:demo && opennextjs-cloudflare deploy --config wrangler.demo.jsonc",
     "upload": "npm run upload:production",
     "upload:production": "npm run build:cloudflare:production && opennextjs-cloudflare upload",
+    "upload:demo": "npm run build:cloudflare:demo && opennextjs-cloudflare upload --config wrangler.demo.jsonc",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "start": "next start",
     "lint": "next lint",
@@ -19,7 +25,9 @@
     "test:training": "tsx --test src/features/training-import/tests/*.test.ts",
     "test:activities": "tsx --test src/features/activities/tests/*.test.ts",
     "test:validation": "tsx --test src/features/validation/engine/*.test.ts",
-    "test:strava": "tsx --test src/features/strava/tests/*.test.ts"
+    "test:strava": "tsx --test src/features/strava/tests/*.test.ts",
+    "test:demo": "tsx --test src/features/demo/*.test.ts",
+    "test:demo:db": "supabase db query --local --file supabase/demo/0001_read_only_hardening.sql && supabase test db supabase/demo/tests/demo_read_only_hardening.test.sql"
   },
   "dependencies": {
     "@block65/webcrypto-web-push": "^2.0.0",

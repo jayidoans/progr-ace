@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { getAdminPasswordStatus, getAdminStravaStatus, getAdminUser } from "@/src/features/admin/queries";
 import { allowStravaForUser, disconnectStravaForUser, revokeStravaForUser } from "@/src/features/admin/strava-actions";
 import { stravaAccessActions } from "@/src/features/strava/access-state";
 import { ResetPasswordForm } from "@/src/features/admin/reset-password-form";
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
+import { isDemoDeployment } from "@/src/features/demo/server";
 
 const messages: Record<string, string> = {
   allowed: "Strava connection is now available for this athlete.",
@@ -20,6 +22,7 @@ const errors: Record<string, string> = {
 };
 
 export default async function AdminUserDetailPage({ params, searchParams }: { params: Promise<{ userId: string }>; searchParams: Promise<{ message?: string; error?: string }> }) {
+  if (isDemoDeployment()) notFound();
   const { userId } = await params;
   const user = await getAdminUser(userId);
   const [strava, passwordChangeRequired, query, session] = await Promise.all([

@@ -57,14 +57,16 @@ function WeeklySessionStatus({
 export function AthleteEvaluationDashboard({
   data,
   insights,
+  readOnly = false,
 }: {
   data: AthleteEvaluationDashboard;
   insights: ProgramTrainingInsights | null;
+  readOnly?: boolean;
 }) {
   const countdown = countdownLabel(data.daysUntilRace);
   return (
     <>
-      <AthleteMobileDashboard data={data} insights={insights} />
+      <AthleteMobileDashboard data={data} insights={insights} readOnly={readOnly} />
       <div className="hidden space-y-8 md:block">
       <section>
         <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">Dashboard</p>
@@ -77,7 +79,7 @@ export function AthleteEvaluationDashboard({
       </section>
 
       <div className="space-y-3">
-        <ActiveRaceGoalCard goal={data.activeGoal} />
+        <ActiveRaceGoalCard goal={data.activeGoal} readOnly={readOnly} />
         {countdown ? (
           <p className="rounded-lg bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800">
             {countdown}
@@ -113,7 +115,7 @@ export function AthleteEvaluationDashboard({
                 return (
                   <Link
                     className="min-w-0 rounded-lg border border-gray-200 p-4 hover:border-indigo-300"
-                    href={`/dashboard/training/prescriptions/${prescription.id}/claim`}
+                    href={readOnly && data.currentProgram ? `/dashboard/training/${data.currentProgram.id}` : `/dashboard/training/prescriptions/${prescription.id}/claim`}
                     key={prescription.id}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
@@ -159,7 +161,7 @@ export function AthleteEvaluationDashboard({
                     </div>
                     <EvaluationStateBadge state={item.state} />
                   </div>
-                  <Link className="mt-3 inline-flex text-sm font-semibold text-indigo-700" href={item.claimId ? `/dashboard/claims/${item.claimId}` : `/dashboard/training/prescriptions/${item.prescriptionId}/claim`}>
+                  <Link className="mt-3 inline-flex text-sm font-semibold text-indigo-700" href={item.claimId ? `/dashboard/claims/${item.claimId}` : readOnly && data.currentProgram ? `/dashboard/training/${data.currentProgram.id}` : `/dashboard/training/prescriptions/${item.prescriptionId}/claim`}>
                     Review →
                   </Link>
                 </li>

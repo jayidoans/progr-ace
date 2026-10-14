@@ -9,6 +9,7 @@ import { getSiteUrl } from "@/src/lib/supabase/env";
 import { createClient } from "@/src/lib/supabase/server";
 import { ACTIVE_MODE_STORAGE_KEY } from "@/src/features/navigation/active-mode";
 import { performDeviceScopedLogout } from "@/src/features/push/logout-operation";
+import { assertDemoFeatureAvailable, isDemoDeployment } from "@/src/features/demo/server";
 
 const credentialsSchema = z.object({
   email: z.string().trim().email("Enter a valid email address."),
@@ -77,6 +78,7 @@ export async function signIn(formData: FormData) {
 }
 
 export async function register(formData: FormData) {
+  assertDemoFeatureAvailable("registration");
   const parsed = registrationSchema.safeParse({
     fullName: formData.get("fullName"),
     email: formData.get("email"),
@@ -116,6 +118,13 @@ export type SignOutState = { error: string | null };
 
 export async function signOut(_state: SignOutState, formData: FormData): Promise<SignOutState> {
   const supabase = await createClient();
+  if (isDemoDeployment()) {
+    const { error } = await supabase.auth.signOut({ scope: "local" });
+    if (error) return { error: "Could not sign out. Please try again." };
+    (await cookies()).delete(ACTIVE_MODE_STORAGE_KEY);
+    revalidatePath("/", "layout");
+    redirect("/");
+  }
   const outcome = await performDeviceScopedLogout(
     formData.get("pushState"),
     formData.get("pushEndpoint"),

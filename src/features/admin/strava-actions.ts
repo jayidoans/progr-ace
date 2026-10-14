@@ -7,12 +7,14 @@ import { getAdminStravaStatus, getAdminUser } from "@/src/features/admin/queries
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
 import { disconnectAuthorizedStravaConnection } from "@/src/features/strava/disconnect";
 import { StravaIntegrationError } from "@/src/features/strava/errors";
+import { assertDemoFeatureAvailable } from "@/src/features/demo/server";
 
 function detailPath(userId: string) {
   return `/dashboard/admin/users/${encodeURIComponent(userId)}`;
 }
 
 export async function allowStravaForUser(userId: string) {
+  assertDemoFeatureAvailable("strava");
   const user = await getAdminUser(userId);
   if (!user.roles.includes("ATHLETE")) redirect(`${detailPath(userId)}?error=athlete-required`);
   const { supabase } = await requireAuthenticatedSession(detailPath(userId));
@@ -23,6 +25,7 @@ export async function allowStravaForUser(userId: string) {
 }
 
 export async function revokeStravaForUser(userId: string) {
+  assertDemoFeatureAvailable("strava");
   await getAdminUser(userId);
   const { supabase } = await requireAuthenticatedSession(detailPath(userId));
   const { error } = await supabase.rpc("admin_revoke_strava_permission", { p_user_id: userId });
@@ -33,6 +36,7 @@ export async function revokeStravaForUser(userId: string) {
 }
 
 export async function disconnectStravaForUser(userId: string) {
+  assertDemoFeatureAvailable("strava");
   const user = await getAdminUser(userId);
   if (!user.roles.includes("ATHLETE")) redirect(`${detailPath(userId)}?error=athlete-required`);
   const status = await getAdminStravaStatus(userId);

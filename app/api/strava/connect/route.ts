@@ -11,10 +11,14 @@ import {
 import { requireAthleteSession, storeOAuthState } from "@/src/features/strava/repository";
 import { requireStravaPermission } from "@/src/features/strava/permission";
 import { getSiteUrl } from "@/src/lib/supabase/env";
+import { isDemoDeployment } from "@/src/features/demo/server";
 
 export const runtime = "nodejs";
 
 export async function GET() {
+  if (isDemoDeployment()) {
+    return new NextResponse("Not found", { status: 404 });
+  }
   try {
     await requireAthleteSession();
     await requireStravaPermission();

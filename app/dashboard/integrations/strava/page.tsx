@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { stravaAccessActions } from "@/src/features/strava/access-state";
 
@@ -8,6 +9,7 @@ import {
   type StravaConnectionSummary,
 } from "@/src/features/strava/queries";
 import { isCurrentAthleteStravaAllowed } from "@/src/features/strava/permission";
+import { isDemoDeployment } from "@/src/features/demo/server";
 
 const messages: Record<string, string> = {
   connected: "Strava is connected.",
@@ -65,6 +67,7 @@ export default async function StravaIntegrationPage({
     locked?: string;
   }>;
 }) {
+  if (isDemoDeployment()) notFound();
   const connection = await getStravaConnectionSummary();
   const [allowed, params] = await Promise.all([isCurrentAthleteStravaAllowed(), searchParams]);
   const message = params.message ? messages[params.message] : undefined;
