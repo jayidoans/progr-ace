@@ -5,6 +5,7 @@ import type { NormalizedTrainingPlan } from "@/src/features/training-import/type
 
 import {
   buildDemoSeedPlan,
+  demoActivitySource,
   dayDifference,
   demoActualMetrics,
   demoEntityId,
@@ -143,4 +144,10 @@ test("creates partial and over-target actuals without turning missing metrics in
 test("stable demo identifiers are valid and distinct UUIDs", () => {
   assert.match(demoEntityId("program"), /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-8[0-9a-f]{3}-[0-9]{12}$/);
   assert.notEqual(demoEntityId("week", 1), demoEntityId("week", 2));
+});
+
+test("demo evidence includes deterministic Strava-sourced activities", () => {
+  assert.equal(demoActivitySource(1), "MANUAL");
+  assert.equal(demoActivitySource(4), "STRAVA");
+  assert.equal(demoActivitySource(8), "STRAVA");
 });

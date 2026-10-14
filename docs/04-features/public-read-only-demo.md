@@ -190,6 +190,13 @@ Coach PDF export remain available. Notifications are readable but cannot be
 marked read. Presentation-only choices such as theme may remain device-local.
 Registration, password management, Admin, Strava, and Push remain unavailable.
 
+The Activities page includes a clearly labelled `Sync from Strava (Demo)`
+control. It is a client-only simulation: it shows a bounded sync-attempt state
+and completion message, but never starts OAuth, calls Strava, changes a token,
+or writes a database row. The seed marks a deterministic subset of synthetic
+Activities as `STRAVA` with synthetic external IDs. Those records remain
+read-only, just like real imported Strava Activities in the production app.
+
 Date-sensitive demo queries use `PROGRACE_DEMO_REFERENCE_DATE=2027-01-08`, so
 the shared experience remains stable instead of changing with wall-clock time.
 The normal production deployment continues to use the real current date.

@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import {
   buildDemoSeedPlan,
+  demoActivitySource,
   demoActualMetrics,
   demoEntityId,
   plannedDistanceM,
@@ -331,7 +332,10 @@ async function main() {
           elevation_gain_m: metrics.distanceM === null ? null : Math.round(metrics.distanceM / 125),
           rpe: 3 + (evidenceSequence % 6),
           notes: `Synthetic ${session.outcome.toLowerCase().replace("_", " ")} evidence.`,
-          source: "MANUAL",
+          source: demoActivitySource(evidenceSequence),
+          external_activity_id: demoActivitySource(evidenceSequence) === "STRAVA"
+            ? `demo-strava-${evidenceSequence}`
+            : null,
         });
         claimRows.push({
           id: claimId,
@@ -355,12 +359,40 @@ async function main() {
       }
     }
 
+    const stravaPreviewRows = activityRows.slice(0, 4).map((activity, index) => ({
+      ...activity,
+      id: demoEntityId("activity", 9001 + index),
+      name: `Strava imported · ${String(activity.name)}`,
+      source: "STRAVA",
+      external_activity_id: `demo-strava-${index + 1}`,
+      notes: "Synthetic activity imported by the demo Strava sync.",
+    }));
+    activityRows.push(...stravaPreviewRows);
+
     await insertIgnore(supabase, "training_weeks", weekRows);
     await insertIgnore(supabase, "training_prescriptions", prescriptionRows);
-    await insertIgnore(supabase, "prescription_components", componentRows);
+    const existingComponents = await supabase
+      .from("prescription_components")
+      .select("id")
+      .in("id", componentRows.map((component) => component.id as string));
+    throwIfError(existingComponents.error, "Check synthetic prescription components");
+    if ((existingComponents.data ?? []).length === 0) {
+      await insertIgnore(supabase, "prescription_components", componentRows);
+    } else if ((existingComponents.data ?? []).length !== componentRows.length) {
+      throw new Error("Existing demo prescription components are incomplete; refusing a partial immutable refresh.");
+    }
     await insertIgnore(supabase, "activities", activityRows);
     await insertIgnore(supabase, "training_claims", claimRows);
-    await insertIgnore(supabase, "claim_activities", claimActivityRows);
+    const existingClaimActivities = await supabase
+      .from("claim_activities")
+      .select("id")
+      .in("id", claimActivityRows.map((item) => item.id as string));
+    throwIfError(existingClaimActivities.error, "Check synthetic claim activities");
+    if ((existingClaimActivities.data ?? []).length === 0) {
+      await insertIgnore(supabase, "claim_activities", claimActivityRows);
+    } else if ((existingClaimActivities.data ?? []).length !== claimActivityRows.length) {
+      throw new Error("Existing demo claim activities are incomplete; refusing a partial immutable refresh.");
+    }
 
     const claimIds = claimOutcomes.map((item) => item.claimId);
     if (claimIds.length > 0) {

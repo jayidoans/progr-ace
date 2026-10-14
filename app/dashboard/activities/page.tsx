@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getApplicationToday, getDemoEnvironment } from "@/src/features/demo/server";
+import { DemoStravaSyncButton } from "@/src/features/demo/demo-strava-sync-button";
 
 import { ActivityHistory } from "@/src/features/activities/components/activity-history";
 import { getActivities } from "@/src/features/activities/queries";
@@ -54,7 +55,7 @@ export default async function ActivitiesPage({
             Review your recorded activities, add training details, and use them as evidence for scheduled workouts.
           </p>
         </div>
-        {!demoMode ? <div className="w-full space-y-2 sm:w-52">
+        {demoMode ? <DemoStravaSyncButton /> : <div className="w-full space-y-2 sm:w-52">
           <Link
             className="block w-full rounded-md bg-indigo-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-indigo-700"
             href="/dashboard/activities/new"
@@ -95,7 +96,7 @@ export default async function ActivitiesPage({
               Connect Strava to sync recent activities.
             </p>
           ) : null}
-        </div> : null}
+        </div>}
       </header>
 
       {params.message ? <p className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800" role="status">{messages[params.message] ?? "Activity saved."}</p> : null}

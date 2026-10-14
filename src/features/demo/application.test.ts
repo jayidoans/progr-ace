@@ -55,3 +55,13 @@ test("date-sensitive read models use the application reference clock", () => {
     assert.match(read(path), /getApplicationToday/, path);
   }
 });
+
+test("demo Strava sync is visibly simulated and client-only", () => {
+  const component = read("src/features/demo/demo-strava-sync-button.tsx");
+  assert.match(component, /Sync from Strava \(Demo\)/);
+  assert.match(component, /no external Strava request was made/);
+  assert.match(component, /type=\"button\"/);
+  assert.doesNotMatch(component, /fetch\(|form action=|syncStravaActivities/);
+  assert.match(read("scripts/provision-demo.ts"), /demoActivitySource/);
+  assert.match(read("scripts/provision-demo.ts"), /external_activity_id/);
+});

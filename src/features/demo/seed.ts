@@ -176,6 +176,10 @@ export function plannedDurationSec(prescription: NormalizedPrescription) {
   return values.length > 0 ? values.reduce((total, value) => total + value, 0) : null;
 }
 
+export function demoActivitySource(sequence: number): "MANUAL" | "STRAVA" {
+  return sequence % 4 === 0 ? "STRAVA" : "MANUAL";
+}
+
 export function demoActualMetrics(session: ShiftedDemoSession) {
   const distanceTarget = plannedDistanceM(session);
   const durationTarget = plannedDurationSec(session);
