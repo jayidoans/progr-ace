@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { submitResearchSurvey } from "./actions";
 import { RESEARCH_SURVEY_CODES, RESEARCH_SURVEY_SECTIONS } from "./domain";
 import { initialSurveySubmitState } from "./submit-state";
@@ -38,4 +39,13 @@ export function ResearchSurveyForm() {
   </form>;
 }
 
-function SurveyComplete() { return <section className="rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-200"><h1 className="text-2xl font-bold text-gray-950">Terima Kasih atas Partisipasi Anda!</h1><p className="mx-auto mt-4 max-w-xl leading-7 text-gray-600">Jawaban survei Anda telah berhasil disimpan.<br /><br />Terima kasih telah meluangkan waktu untuk membantu evaluasi dan pengembangan aplikasi ProgrACE. Masukan Anda sangat berarti bagi penelitian ini dan pengembangan aplikasi di masa mendatang.</p><Link className="mt-6 inline-flex min-h-11 items-center rounded-md bg-indigo-600 px-5 font-semibold text-white hover:bg-indigo-700" href="/dashboard">Kembali ke Dashboard</Link></section>; }
+function SurveyComplete() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const redirectTimer = window.setTimeout(() => router.replace("/dashboard"), 2000);
+    return () => window.clearTimeout(redirectTimer);
+  }, [router]);
+
+  return <section className="rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-200"><h1 className="text-2xl font-bold text-gray-950">Terima Kasih atas Partisipasi Anda!</h1><p className="mx-auto mt-4 max-w-xl leading-7 text-gray-600">Jawaban survei Anda telah berhasil disimpan.<br /><br />Terima kasih telah meluangkan waktu untuk membantu evaluasi dan pengembangan aplikasi ProgrACE. Masukan Anda sangat berarti bagi penelitian ini dan pengembangan aplikasi di masa mendatang.</p><p aria-live="polite" className="mt-4 text-sm text-gray-500">Anda akan kembali ke Dashboard secara otomatis.</p><Link className="mt-6 inline-flex min-h-11 items-center rounded-md bg-indigo-600 px-5 font-semibold text-white hover:bg-indigo-700" href="/dashboard" replace>Kembali ke Dashboard</Link></section>;
+}
