@@ -1,6 +1,6 @@
 import { getCurrentUserRoles, requireAuthenticatedSession } from "@/src/features/auth/session";
 
-const HEADERS = ["participant_id", "survey_version", "submitted_at", "sus01", "sus02", "sus03", "sus04", "sus05", "sus06", "sus07", "sus08", "sus09", "sus10", "tm01", "tm02", "tm03", "ev01", "ev02", "ev03", "ac01", "ac02", "ac03", "sus_score", "tm_mean", "ev_mean", "ac_mean"] as const;
+const HEADERS = ["participant_id", "participant_roles", "survey_version", "submitted_at", "sus01", "sus02", "sus03", "sus04", "sus05", "sus06", "sus07", "sus08", "sus09", "sus10", "tm01", "tm02", "tm03", "ev01", "ev02", "ev03", "ac01", "ac02", "ac03", "sus_score", "tm_mean", "ev_mean", "ac_mean"] as const;
 
 function csvValue(value: unknown) {
   const text = value == null ? "" : String(value);
