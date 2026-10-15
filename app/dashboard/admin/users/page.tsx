@@ -21,6 +21,7 @@ export default async function AdminUsersPage({ searchParams }: {
         <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">Admin</p>
         <h1 className="mt-2 text-3xl font-bold">Manage Users</h1>
         <p className="mt-3 max-w-2xl text-gray-600">View registered users and their access roles in ProgrACE.</p>
+        <a className="mt-4 inline-flex min-h-11 items-center rounded-md border border-indigo-300 px-4 text-sm font-semibold text-indigo-700 hover:bg-indigo-50" href="/api/admin/research-survey.csv">Export research survey CSV</a>
       </header>
 
       <section aria-label="User account summary" className="grid grid-cols-2 gap-3 lg:grid-cols-4">

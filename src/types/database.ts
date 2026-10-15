@@ -207,6 +207,12 @@ export type Database = {
           },
         ]
       }
+      research_survey_responses: {
+        Row: { id: string; athlete_user_id: string; survey_version: string; sus01: number; sus02: number; sus03: number; sus04: number; sus05: number; sus06: number; sus07: number; sus08: number; sus09: number; sus10: number; tm01: number; tm02: number; tm03: number; ev01: number; ev02: number; ev03: number; ac01: number; ac02: number; ac03: number; sus_score: number; tm_mean: number; ev_mean: number; ac_mean: number; consent_given: boolean; consent_version: string; submitted_at: string }
+        Insert: { id?: string; athlete_user_id: string; survey_version?: string; sus01: number; sus02: number; sus03: number; sus04: number; sus05: number; sus06: number; sus07: number; sus08: number; sus09: number; sus10: number; tm01: number; tm02: number; tm03: number; ev01: number; ev02: number; ev03: number; ac01: number; ac02: number; ac03: number; sus_score: number; tm_mean: number; ev_mean: number; ac_mean: number; consent_given: boolean; consent_version: string; submitted_at?: string }
+        Update: { id?: string; athlete_user_id?: string; survey_version?: string; sus01?: number; sus02?: number; sus03?: number; sus04?: number; sus05?: number; sus06?: number; sus07?: number; sus08?: number; sus09?: number; sus10?: number; tm01?: number; tm02?: number; tm03?: number; ev01?: number; ev02?: number; ev03?: number; ac01?: number; ac02?: number; ac03?: number; sus_score?: number; tm_mean?: number; ev_mean?: number; ac_mean?: number; consent_given?: boolean; consent_version?: string; submitted_at?: string }
+        Relationships: [{ foreignKeyName: "research_survey_responses_athlete_user_id_fkey"; columns: ["athlete_user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }]
+      }
       push_subscriptions: {
         Row: { id: string; user_id: string; endpoint: string; p256dh: string; auth_secret: string; revoked_at: string | null; created_at: string; updated_at: string }
         Insert: { id?: string; user_id: string; endpoint: string; p256dh: string; auth_secret: string; revoked_at?: string | null; created_at?: string; updated_at?: string }
@@ -1147,6 +1153,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      submit_research_survey_response: { Args: { p_sus01: number; p_sus02: number; p_sus03: number; p_sus04: number; p_sus05: number; p_sus06: number; p_sus07: number; p_sus08: number; p_sus09: number; p_sus10: number; p_tm01: number; p_tm02: number; p_tm03: number; p_ev01: number; p_ev02: number; p_ev03: number; p_ac01: number; p_ac02: number; p_ac03: number; p_consent_given: boolean; p_consent_version: string }; Returns: string }
+      export_research_survey_responses: { Args: Record<PropertyKey, never>; Returns: Array<{ participant_id: string; survey_version: string; submitted_at: string; sus01: number; sus02: number; sus03: number; sus04: number; sus05: number; sus06: number; sus07: number; sus08: number; sus09: number; sus10: number; tm01: number; tm02: number; tm03: number; ev01: number; ev02: number; ev03: number; ac01: number; ac02: number; ac03: number; sus_score: number; tm_mean: number; ev_mean: number; ac_mean: number }> }
       register_push_subscription: { Args: { p_endpoint: string; p_p256dh: string; p_auth: string }; Returns: string }
       push_subscription_is_active: { Args: { p_endpoint: string }; Returns: boolean }
       revoke_push_subscription: { Args: { p_endpoint: string }; Returns: boolean }
