@@ -16,7 +16,7 @@ export async function submitResearchSurvey(_state: SurveySubmitState, formData: 
   assertDemoFeatureAvailable("domain-mutations");
   const { supabase } = await requireAuthenticatedSession("/survey");
   const roles = await getCurrentUserRoles();
-  if (!roles.includes("ATHLETE")) return { error: "Survei ini hanya tersedia untuk akun Athlete.", submitted: false };
+  if (!roles.includes("ATHLETE") && !roles.includes("COACH")) return { error: "Survei ini hanya tersedia untuk akun Athlete atau Coach.", submitted: false };
 
   const parsed = answersSchema.safeParse(Object.fromEntries(RESEARCH_SURVEY_CODES.map((code) => [code.toLowerCase(), formData.get(code)])));
   if (!parsed.success) return { error: "Jawab semua 19 pernyataan dengan nilai 1 sampai 5.", submitted: false };

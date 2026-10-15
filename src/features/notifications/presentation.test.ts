@@ -15,9 +15,10 @@ test("notification badge is bounded and empty when nothing is unread", () => {
   assert.equal(RECENT_NOTIFICATION_LIMIT, 10);
 });
 
-test("notification navigation accepts only internal dashboard paths", () => {
+test("notification navigation accepts only approved internal paths", () => {
   assert.equal(safeNotificationTarget("/dashboard/validation/abc-123"), "/dashboard/validation/abc-123");
   assert.equal(safeNotificationTarget("/dashboard/training/123"), "/dashboard/training/123");
+  assert.equal(safeNotificationTarget("/survey"), "/survey");
   for (const target of [null, "https://example.com", "//example.com", "/login", "/dashboard/../login", "/dashboard?next=https://example.com", "/dashboard/%2F%2Fevil.com"]) {
     assert.equal(safeNotificationTarget(target), null);
   }

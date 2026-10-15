@@ -57,7 +57,7 @@ self.addEventListener("fetch", (event) => {
 });
 
 function safeNotificationTarget(path) {
-  return typeof path === "string" && /^\/dashboard(?:\/[a-zA-Z0-9_-]+)*$/.test(path)
+  return typeof path === "string" && (path === "/survey" || /^\/dashboard(?:\/[a-zA-Z0-9_-]+)*$/.test(path))
     ? path : "/dashboard";
 }
 

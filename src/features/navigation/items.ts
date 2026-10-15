@@ -41,7 +41,7 @@ export function getDashboardNavigationGroups({
   if (!demoMode && roles.includes("ADMIN")) {
     groups.push({
       label: "Admin",
-      items: [{ href: "/dashboard/admin/users", label: "Manage Users" }],
+      items: [{ href: "/dashboard/admin/users", label: "Manage Users" }, { href: "/dashboard/admin/survey", label: "Survey" }],
     });
   }
 

@@ -58,15 +58,17 @@ export function AthleteEvaluationDashboard({
   data,
   insights,
   readOnly = false,
+  surveyAvailable = false,
 }: {
   data: AthleteEvaluationDashboard;
   insights: ProgramTrainingInsights | null;
   readOnly?: boolean;
+  surveyAvailable?: boolean;
 }) {
   const countdown = countdownLabel(data.daysUntilRace);
   return (
     <>
-      <AthleteMobileDashboard data={data} insights={insights} readOnly={readOnly} />
+      <AthleteMobileDashboard data={data} insights={insights} readOnly={readOnly} surveyAvailable={surveyAvailable} />
       <div className="hidden space-y-8 md:block">
       <section>
         <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">Dashboard</p>
@@ -77,6 +79,7 @@ export function AthleteEvaluationDashboard({
           Follow your current training week, submitted evidence, and authoritative Validation results.
         </p>
       </section>
+      {surveyAvailable ? <Link className="block rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-sm font-semibold text-indigo-800 hover:bg-indigo-100" href="/survey">Research survey is available. Share your ProgrACE experience →</Link> : null}
 
       <div className="space-y-3">
         <ActiveRaceGoalCard goal={data.activeGoal} readOnly={readOnly} />

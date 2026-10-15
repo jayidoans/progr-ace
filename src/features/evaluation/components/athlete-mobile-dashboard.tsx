@@ -23,10 +23,12 @@ export function AthleteMobileDashboard({
   data,
   insights,
   readOnly = false,
+  surveyAvailable = false,
 }: {
   data: AthleteEvaluationDashboard;
   insights: ProgramTrainingInsights | null;
   readOnly?: boolean;
+  surveyAvailable?: boolean;
 }) {
   const countdown = countdownLabel(data.daysUntilRace);
   const prescriptions = data.currentWeek?.prescriptions ?? [];
@@ -38,6 +40,7 @@ export function AthleteMobileDashboard({
         <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-gray-950">Hi, {firstName(data.profile?.full_name)}</h1>
         <p className="mt-2 text-sm text-gray-600">Your training, progress, and next action in one place.</p>
       </header>
+      {surveyAvailable ? <Link className="rounded-[1.5rem] bg-indigo-50 p-5 text-sm font-extrabold text-indigo-800 ring-1 ring-indigo-100" href="/survey">Research survey is available. Share your ProgrACE experience →</Link> : null}
 
       {data.activeGoal ? (
         <section className="overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-emerald-100 via-cyan-50 to-indigo-100 p-5 shadow-sm ring-1 ring-emerald-100">

@@ -4,6 +4,7 @@ import { isDemoDeployment } from "@/src/features/demo/server";
 import { getEvaluationDashboard } from "@/src/features/evaluation/queries";
 import { measureRouteWorkflow } from "@/src/features/performance/diagnostics";
 import { getCoachTrainingInsights, getProgramTrainingInsights } from "@/src/features/training-insights/queries";
+import { getResearchSurveyStatus } from "@/src/features/research-survey/queries";
 
 export default async function DashboardPage() {
   const demoMode = isDemoDeployment();
@@ -25,10 +26,11 @@ export default async function DashboardPage() {
 
   // Keep the existing dashboard's current-program selection authoritative, then
   // load exactly one bounded insight projection for the Athlete presentation.
-  const insights = data.currentProgram
-    ? await getProgramTrainingInsights(data.currentProgram.id, data.today)
-    : null;
+  const [insights, survey] = await Promise.all([
+    data.currentProgram ? getProgramTrainingInsights(data.currentProgram.id, data.today) : Promise.resolve(null),
+    getResearchSurveyStatus(),
+  ]);
   return (
-    <AthleteEvaluationDashboard data={data} insights={insights} readOnly={demoMode} />
+    <AthleteEvaluationDashboard data={data} insights={insights} readOnly={demoMode} surveyAvailable={survey.isOpen && !survey.submitted} />
   );
 }

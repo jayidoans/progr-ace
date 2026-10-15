@@ -13,7 +13,7 @@ export function formatUnreadBadge(count: number): string | null {
 }
 
 export function safeNotificationTarget(path: string | null): string | null {
-  return path && /^\/dashboard(?:\/[a-zA-Z0-9_-]+)*$/.test(path) ? path : null;
+  return path && (path === "/survey" || /^\/dashboard(?:\/[a-zA-Z0-9_-]+)*$/.test(path)) ? path : null;
 }
 
 export function formatNotificationTime(iso: string): string {

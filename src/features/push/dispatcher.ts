@@ -34,7 +34,7 @@ function validateEnvironment(env: PushWorkerEnv) {
 }
 
 function safeTargetPath(path: string | null) {
-  return path && /^\/dashboard(?:\/[a-zA-Z0-9_-]+)*$/.test(path) ? path : "/dashboard";
+  return path && (path === "/survey" || /^\/dashboard(?:\/[a-zA-Z0-9_-]+)*$/.test(path)) ? path : "/dashboard";
 }
 
 async function sendPush(delivery: Delivery, env: PushWorkerEnv, send: typeof fetch): Promise<{ outcome: Outcome; status: number | null }> {
