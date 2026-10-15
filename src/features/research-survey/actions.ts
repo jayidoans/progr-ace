@@ -6,11 +6,9 @@ import { z } from "zod";
 import { requireAuthenticatedSession } from "@/src/features/auth/session";
 import { assertDemoFeatureAvailable } from "@/src/features/demo/server";
 import { RESEARCH_SURVEY_CODES, RESEARCH_SURVEY_VERSION } from "./domain";
+import type { SurveySubmitState } from "./submit-state";
 
 const answersSchema = z.object(Object.fromEntries(RESEARCH_SURVEY_CODES.map((code) => [code.toLowerCase(), z.coerce.number().int().min(1).max(5)])) as Record<string, z.ZodType>);
-
-export type SurveySubmitState = { error: string | null; submitted: boolean };
-export const initialSurveySubmitState: SurveySubmitState = { error: null, submitted: false };
 
 function isNextControlFlow(error: unknown) {
   return typeof error === "object" && error !== null && "digest" in error

@@ -2,8 +2,9 @@
 
 import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
-import { initialSurveySubmitState, submitResearchSurvey } from "./actions";
+import { submitResearchSurvey } from "./actions";
 import { RESEARCH_SURVEY_CODES, RESEARCH_SURVEY_SECTIONS } from "./domain";
+import { initialSurveySubmitState } from "./submit-state";
 
 const SCALE = [[1, "Sangat Tidak Setuju"], [2, "Tidak Setuju"], [3, "Netral"], [4, "Setuju"], [5, "Sangat Setuju"]] as const;
 
