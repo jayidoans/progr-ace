@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { getCurrentUserRoles, requireAuthenticatedSession } from "@/src/features/auth/session";
+import { BrowserInactivityGuard } from "@/src/features/auth/browser-inactivity-guard";
 import { DemoBanner } from "@/src/features/demo/demo-banner";
 import { getDemoEnvironment } from "@/src/features/demo/server";
 import { DashboardNavigation } from "@/src/features/navigation/dashboard-navigation";
@@ -75,6 +76,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-[100dvh] bg-gray-50 text-gray-950">
+      <BrowserInactivityGuard />
       {demo.enabled ? <DemoBanner /> : null}
       <header className="border-b border-gray-200 bg-white pt-[env(safe-area-inset-top)]">
         <div className={`relative mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 ${activeMode === "ATHLETE" ? "min-h-14 md:min-h-20" : "min-h-20"}`}>
