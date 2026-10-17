@@ -5,7 +5,11 @@ import test from "node:test";
 
 import manifest from "@/app/manifest";
 import { getInstallAvailability, shouldBlockOfflineFormSubmission } from "./presentation";
-import { SERVICE_WORKER_URL, shouldRegisterServiceWorker } from "./service-worker-registration";
+import {
+  SERVICE_WORKER_UPDATE_INTERVAL_MS,
+  SERVICE_WORKER_URL,
+  shouldRegisterServiceWorker,
+} from "./service-worker-registration";
 
 test("the native manifest configures an installable standalone ProgrACE app", () => {
   const value = manifest();
@@ -26,6 +30,10 @@ test("service worker registration is a production-only progressive enhancement",
   assert.equal(shouldRegisterServiceWorker(true, "production"), true);
   assert.equal(shouldRegisterServiceWorker(false, "production"), false);
   assert.equal(shouldRegisterServiceWorker(true, "development"), false);
+});
+
+test("PWA update checks use the six-hour freshness window", () => {
+  assert.equal(SERVICE_WORKER_UPDATE_INTERVAL_MS, 6 * 60 * 60 * 1000);
 });
 
 test("install is discoverable only when an explicit browser capability is available", () => {
@@ -77,6 +85,13 @@ test("service worker update protocol carries only an explicit activation request
   assert.match(source, /event\.data\?\.type === "SKIP_WAITING"/);
   assert.match(source, /self\.skipWaiting\(\)/);
   assert.doesNotMatch(source, /token|authorization|athlete|coach/i);
+});
+
+test("standalone PWA zoom lock is scoped to the PWA experience", () => {
+  const source = readFileSync(join(process.cwd(), "src/features/pwa/pwa-experience.tsx"), "utf8");
+  assert.match(source, /pwa-standalone/);
+  assert.match(source, /maximum-scale=1, user-scalable=no/);
+  assert.match(source, /gesturestart/);
 });
 
 test("offline page retries the normal online entry point after ten seconds", () => {

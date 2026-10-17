@@ -14,6 +14,12 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Standalone PWA touch navigation intentionally does not allow pinch zoom;
+ * browser tabs retain their normal accessibility zoom behavior. */
+html.pwa-standalone {
+  touch-action: pan-x pan-y;
+}
+
 /* Keep native form controls readable even when the browser or OS prefers a
  * dark color scheme. Individual forms can still refine these with utilities. */
 input,

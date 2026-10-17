@@ -83,14 +83,16 @@ export default async function DashboardLayout({
           <Link className={`text-lg font-bold ${activeMode === "ATHLETE" ? "text-emerald-600" : "text-blue-700"}`} href="/dashboard">
             ProgrACE
           </Link>
-          <DashboardNavigation
-            access={{ activeMode, demoMode: demo.enabled, roles }}
-            activeMode={activeMode}
-            demoMode={demo.enabled}
-            email={user.email}
-            roles={roles}
-          />
-          {demo.enabled ? null : <NotificationCenter initialUnreadCount={unreadResult.count ?? 0} />}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <DashboardNavigation
+              access={{ activeMode, demoMode: demo.enabled, roles }}
+              activeMode={activeMode}
+              demoMode={demo.enabled}
+              email={user.email}
+              roles={roles}
+            />
+            {demo.enabled ? null : <NotificationCenter initialUnreadCount={unreadResult.count ?? 0} />}
+          </div>
         </div>
       </header>
       <main className={`mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-8 ${activeMode === "ATHLETE" ? "pb-28 md:pb-[max(1.5rem,env(safe-area-inset-bottom))]" : "pb-[max(1.5rem,env(safe-area-inset-bottom))]"}`}>

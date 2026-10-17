@@ -144,6 +144,35 @@ export function PwaExperienceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!isStandalone) return;
+
+    const root = document.documentElement;
+    const viewport = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+    const originalViewport = viewport?.content;
+    root.classList.add("pwa-standalone");
+    if (viewport && !viewport.content.includes("maximum-scale")) {
+      viewport.content = `${viewport.content}, maximum-scale=1, user-scalable=no`;
+    }
+    const preventGestureZoom = (event: Event) => event.preventDefault();
+    const preventCtrlWheelZoom = (event: WheelEvent) => {
+      if (event.ctrlKey) event.preventDefault();
+    };
+    document.addEventListener("gesturestart", preventGestureZoom, { passive: false });
+    document.addEventListener("gesturechange", preventGestureZoom, { passive: false });
+    document.addEventListener("gestureend", preventGestureZoom, { passive: false });
+    document.addEventListener("wheel", preventCtrlWheelZoom, { passive: false });
+
+    return () => {
+      root.classList.remove("pwa-standalone");
+      if (viewport && originalViewport !== undefined) viewport.content = originalViewport;
+      document.removeEventListener("gesturestart", preventGestureZoom);
+      document.removeEventListener("gesturechange", preventGestureZoom);
+      document.removeEventListener("gestureend", preventGestureZoom);
+      document.removeEventListener("wheel", preventCtrlWheelZoom);
+    };
+  }, [isStandalone]);
+
+  useEffect(() => {
     if (!restored) return;
     const timeout = window.setTimeout(() => setRestored(false), 5_000);
     return () => window.clearTimeout(timeout);
