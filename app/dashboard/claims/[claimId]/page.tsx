@@ -52,13 +52,13 @@ export default async function TrainingClaimPage({
   const programId = claim.prescription.training_week.program.id;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-7">
-      <header>
+    <div className="mx-auto w-full min-w-0 max-w-4xl space-y-7">
+      <header className="min-w-0">
         <Link className="text-sm font-semibold text-indigo-700" href={`/dashboard/training/${programId}`}>
           ← Training program
         </Link>
         <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">
               Training session
             </p>
@@ -80,17 +80,17 @@ export default async function TrainingClaimPage({
       </header>
 
       {feedback.message ? (
-        <p className="rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-700" role="status">
+        <p className="break-words rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-700" role="status">
           {messages[feedback.message] ?? "Claim updated."}
         </p>
       ) : null}
       {feedback.error ? (
-        <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+        <p className="break-words rounded-md bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
           {errors[feedback.error] ?? "The training session couldn't be updated."}
         </p>
       ) : null}
 
-      <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+      <section className="min-w-0 max-w-full rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
         <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">
           {claim.prescription.training_menu}
         </p>
@@ -98,7 +98,7 @@ export default async function TrainingClaimPage({
         <dl className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
             <dt className="text-sm text-gray-500">Training program</dt>
-            <dd className="font-semibold">{claim.prescription.training_week.program.name}</dd>
+            <dd className="break-words font-semibold">{claim.prescription.training_week.program.name}</dd>
           </div>
           <div>
             <dt className="text-sm text-gray-500">Scheduled date</dt>
@@ -109,7 +109,7 @@ export default async function TrainingClaimPage({
           <h3 className="text-sm font-bold text-gray-900">Prescription components / target</h3>
           <div className="mt-2 space-y-1">
             {claim.prescription.components.map((component) => (
-              <p className="text-sm text-gray-700" key={component.id}>
+              <p className="break-words text-sm text-gray-700" key={component.id}>
                 {formatComponent(component)}
               </p>
             ))}
@@ -119,7 +119,7 @@ export default async function TrainingClaimPage({
 
       {claim.validation ? <ValidationSummary validation={claim.validation} /> : null}
 
-      <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+      <section className="min-w-0 max-w-full rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-xl font-bold">Selected evidence</h2>
@@ -127,7 +127,7 @@ export default async function TrainingClaimPage({
               These totals describe the selection only; they are not a validation result.
             </p>
           </div>
-          <dl className="flex gap-5 text-sm">
+          <dl className="flex flex-wrap gap-5 text-sm">
             <div>
               <dt className="text-gray-500">Distance</dt>
               <dd className="font-semibold">{formatDistance(totalDistance || null)}</dd>
@@ -182,7 +182,7 @@ export default async function TrainingClaimPage({
           </section>
         </>
       ) : (
-        <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+        <section className="min-w-0 max-w-full rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
           <h2 className="text-xl font-bold">Training note</h2>
           <p className="mt-3 whitespace-pre-wrap text-sm text-gray-700">
             {claim.athlete_note ?? "No training note added."}

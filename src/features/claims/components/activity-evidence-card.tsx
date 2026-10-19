@@ -21,7 +21,7 @@ export function ActivityEvidenceCard({
   showNote = false,
 }: ActivityEvidenceCardProps) {
   return (
-    <article className="min-w-0 rounded-lg border border-gray-200 p-3 sm:p-4">
+    <article className="w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-gray-200 p-3 sm:p-4">
       <div className="flex items-start gap-3">
         {control}
         <div className="min-w-0 flex-1">
@@ -79,7 +79,7 @@ export function ActivityEvidenceCard({
           {showNote ? (
             <div className="mt-4 border-t border-gray-100 pt-3">
               <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Activity note</p>
-              <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">
+              <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-700">
                 {activity.notes ?? "No notes added yet."}
               </p>
             </div>

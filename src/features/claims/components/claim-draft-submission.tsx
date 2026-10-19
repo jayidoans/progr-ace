@@ -18,15 +18,15 @@ export function ClaimDraftSubmission({ athleteNote, canSubmit, claimId }: ClaimD
   const titleId = `claim-submission-${claimId}`;
 
   return (
-    <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6" aria-labelledby={`training-note-${claimId}`}>
+    <section className="w-full min-w-0 max-w-full rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6" aria-labelledby={`training-note-${claimId}`}>
       <h2 className="text-xl font-bold text-gray-950" id={`training-note-${claimId}`}>Training note</h2>
       <p className="mt-1 text-sm text-gray-600">
         Add any context about why the selected Activities represent this workout. This does not change the Activity notes.
       </p>
-      <form action={updateClaimNote} className="mt-4">
+      <form action={updateClaimNote} className="mt-4 min-w-0 max-w-full">
         <input name="claimId" type="hidden" value={claimId} />
         <textarea
-          className="min-h-28 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          className="min-h-28 w-full max-w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
           defaultValue={athleteNote ?? ""}
           maxLength={4000}
           name="athleteNote"

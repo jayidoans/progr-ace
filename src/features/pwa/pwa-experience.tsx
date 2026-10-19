@@ -157,9 +157,13 @@ export function PwaExperienceProvider({ children }: { children: ReactNode }) {
     const preventCtrlWheelZoom = (event: WheelEvent) => {
       if (event.ctrlKey) event.preventDefault();
     };
+    const preventMultiTouchZoom = (event: TouchEvent) => {
+      if (event.touches.length > 1) event.preventDefault();
+    };
     document.addEventListener("gesturestart", preventGestureZoom, { passive: false });
     document.addEventListener("gesturechange", preventGestureZoom, { passive: false });
     document.addEventListener("gestureend", preventGestureZoom, { passive: false });
+    document.addEventListener("touchmove", preventMultiTouchZoom, { passive: false });
     document.addEventListener("wheel", preventCtrlWheelZoom, { passive: false });
 
     return () => {
@@ -168,6 +172,7 @@ export function PwaExperienceProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("gesturestart", preventGestureZoom);
       document.removeEventListener("gesturechange", preventGestureZoom);
       document.removeEventListener("gestureend", preventGestureZoom);
+      document.removeEventListener("touchmove", preventMultiTouchZoom);
       document.removeEventListener("wheel", preventCtrlWheelZoom);
     };
   }, [isStandalone]);

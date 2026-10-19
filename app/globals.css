@@ -9,6 +9,8 @@
 }
 
 body {
+  max-width: 100%;
+  overflow-x: hidden;
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
@@ -20,6 +22,12 @@ html.pwa-standalone {
   touch-action: pan-x pan-y;
 }
 
+@media (display-mode: standalone) {
+  html {
+    touch-action: pan-x pan-y;
+  }
+}
+
 /* Keep native form controls readable even when the browser or OS prefers a
  * dark color scheme. Individual forms can still refine these with utilities. */
 input,
@@ -27,9 +35,21 @@ textarea,
 select,
 option,
 optgroup {
+  max-width: 100%;
   color: #111827;
   background-color: #ffffff;
   color-scheme: light;
+}
+
+/* iOS zooms the whole viewport when a control below 16px receives focus.
+ * Keep mobile controls at the native readable size so focus never changes
+ * the page scale, including before the standalone PWA hydrates. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }
 
 /* Native dialogs do not receive a Tailwind background utility by default.

@@ -89,9 +89,13 @@ test("service worker update protocol carries only an explicit activation request
 
 test("standalone PWA zoom lock is scoped to the PWA experience", () => {
   const source = readFileSync(join(process.cwd(), "src/features/pwa/pwa-experience.tsx"), "utf8");
+  const styles = readFileSync(join(process.cwd(), "app/globals.css"), "utf8");
   assert.match(source, /pwa-standalone/);
   assert.match(source, /maximum-scale=1, user-scalable=no/);
   assert.match(source, /gesturestart/);
+  assert.match(source, /touches\.length > 1/);
+  assert.match(styles, /display-mode: standalone/);
+  assert.match(styles, /font-size: 16px/);
 });
 
 test("offline page retries the normal online entry point after ten seconds", () => {

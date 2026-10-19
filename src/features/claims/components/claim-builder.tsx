@@ -56,8 +56,8 @@ export function ClaimBuilder({ candidates, prescription, programId }: ClaimBuild
   );
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+    <div className="w-full min-w-0 max-w-full space-y-6">
+      <section className="min-w-0 max-w-full rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
         <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">
           {prescription.training_menu}
         </p>
@@ -67,19 +67,19 @@ export function ClaimBuilder({ candidates, prescription, programId }: ClaimBuild
         </p>
         <div className="mt-4 space-y-1">
           {prescription.components.map((component) => (
-            <p className="text-sm text-gray-700" key={component.id}>
+            <p className="break-words text-sm text-gray-700" key={component.id}>
               {formatComponent(component)}
             </p>
           ))}
         </div>
       </section>
 
-      <form action={createClaimDraft} className="space-y-6">
+      <form action={createClaimDraft} className="min-w-0 max-w-full space-y-6">
         <input name="prescriptionId" type="hidden" value={prescription.id} />
         <input name="programId" type="hidden" value={programId} />
         {[...selectedActivityIds].map((activityId) => <input key={activityId} name="activityIds" type="hidden" value={activityId} />)}
 
-        <section className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
+        <section className="min-w-0 max-w-full rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
           <h2 className="text-xl font-bold">Choose activities</h2>
           <p className="mt-2 text-sm text-gray-600">
             Activities are organized by date to help you find your evidence. You decide which
@@ -135,7 +135,7 @@ export function ClaimBuilder({ candidates, prescription, programId }: ClaimBuild
           )}
         </section>
 
-        <section className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
+        <section className="min-w-0 max-w-full rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6">
           <label className="block text-sm font-bold text-gray-900" htmlFor="athleteNote">
             Training note <span className="font-normal text-gray-500">(optional)</span>
           </label>
@@ -144,7 +144,7 @@ export function ClaimBuilder({ candidates, prescription, programId }: ClaimBuild
             activity&apos;s own notes.
           </p>
           <textarea
-            className="mt-3 min-h-28 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="mt-3 min-h-28 w-full max-w-full rounded-md border border-gray-300 px-3 py-2 text-base"
             id="athleteNote"
             maxLength={4000}
             name="athleteNote"

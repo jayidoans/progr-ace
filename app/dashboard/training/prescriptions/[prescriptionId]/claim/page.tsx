@@ -24,8 +24,8 @@ export default async function NewTrainingClaimPage({
   if (data.existingClaimId) redirect(`/dashboard/claims/${data.existingClaimId}`);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-7">
-      <header>
+    <div className="mx-auto w-full min-w-0 max-w-4xl space-y-7">
+      <header className="min-w-0">
         <Link
           className="text-sm font-semibold text-indigo-700"
           href={`/dashboard/training/${data.programId}`}
@@ -36,13 +36,13 @@ export default async function NewTrainingClaimPage({
           Training session
         </p>
         <h1 className="mt-2 text-3xl font-bold">Choose activities</h1>
-        <p className="mt-3 text-gray-600">
+        <p className="mt-3 break-words text-gray-600">
           Select the activities that represent this workout. You can review your selection before submitting it for review.
         </p>
       </header>
 
       {feedback.error ? (
-        <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+        <p className="break-words rounded-md bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
           {errors[feedback.error] ?? "The claim request failed."}
         </p>
       ) : null}

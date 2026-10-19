@@ -23,9 +23,9 @@ export function AvailableClaimActivities({ activities, claimId }: AvailableClaim
   const visibleActivities = filteredActivities.slice(0, visibleCount);
 
   return (
-    <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6" aria-labelledby="other-available-activities">
+    <section className="w-full min-w-0 max-w-full rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 sm:p-6" aria-labelledby="other-available-activities">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h2 className="text-xl font-bold text-gray-950" id="other-available-activities">Other available activities</h2>
           <p className="mt-1 text-sm text-gray-600">
             Add another Activity only when it belongs to this same training session.
@@ -35,7 +35,7 @@ export function AvailableClaimActivities({ activities, claimId }: AvailableClaim
         <label className="text-sm font-semibold text-gray-700" htmlFor="claim-activity-category">
           Activity category
           <select
-            className="mt-1 block min-h-11 rounded-md border border-gray-300 bg-white px-3 text-sm font-normal text-gray-950 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            className="mt-1 block min-h-11 max-w-full rounded-md border border-gray-300 bg-white px-3 text-base font-normal text-gray-950 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             id="claim-activity-category"
             onChange={(event) => {
               setSportType(event.target.value);
