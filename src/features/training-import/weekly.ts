@@ -21,8 +21,8 @@ export function selectWeeklyImport(
   const week = plan.weeks[0];
   if (
     week.weekNumber !== target.weekNumber
-    || week.startDate !== target.startDate
-    || week.endDate !== target.endDate
+    || week.startDate > target.startDate
+    || week.endDate < target.endDate
   ) {
     return {
       ok: false,
@@ -34,5 +34,26 @@ export function selectWeeklyImport(
     return { ok: false, message: "The workbook does not contain any training sessions for this week." };
   }
 
-  return { ok: true, week };
+  if (week.prescriptions.some(
+    (prescription) => prescription.scheduledDate < target.startDate
+      || prescription.scheduledDate > target.endDate,
+  )) {
+    return {
+      ok: false,
+      message: "The workbook contains training sessions outside the selected week.",
+    };
+  }
+
+  if (week.startDate === target.startDate && week.endDate === target.endDate) {
+    return { ok: true, week };
+  }
+
+  return {
+    ok: true,
+    week: {
+      ...week,
+      startDate: target.startDate,
+      endDate: target.endDate,
+    },
+  };
 }
