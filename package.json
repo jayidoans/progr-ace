@@ -20,7 +20,7 @@
     "upload:demo": "npm run build:cloudflare:demo && opennextjs-cloudflare upload --config wrangler.demo.jsonc",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit --incremental false",
     "test:training": "tsx --test src/features/training-import/tests/*.test.ts",
     "test:activities": "tsx --test src/features/activities/tests/*.test.ts",
@@ -35,25 +35,24 @@
     "@supabase/supabase-js": "^2.116.0",
     "exceljs": "^4.4.0",
     "jszip": "^3.10.2",
-    "next": "15.5.25",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "next": "16.4.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@opennextjs/cloudflare": "1.20.6",
+    "@opennextjs/cloudflare": "1.20.13",
     "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "eslint": "^9",
-    "eslint-config-next": "15.5.25",
+    "eslint-config-next": "16.4.3",
     "postcss": "^8",
     "supabase": "^2.117.0",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.23.13",
     "typescript": "^5",
-    "wrangler": "4.132.0"
+    "wrangler": "4.152.0"
   },
   "overrides": {
     "exceljs": {

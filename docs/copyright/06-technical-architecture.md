@@ -18,7 +18,7 @@ flowchart TD
 
 ## Frontend
 
-- Next.js 15 App Router and React 19.
+- Next.js 16 App Router and React 19.
 - TypeScript for application and domain types.
 - Tailwind CSS for responsive presentation.
 - Server Components are the default; client components are used for interaction such as forms, filters, dialogs, and responsive navigation.

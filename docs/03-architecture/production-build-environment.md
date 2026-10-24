@@ -41,4 +41,6 @@ Keep `.env.local` configured for local Supabase and run `npm run dev`. Productio
 
 `npm run build:production` produces a guarded Next.js build without OpenNext. `npm run build:cloudflare:production` produces the deployable OpenNext bundle. `npm run deploy` and `npm run upload` are aliases of the guarded production paths. A plain `npm run build` or raw OpenNext build without the wrapper intentionally fails in the production build phase; `npm run dev` remains unchanged.
 
+Next.js 16 deprecates the `middleware.ts` convention in favor of `proxy.ts`. ProgrACE intentionally retains `middleware.ts` while OpenNext reports Node.js middleware—the runtime used by `proxy.ts`—as experimental and not officially maintained. The deprecation warning is expected; migrate only after OpenNext officially supports that runtime and the authentication smoke tests pass.
+
 The M17.2 database migrations are separate from this build procedure. This hotfix requires no schema/RLS changes and does not redeploy or migrate production.
